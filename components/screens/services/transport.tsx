@@ -1,0 +1,251 @@
+"use client"
+
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Icon } from "@/components/shared"
+import { useLanguage } from "@/lib/contexts/LanguageContext"
+import type { ScreenKey } from "@/lib/data"
+
+const travelVehicles = [
+  {
+    id: "sedan",
+    name: "Sedan Cab (AC)",
+    nameHi: "सेडान कैब (एसी)",
+    desc: "Comfortable 4-seater cab. Perfect for small families.",
+    descHi: "आरामदायक 4-सीटर कैब। छोटे परिवारों के लिए आदर्श।",
+    fare: "₹1,800 approx",
+    time: "~1h 45m from Jaipur",
+    icon: "Car",
+    capacity: "4 Devotees",
+  },
+  {
+    id: "suv",
+    name: "SUV (AC) - Innova / Ertiga",
+    nameHi: "एसयूवी (एसी) - इनोवा / अर्टिगा",
+    desc: "Spacious 6-7 seater. Best for larger groups & luggage.",
+    descHi: "विशाल 6-7 सीटर। बड़े समूहों और सामान के लिए सर्वश्रेष्ठ।",
+    fare: "₹2,600 approx",
+    time: "~1h 45m from Jaipur",
+    icon: "CarFront",
+    capacity: "6-7 Devotees",
+  },
+  {
+    id: "auto",
+    name: "E-Rickshaw / Auto",
+    nameHi: "ई-रिक्शा / ऑटो",
+    desc: "Available for local shuttle from Ringas Junction to Khatu Dham.",
+    descHi: "रींगस जंक्शन से खाटू धाम तक स्थानीय शटल के लिए उपलब्ध।",
+    fare: "₹50/seat or ₹300 full",
+    time: "~35m from Ringas",
+    icon: "Shuffle",
+    capacity: "3-5 Devotees",
+  },
+]
+
+export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+  const { t } = useLanguage()
+  const [selectedVehicle, setSelectedVehicle] = useState<typeof travelVehicles[0] | null>(null)
+  const [bookingForm, setBookingForm] = useState({
+    name: "",
+    phone: "",
+    pickup: "jaipur-airport",
+    customPickup: "",
+    date: "",
+    time: "",
+  })
+  const [booked, setBooked] = useState(false)
+
+  const handleBooking = (e: React.FormEvent) => {
+    e.preventDefault()
+    setBooked(true)
+    setTimeout(() => {
+      setBooked(false)
+      setSelectedVehicle(null)
+      setBookingForm({ name: "", phone: "", pickup: "jaipur-airport", customPickup: "", date: "", time: "" })
+    }, 4000)
+  }
+
+  return (
+    <div className="space-y-5 pb-10">
+      {/* Header */}
+      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#D97706] to-[#D4AF37] p-6 text-white shadow-lg">
+        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
+        <div className="relative flex items-center justify-between">
+          <div>
+            <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
+              <Icon name="ArrowLeft" className="size-4" /> {t("Back to Services", "सेवाओं पर वापस")}
+            </button>
+            <h1 className="font-heading text-xl font-bold">{t("Transport Services", "परिवहन सेवाएं")}</h1>
+            <p className="text-xs text-white/80 mt-1">{t("Book clean, trusted rides from stations & airports", "स्टेशनों और हवाई अड्डों से स्वच्छ, विश्वसनीय सवारी बुक करें")}</p>
+          </div>
+          <span className="grid size-12 place-items-center rounded-2xl bg-white/25 border border-white/20">
+            <Icon name="Bus" className="size-6 text-white" />
+          </span>
+        </div>
+      </section>
+
+      {!selectedVehicle ? (
+        <div className="space-y-4">
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm dark:bg-card dark:border-border/30">
+            <h3 className="font-heading text-sm font-bold text-foreground mb-2">{t("Official Rates & Fare Guideline", "आधिकारिक दरें और किराया दिशानिर्देश")}</h3>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              {t("Temple Trust verified drivers only. Toll and state tax included in estimated fare. Pay driver directly after the trip.", "केवल मंदिर ट्रस्ट द्वारा सत्यापित ड्राइवर। अनुमानित किराए में टोल और राज्य कर शामिल हैं। यात्रा के बाद सीधे ड्राइवर को भुगतान करें।")}
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {travelVehicles.map(v => (
+              <div key={v.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30">
+                <div className="flex items-center gap-4">
+                  <span className="grid size-14 place-items-center rounded-2xl bg-secondary/35 text-primary dark:bg-muted dark:text-secondary shrink-0">
+                    <Icon name={v.icon} className="size-8" />
+                  </span>
+                  <div>
+                    <h3 className="font-heading font-bold text-base text-foreground">{t(v.name, v.nameHi)}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t(v.desc, v.descHi)}</p>
+                    <div className="flex gap-4 mt-2 text-[10px] text-muted-foreground font-semibold">
+                      <span className="flex items-center gap-1"><Icon name="Users" className="size-3 text-primary" /> {v.capacity}</span>
+                      <span className="flex items-center gap-1"><Icon name="Clock" className="size-3 text-primary" /> {v.time}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="w-full sm:w-auto text-left sm:text-right shrink-0 flex sm:flex-col justify-between items-center sm:items-end gap-2 border-t sm:border-t-0 border-border/55 pt-3 sm:pt-0">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t("Estimated Fare", "अनुमानित किराया")}</p>
+                    <p className="font-heading font-bold text-base text-primary mt-0.5">{v.fare}</p>
+                  </div>
+                  <button
+                    onClick={() => setSelectedVehicle(v)}
+                    className="rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-2 text-xs font-bold text-white shadow transition hover:shadow-md active:scale-[0.98]"
+                  >
+                    {t("Book Cab", "सवारी बुक करें")}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        /* Ride Booking Form */
+        <div className="rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30 space-y-5">
+          <div className="flex justify-between items-center border-b border-border/50 pb-4 dark:border-border/20">
+            <div>
+              <h2 className="font-heading text-lg font-bold text-foreground">{t("Confirm Ride Details", "सवारी विवरण की पुष्टि")}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{t(selectedVehicle.name, selectedVehicle.nameHi)}</p>
+            </div>
+            <button onClick={() => setSelectedVehicle(null)} className="text-xs font-bold text-primary hover:underline">
+              {t("Change Ride", "वाहन बदलें")}
+            </button>
+          </div>
+
+          <AnimatePresence mode="wait">
+            {booked ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center gap-3 py-6 text-center"
+              >
+                <span className="grid size-16 place-items-center rounded-full bg-green-100 text-green-600 dark:bg-green-950/30">
+                  <Icon name="CheckCircle" className="size-8" />
+                </span>
+                <h3 className="font-heading text-lg font-bold text-green-600 dark:text-green-400">
+                  {t("Ride Booked Successfully!", "सवारी सफलतापूर्वक बुक हुई!")}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
+                  {t("Driver details & OTP will be sent via SMS 30 mins prior to pickup time. Pay driver directly. Ref: TR-2026-881", "ड्राइवर का विवरण और ओटीपी पिकअप से 30 मिनट पहले एसएमएस द्वारा भेजा जाएगा। सीधे ड्राइवर को भुगतान करें। संदर्भ: TR-2026-881")}
+                </p>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleBooking} className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Devotee Name *", "भक्त का नाम *")}</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="Mohan Sharma"
+                      value={bookingForm.name}
+                      onChange={e => setBookingForm({ ...bookingForm, name: e.target.value })}
+                      className="dark:bg-muted dark:border-border/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Contact Number *", "संपर्क नंबर *")}</label>
+                    <input
+                      type="tel"
+                      required
+                      placeholder="+91 XXXXX XXXXX"
+                      value={bookingForm.phone}
+                      onChange={e => setBookingForm({ ...bookingForm, phone: e.target.value })}
+                      className="dark:bg-muted dark:border-border/30"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Pickup Point *", "पिकअप स्थान *")}</label>
+                  <select
+                    value={bookingForm.pickup}
+                    onChange={e => setBookingForm({ ...bookingForm, pickup: e.target.value })}
+                    className="dark:bg-muted dark:border-border/30"
+                  >
+                    <option value="jaipur-airport">{t("Jaipur Airport (JAI)", "जयपुर हवाई अड्डा (JAI)")}</option>
+                    <option value="jaipur-railway">{t("Jaipur Railway Station (JP)", "जयपुर रेलवे स्टेशन (JP)")}</option>
+                    <option value="ringas-junction">{t("Ringas Junction Railway Station (RGS)", "रींगस जंक्शन रेलवे स्टेशन (RGS)")}</option>
+                    <option value="sikar-railway">{t("Sikar Railway Station (SIKR)", "सीकर रेलवे स्टेशन (SIKR)")}</option>
+                    <option value="other">{t("Other (Specify below)", "अन्य (नीचे दर्ज करें)")}</option>
+                  </select>
+                </div>
+
+                {bookingForm.pickup === "other" && (
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Enter Pickup Location *", "पिकअप स्थान दर्ज करें *")}</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Hotel Marriott, Jaipur"
+                      value={bookingForm.customPickup}
+                      onChange={e => setBookingForm({ ...bookingForm, customPickup: e.target.value })}
+                      className="dark:bg-muted dark:border-border/30"
+                    />
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Pickup Date *", "पिकअप तिथि *")}</label>
+                    <input
+                      type="date"
+                      required
+                      value={bookingForm.date}
+                      onChange={e => setBookingForm({ ...bookingForm, date: e.target.value })}
+                      className="dark:bg-muted dark:border-border/30"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Pickup Time *", "पिकअप समय *")}</label>
+                    <input
+                      type="time"
+                      required
+                      value={bookingForm.time}
+                      onChange={e => setBookingForm({ ...bookingForm, time: e.target.value })}
+                      className="dark:bg-muted dark:border-border/30"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary py-3.5 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
+                >
+                  <Icon name="Check" className="size-4" />
+                  {t("Confirm Booking", "बुकिंग पक्की करें")}
+                </button>
+              </form>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+    </div>
+  )
+}

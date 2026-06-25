@@ -190,7 +190,7 @@ function TempleScreen() {
     <div className="space-y-5">
       <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
         <div className="relative h-44 w-full">
-          <Image src="/images/khatu-shyam-deity.png" alt="Khatu Shyam Ji deity" fill className="object-cover" />
+          <Image src="/images/khatu-shyam-temple.png" alt="Khatu Shyam Ji temple" fill className="object-cover" />
         </div>
         <div className="p-4">
           <p className="font-heading text-lg font-bold text-foreground">Shri Khatu Shyam Ji</p>

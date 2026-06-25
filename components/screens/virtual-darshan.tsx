@@ -155,11 +155,11 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
               {/* Main deity */}
               <div className="relative size-60 md:size-80 flex items-center justify-center">
                 <Image 
-                  src="/images/khatu-shyam-deity.png" 
+                  src="/images/khatu-shyam-hero.jpg" 
                   alt="Lord Khatu Shyam" 
                   width={250} 
                   height={250} 
-                  className="object-contain drop-shadow-[0_0_35px_rgba(212,175,55,0.95)]" 
+                  className="object-contain drop-shadow-[0_0_35px_rgba(212,175,55,0.95)] rounded-full" 
                 />
               </div>
 

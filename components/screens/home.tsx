@@ -25,11 +25,11 @@ export function HomeScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
       <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
         <div className="relative h-52 w-full">
           <Image
-            src="/images/khatu-shyam-hero.png"
+            src="/images/khatu-shyam-hero.jpg"
             alt="Shri Khatu Shyam Ji"
             fill
             priority
-            className="object-cover"
+            className="object-cover object-top"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
           <div className="absolute right-3 top-3">

@@ -13,6 +13,11 @@ import { BookDarshanScreen } from "@/components/screens/book-darshan"
 import { PassengerDetailsScreen } from "@/components/screens/passenger-details"
 import { GroupBookingScreen } from "@/components/screens/group-booking"
 import { ServicesScreen } from "@/components/screens/services"
+import { SevaBookingScreen } from "@/components/screens/services/seva-booking"
+import { OfferingsScreen } from "@/components/screens/services/offerings"
+import { EmergencyHelplineScreen } from "@/components/screens/services/emergency-helpline"
+import { ParkingInfoScreen } from "@/components/screens/services/parking-info"
+import { TrafficUpdatesScreen } from "@/components/screens/services/traffic-updates"
 import { MyBookingsScreen } from "@/components/screens/my-bookings"
 import { QrPassScreen } from "@/components/screens/qr-pass"
 import { HowToReachScreen } from "@/components/screens/how-to-reach"
@@ -487,6 +492,10 @@ export function AppShell() {
           {screen === "passenger-details" && <PassengerDetailsScreen navigate={navigate} bookingDate={bookingDate} />}
           {screen === "group-booking" && <GroupBookingScreen navigate={navigate} />}
           {screen === "services" && <ServicesScreen navigate={navigate} />}
+{screen === "offerings" && <OfferingsScreen navigate={navigate} />}
+{screen === "emergency" && <EmergencyHelplineScreen navigate={navigate} />}
+{screen === "parking" && <ParkingInfoScreen navigate={navigate} />}
+{screen === "traffic" && <TrafficUpdatesScreen navigate={navigate} />}
           {screen === "bookings" && <MyBookingsScreen navigate={navigate} />}
           {screen === "qr" && <QrPassScreen />}
           {screen === "reach" && <HowToReachScreen />}
