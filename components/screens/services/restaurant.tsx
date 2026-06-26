@@ -87,10 +87,10 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
         <div className="relative flex items-center justify-between">
           <div>
             <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
-              <Icon name="ArrowLeft" className="size-4" /> {t("Back to Services", "सेवाओं पर वापस")}
+              <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.restaurant.backToServices")}
             </button>
-            <h1 className="font-heading text-xl font-bold">{t("Pure Veg dining", "शुद्ध शाकाहारी भोजन")}</h1>
-            <p className="text-xs text-white/80 mt-1">{t("Explore best family restaurants, thalis & sweet shops", "सर्वश्रेष्ठ पारिवारिक रेस्तरां, थाली और मिठाई की दुकानों का विवरण")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.services.restaurant.pureVegDining")}</h1>
+            <p className="text-xs text-white/80 mt-1">{t("screens.services.restaurant.exploreBestFamilyRestaurantsThalisSweetShop")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/25 border border-white/20">
             <Icon name="UtensilsCrossed" className="size-6 text-white" />
@@ -102,10 +102,10 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
         <div className="space-y-4">
           <div className="rounded-2xl border border-border bg-[#FFF8E7] dark:bg-[#1a1107] dark:border-border/30 p-4">
             <h3 className="font-heading text-xs font-bold text-[#8a4b12] dark:text-[#f3d9b2] uppercase tracking-wider flex items-center gap-1">
-              <Icon name="Heart" className="size-3.5 text-primary" /> {t("Strict Pure Veg Guideline", "सख्त शुद्ध शाकाहारी दिशानिर्देश")}
+              <Icon name="Heart" className="size-3.5 text-primary" /> {t("screens.services.restaurant.strictPureVegGuideline")}
             </h3>
             <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
-              {t("To maintain the sanctity of Khatu Dham, all registered restaurants serve 100% vegetarian food without onion & garlic (Garlic-free options are available upon request).", "खाटू धाम की पवित्रता बनाए रखने के लिए, सभी पंजीकृत रेस्तरां 100% शाकाहारी भोजन परोसते हैं। प्याज और लहसुन रहित विकल्प अनुरोध पर उपलब्ध हैं।")}
+              {t("screens.services.restaurant.toMaintainTheSanctityOfKhatuDhamAllRegiste")}
             </p>
           </div>
 
@@ -126,7 +126,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                       <span className="font-heading font-bold text-xs text-primary shrink-0">{t(r.price, r.price)}</span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-1.5">
-                      <span className="font-bold text-foreground">{t("Speciality:", "विशेषता:")}</span> {t(r.speciality, r.specialityHi)}
+                      <span className="font-bold text-foreground">{t("screens.services.restaurant.speciality")}</span> {t(r.speciality, r.specialityHi)}
                     </p>
                     <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1">
                       <Icon name="Clock" className="size-3 text-primary" />
@@ -138,11 +138,11 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                       onClick={() => setSelectedRest(r)}
                       className="mt-4 w-full sm:w-auto self-end rounded-xl bg-gradient-to-r from-primary to-secondary px-4 py-2 text-xs font-bold text-white shadow transition hover:shadow-md active:scale-[0.98]"
                     >
-                      {t("Reserve Table", "टेबल बुक करें")}
+                      {t("screens.services.restaurant.reserveTable")}
                     </button>
                   ) : (
                     <span className="mt-4 text-xs font-bold text-green-600 dark:text-green-400 self-end">
-                      {t("No Reservation Required ✓", "किसी बुकिंग की आवश्यकता नहीं ✓")}
+                      {t("screens.services.restaurant.noReservationRequired")}
                     </span>
                   )}
                 </div>
@@ -155,11 +155,11 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
         <div className="rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30 space-y-5">
           <div className="flex justify-between items-center border-b border-border/50 pb-4 dark:border-border/20">
             <div>
-              <h2 className="font-heading text-lg font-bold text-foreground">{t("Table Reservation", "टेबल बुकिंग")}</h2>
+              <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.restaurant.tableReservation")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t(selectedRest.name, selectedRest.nameHi)}</p>
             </div>
             <button onClick={() => setSelectedRest(null)} className="text-xs font-bold text-primary hover:underline">
-              {t("Cancel", "रद्द करें")}
+              {t("screens.services.restaurant.cancel")}
             </button>
           </div>
 
@@ -174,17 +174,17 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                   <Icon name="CheckCircle" className="size-8" />
                 </span>
                 <h3 className="font-heading text-lg font-bold text-green-600 dark:text-green-400">
-                  {t("Table Reserved Successfully!", "टेबल बुक हो गई!")}
+                  {t("screens.services.restaurant.tableReservedSuccessfully")}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-                  {t("Your reservation details have been sent. Show SMS at the reception. Res: RS-2026-104", "बुकिंग विवरण एसएमएस द्वारा भेजा गया है। काउंटर पर एसएमएस दिखाएं। संदर्भ: RS-2026-104")}
+                  {t("screens.services.restaurant.yourReservationDetailsHaveBeenSentShowSmsA")}
                 </p>
               </motion.div>
             ) : (
               <form onSubmit={handleReservation} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Your Name *", "आपका नाम *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.restaurant.yourName")}</label>
                     <input
                       type="text"
                       required
@@ -195,7 +195,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Contact Number *", "संपर्क नंबर *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.restaurant.contactNumber")}</label>
                     <input
                       type="tel"
                       required
@@ -209,7 +209,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Date *", "तारीख *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.restaurant.date")}</label>
                     <input
                       type="date"
                       required
@@ -219,7 +219,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("People *", "व्यक्ति *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.restaurant.people")}</label>
                     <select
                       value={reserveForm.people}
                       onChange={e => setReserveForm({ ...reserveForm, people: e.target.value })}
@@ -233,7 +233,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Preferred Time *", "समय *")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.restaurant.preferredTime")}</label>
                   <input
                     type="time"
                     required
@@ -248,7 +248,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                   className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary py-3.5 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
                 >
                   <Icon name="Check" className="size-4" />
-                  {t("Confirm Table Reservation", "आरक्षण पक्का करें")}
+                  {t("screens.services.restaurant.confirmTableReservation")}
                 </button>
               </form>
             )}

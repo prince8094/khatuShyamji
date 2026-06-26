@@ -90,10 +90,10 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
         <div className="relative flex items-center justify-between">
           <div>
             <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
-              <Icon name="ArrowLeft" className="size-4" /> {t("Back to Services", "सेवाओं पर वापस")}
+              <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.hotelBooking.backToServices")}
             </button>
-            <h1 className="font-heading text-xl font-bold">{t("Hotel & Dharamshala", "होटल और धर्मशाला")}</h1>
-            <p className="text-xs text-white/80 mt-1">{t("Book clean & trusted stays near the temple", "मंदिर के पास साफ और विश्वसनीय ठहरने की जगह बुक करें")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.services.hotelBooking.hotelDharamshala")}</h1>
+            <p className="text-xs text-white/80 mt-1">{t("screens.services.hotelBooking.bookCleanTrustedStaysNearTheTemple")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/25 border border-white/20">
             <Icon name="BedDouble" className="size-6 text-white" />
@@ -158,7 +158,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                     onClick={() => setSelectedHotel(h)}
                     className="mt-4 w-full sm:w-auto self-end rounded-xl bg-gradient-to-r from-primary to-secondary px-4 py-2 text-xs font-bold text-white shadow transition hover:shadow-md active:scale-[0.98]"
                   >
-                    {t("Book Stay", "बुक करें")}
+                    {t("screens.services.hotelBooking.bookStay")}
                   </button>
                 </div>
               </div>
@@ -170,11 +170,11 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
         <div className="rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30 space-y-5">
           <div className="flex justify-between items-center border-b border-border/50 pb-4 dark:border-border/20">
             <div>
-              <h2 className="font-heading text-lg font-bold text-foreground">{t("Confirm Stay Details", "बुकिंग विवरण की पुष्टि")}</h2>
+              <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.hotelBooking.confirmStayDetails")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t(selectedHotel.name, selectedHotel.nameHi)}</p>
             </div>
             <button onClick={() => setSelectedHotel(null)} className="text-xs font-bold text-primary hover:underline">
-              {t("Change Hotel", "होटल बदलें")}
+              {t("screens.services.hotelBooking.changeHotel")}
             </button>
           </div>
 
@@ -189,17 +189,17 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                   <Icon name="CheckCircle" className="size-8" />
                 </span>
                 <h3 className="font-heading text-lg font-bold text-green-600 dark:text-green-400">
-                  {t("Stay Booked Successfully!", "कमरा सफलतापूर्वक बुक हुआ!")}
+                  {t("screens.services.hotelBooking.stayBookedSuccessfully")}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-                  {t("A confirmation SMS has been sent. Pay directly at the hotel counter on arrival. Ref: HT-2026-092", "पुष्टि एसएमएस भेजा गया है। आगमन पर सीधे होटल काउंटर पर भुगतान करें। संदर्भ: HT-2026-092")}
+                  {t("screens.services.hotelBooking.aConfirmationSmsHasBeenSentPayDirectlyAtT")}
                 </p>
               </motion.div>
             ) : (
               <form onSubmit={handleBooking} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Devotee Name *", "भक्त का नाम *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.hotelBooking.devoteeName")}</label>
                     <input
                       type="text"
                       required
@@ -210,7 +210,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Contact Number *", "संपर्क नंबर *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.hotelBooking.contactNumber")}</label>
                     <input
                       type="tel"
                       required
@@ -224,7 +224,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Check-In Date *", "आगमन तिथि *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.hotelBooking.checkInDate")}</label>
                     <input
                       type="date"
                       required
@@ -234,7 +234,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Rooms *", "कमरे *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.hotelBooking.rooms")}</label>
                     <select
                       value={bookingForm.rooms}
                       onChange={e => setBookingForm({ ...bookingForm, rooms: e.target.value })}
@@ -248,14 +248,14 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Number of Guests *", "भक्तों की संख्या *")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.hotelBooking.numberOfGuests")}</label>
                   <select
                     value={bookingForm.guests}
                     onChange={e => setBookingForm({ ...bookingForm, guests: e.target.value })}
                     className="dark:bg-muted dark:border-border/30"
                   >
                     {["1", "2", "3", "4", "5", "6+"].map(n => (
-                      <option key={n} value={n}>{n} {t("Devotees", "भक्त")}</option>
+                      <option key={n} value={n}>{n} {t("screens.services.hotelBooking.devotees")}</option>
                     ))}
                   </select>
                 </div>
@@ -265,7 +265,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                   className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary py-3.5 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
                 >
                   <Icon name="Check" className="size-4" />
-                  {t("Confirm Stay", "बुकिंग पक्की करें")}
+                  {t("screens.services.hotelBooking.confirmStay")}
                 </button>
               </form>
             )}

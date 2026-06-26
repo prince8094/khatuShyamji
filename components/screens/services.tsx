@@ -15,73 +15,13 @@ const tints = [
   { bg: "bg-purple-600/10 border-purple-600/20", fg: "text-purple-600" },
 ]
 
-const touristPlaces = [
-  {
-    name: "Salasar Balaji Temple",
-    hindi: "सालासर बालाजी मंदिर",
-    desc: "Famous temple of Lord Hanuman, a major pilgrimage site in Rajasthan",
-    descHi: "भगवान हनुमान का प्रसिद्ध मंदिर, राजस्थान का एक प्रमुख तीर्थ स्थल",
-    distance: "57 km",
-    icon: "Landmark",
-    gradient: "from-orange-500 to-amber-500",
-    tag: "Temple",
-  },
-  {
-    name: "Ringas Junction",
-    hindi: "रींगस जंक्शन",
-    desc: "Nearest railway junction to Khatu Shyam, with good connectivity to major cities",
-    descHi: "खाटू श्याम का निकटतम रेलवे जंक्शन, प्रमुख शहरों से अच्छी कनेक्टिविटी के साथ",
-    distance: "17 km",
-    icon: "TrainFront",
-    gradient: "from-sky-500 to-blue-600",
-    tag: "Transit",
-  },
-  {
-    name: "Jeenmata Temple",
-    hindi: "जीणमाता मंदिर",
-    desc: "Ancient goddess temple nestled in Aravalli hills, over 1000 years old",
-    descHi: "अरावली पहाड़ियों में स्थित प्राचीन देवी मंदिर, 1000 वर्ष से अधिक पुराना",
-    distance: "29 km",
-    icon: "Mountain",
-    gradient: "from-rose-500 to-pink-600",
-    tag: "Temple",
-  },
-  {
-    name: "Shyam Kund",
-    hindi: "श्याम कुंड",
-    desc: "Sacred pond near the temple where devotees take a holy dip before darshan",
-    descHi: "मंदिर के पास पवित्र तालाब जहां भक्त दर्शन से पहले पवित्र स्नान करते हैं",
-    distance: "0.5 km",
-    icon: "Droplets",
-    gradient: "from-teal-500 to-cyan-600",
-    tag: "Sacred Site",
-  },
-  {
-    name: "Sikar City",
-    hindi: "सीकर शहर",
-    desc: "Historic trading city with vibrant bazaars, famous for silver jewelry and sweets",
-    descHi: "ऐतिहासिक व्यापारिक शहर चाँदी के गहनों और मिठाइयों के लिए प्रसिद्ध",
-    distance: "43 km",
-    icon: "ShoppingBag",
-    gradient: "from-violet-500 to-purple-600",
-    tag: "City",
-  },
-  {
-    name: "Luhgarh Fort",
-    hindi: "लुहगढ़ किला",
-    desc: "Ancient fort ruins offering panoramic views of the surrounding landscape",
-    descHi: "प्राचीन किले के अवशेष जो आसपास के परिदृश्य का मनोरम दृश्य प्रदान करते हैं",
-    distance: "22 km",
-    icon: "Castle",
-    gradient: "from-yellow-600 to-orange-600",
-    tag: "Heritage",
-  },
-]
+
 
 export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void }) {
-  const { t } = useLanguage()
+  const { t, tObject } = useLanguage()
   const [activeTab, setActiveTab] = useState<"services" | "tourist">("services")
   const [selectedPlace, setSelectedPlace] = useState<number | null>(null)
+  const touristPlaces: any[] = tObject("screens.services.touristPlacesList") || []
 
   return (
     <div className="space-y-6 pb-8">
@@ -89,13 +29,13 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
       <header className="flex items-center justify-between">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">
-            {t("Khatu Dham", "खाटू धाम")}
+            {t("screens.services.khatuDham")}
           </p>
           <h1 className="font-heading text-2xl font-bold leading-tight text-foreground mt-1">
-            {t("Services & Places", "सेवाएं और स्थान")}
+            {t("screens.services.servicesPlaces")}
           </h1>
           <p className="text-xs font-medium text-muted-foreground mt-1">
-            {t("Everything you need for your pilgrimage", "यात्रा के लिए सब कुछ")}
+            {t("screens.services.everythingYouNeedForYourPilgrimage")}
           </p>
         </div>
         <span className="grid size-12 place-items-center rounded-2xl border border-primary/20 bg-secondary shadow-sm text-primary">
@@ -114,7 +54,7 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
           }`}
         >
           <Icon name="LayoutGrid" className="size-4" />
-          {t("Services", "सेवाएं")}
+          {t("screens.services.services")}
         </button>
         <button
           onClick={() => setActiveTab("tourist")}
@@ -125,7 +65,7 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
           }`}
         >
           <Icon name="MapPin" className="size-4" />
-          {t("Tourist Places", "पर्यटन स्थल")}
+          {t("screens.services.touristPlaces")}
         </button>
       </div>
 
@@ -150,17 +90,21 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2 flex-wrap">
-                      <span className="font-heading text-[15px] font-bold text-foreground">{t(s.label, s.hindi)}</span>
+                      <span className="font-heading text-[15px] font-bold text-foreground">
+                        {t("screens.services.items." + s.key + ".label")}
+                      </span>
                       <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold text-primary border border-primary/10">
-                        {s.meta}
+                        {t("screens.services.items." + s.key + ".meta")}
                       </span>
                       {isComingSoon && (
                         <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold text-muted-foreground border border-border">
-                          {t("Soon", "जल्द")}
+                          {t("screens.services.soon")}
                         </span>
                       )}
                     </span>
-                    <span className="mt-1 block truncate text-xs text-muted-foreground">{t(s.desc, s.desc)}</span>
+                    <span className="mt-1 block truncate text-xs text-muted-foreground">
+                      {t("screens.services.items." + s.key + ".desc")}
+                    </span>
                   </span>
                   {!isComingSoon && (
                     <Icon
@@ -178,7 +122,7 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
               <Icon name="ShieldCheck" className="size-5" />
             </span>
             <p className="text-xs leading-relaxed text-green-800 font-medium">
-              {t("All services are verified by the Shri Shyam Mandir Committee for a safe and trusted experience.", "सुरक्षित अनुभव के लिए सभी सेवाएं श्री श्याम मंदिर समिति द्वारा सत्यापित हैं।")}
+              {t("screens.services.allServicesAreVerifiedByTheShriShyamMandir")}
             </p>
           </section>
         </>
@@ -190,7 +134,7 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
           <div className="flex items-start gap-3 rounded-2xl bg-primary/5 border border-primary/20 p-4">
             <Icon name="Info" className="size-5 shrink-0 text-primary mt-0.5" />
             <p className="text-xs text-foreground leading-relaxed font-medium">
-              {t("Explore the spiritual and historical heritage around Khatu Shyam Ji.", "खाटू श्याम जी के आसपास आध्यात्मिक और ऐतिहासिक विरासत की खोज करें।")}
+              {t("screens.services.exploreTheSpiritualAndHistoricalHeritageArou")}
             </p>
           </div>
 
@@ -218,10 +162,10 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
                 {/* Content */}
                 <div className="p-4">
                   <h3 className="font-heading text-base font-bold text-foreground leading-tight">
-                    {t(place.name, place.hindi)}
+                    {place.name}
                   </h3>
                   <p className="mt-1.5 text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                    {t(place.desc, place.descHi)}
+                    {place.desc}
                   </p>
 
                   <div className="mt-3 flex gap-2">
@@ -230,7 +174,7 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
                       className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-primary/20 bg-secondary py-2 text-xs font-bold text-primary transition hover:bg-primary/10"
                     >
                       <Icon name={selectedPlace === i ? "ChevronUp" : "ChevronDown"} className="size-3.5" />
-                      {t("Details", "विवरण")}
+                      {t("screens.services.details")}
                     </button>
                     <a
                       href={`https://www.google.com/maps/search/${encodeURIComponent(place.name + " Rajasthan")}`}
@@ -239,18 +183,18 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
                       className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-secondary py-2 text-xs font-bold text-white shadow-sm transition hover:shadow-md"
                     >
                       <Icon name="Map" className="size-3.5" />
-                      {t("Directions", "दिशा-निर्देश")}
+                      {t("screens.services.directions")}
                     </a>
                   </div>
 
                   {selectedPlace === i && (
                     <div className="mt-3 rounded-xl bg-secondary/50 p-3 border border-border animate-in slide-in-from-top-1 duration-200">
                       <p className="text-xs text-foreground leading-relaxed font-medium">
-                        {t(place.desc, place.descHi)}
+                        {place.desc}
                       </p>
                       <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                         <Icon name="Navigation" className="size-3.5 text-primary" />
-                        <span>{t("Distance from Khatu Shyam:", "खाटू श्याम से दूरी:")} <span className="font-bold text-foreground">{place.distance}</span></span>
+                        <span>{t("screens.services.distanceFromKhatuShyam")} <span className="font-bold text-foreground">{place.distance}</span></span>
                       </div>
                     </div>
                   )}
@@ -267,17 +211,17 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
                 <Icon name="Compass" className="size-7" />
               </span>
               <h3 className="font-heading text-lg font-bold text-foreground">
-                {t("Plan Your Full Itinerary", "अपनी पूरी यात्रा योजना बनाएं")}
+                {t("screens.services.planYourFullItinerary")}
               </h3>
               <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-                {t("Combine your darshan with visits to nearby spiritual and heritage sites.", "अपने दर्शन को पास के आध्यात्मिक और विरासत स्थलों की यात्रा के साथ जोड़ें।")}
+                {t("screens.services.combineYourDarshanWithVisitsToNearbySpiritu")}
               </p>
               <button
                 onClick={() => navigate && navigate("reach")}
                 className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary px-6 py-3 text-sm font-bold text-white shadow-lg transition hover:shadow-xl active:scale-[0.98]"
               >
                 <Icon name="MapPin" className="size-4" />
-                {t("How to Reach Khatu", "खाटू कैसे पहुंचें")}
+                {t("screens.services.howToReachKhatu")}
               </button>
             </div>
           </section>

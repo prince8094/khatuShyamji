@@ -5,7 +5,7 @@ import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Icon } from "@/components/shared"
 import { motion } from "framer-motion"
-import { drawerItems, user as staticUser, type ScreenKey } from "@/lib/data"
+import { drawerItems, user as staticUser, type ScreenKey, type AppUser } from "@/lib/data"
 
 // Screen components
 import { HomeScreen } from "@/components/screens/home"
@@ -88,30 +88,31 @@ const titles: Record<ScreenKey, { en: string; hi: string }> = {
   offerings: { en: "Offerings", hi: "भेंट" },
 }
 
-const bottomNav: { key: ScreenKey; label: { en: string; hi: string }; icon: string }[] = [
-  { key: "home", label: { en: "Home", hi: "होम" }, icon: "Home" },
-  { key: "book", label: { en: "Darshan", hi: "दर्शन" }, icon: "CalendarCheck" },
-  { key: "services", label: { en: "Services", hi: "सेवाएं" }, icon: "LayoutGrid" },
-  { key: "shyam-ai", label: { en: "Shyam AI", hi: "श्याम एआई" }, icon: "Bot" },
-  { key: "profile", label: { en: "Profile", hi: "प्रोफ़ाइल" }, icon: "User" },
+const bottomNav: { key: ScreenKey; icon: string }[] = [
+  { key: "home", icon: "Home" },
+  { key: "book", icon: "CalendarCheck" },
+  { key: "services", icon: "LayoutGrid" },
+  { key: "shyam-ai", icon: "Bot" },
+  { key: "profile", icon: "User" },
 ]
 
 // Sidebar item groups
+// Sidebar item groups
 const sidebarGroups = [
   {
-    title: { en: "Main", hi: "मुख्य" },
+    key: "main",
     items: ["home", "book", "live-darshan", "virtual-darshan", "khatu-path"],
   },
   {
-    title: { en: "My Account", hi: "मेरा खाता" },
+    key: "account",
     items: ["bookings", "qr", "profile"],
   },
   {
-    title: { en: "Services", hi: "सेवाएं" },
+    key: "services",
     items: ["services", "lost-found", "reach", "help-support"],
   },
   {
-    title: { en: "Temple & Info", hi: "मंदिर एवं जानकारी" },
+    key: "info",
     items: ["crowd", "traffic", "parking", "offline", "temple", "emergency", "notifications"],
   },
 ]
@@ -121,7 +122,7 @@ export function AppShell() {
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [bookingDate, setBookingDate] = useState<string | null>(null)
   const [showOpening, setShowOpening] = useState(true)
-  const [currentUser, setCurrentUser] = useState<{ name: string; phone: string; initials: string } | null>(null)
+  const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [notifCount] = useState(3) // mock unread notifications count
 
   const { lang, setLang, t } = useLanguage()
@@ -225,7 +226,7 @@ export function AppShell() {
           </div>
         </div>
         <p className="relative mt-4 font-heading text-lg font-bold tracking-widest text-[#FFF8F0] drop-shadow-md">
-          जय श्री श्याम · Khatu Dham
+          {t("navigation.sidebar.title")}
         </p>
 
         {/* Profile card */}
@@ -252,7 +253,7 @@ export function AppShell() {
             <Icon name="ChevronRight" className="size-4 text-white/70 shrink-0" />
           ) : (
             <span className="text-[10px] font-bold text-white/80 bg-white/20 rounded-full px-2 py-0.5 shrink-0">
-              {t("Login", "लॉगिन")}
+              {t("components.appShell.login")}
             </span>
           )}
         </div>
@@ -264,9 +265,9 @@ export function AppShell() {
           const groupItems = drawerItems.filter((item) => group.items.includes(item.key))
           if (groupItems.length === 0) return null
           return (
-            <div key={group.title.en} className="mb-4">
+            <div key={group.key} className="mb-4">
               <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                {t(group.title.en, group.title.hi)}
+                {t(`navigation.headings.${group.key}`)}
               </p>
               <div className="space-y-0.5">
                 {groupItems.map((item) => {
@@ -289,8 +290,9 @@ export function AppShell() {
                         <Icon name={item.icon} className="size-4" />
                       </span>
                       <span className="flex-1 min-w-0">
-                        <span className="block text-[13px] font-bold leading-tight font-heading truncate">{item.label}</span>
-                        <span className="block text-[10px] text-muted-foreground mt-0.5 truncate">{item.hindi}</span>
+                        <span className="block text-[13px] font-bold leading-tight font-heading truncate">
+                          {t(`navigation.items.${item.key}`)}
+                        </span>
                       </span>
                       {active && <span className="size-1.5 rounded-full bg-[#D97706] shrink-0" />}
                     </button>
@@ -415,13 +417,12 @@ export function AppShell() {
                 />
               </span>
 
-              {/* Page title */}
               <div className="min-w-0 flex-1">
                 <h1 className="truncate font-heading text-base font-bold leading-tight drop-shadow-sm md:text-lg">
                   {t(titles[screen].en, titles[screen].hi)}
                 </h1>
                 <p className="truncate text-[10px] uppercase tracking-wider text-white/80">
-                  {t(titles[screen].hi, titles[screen].en)}
+                  {t("app.header.subtitle")}
                 </p>
               </div>
 
@@ -470,7 +471,7 @@ export function AppShell() {
             {isHome && (
               <div className="relative pb-2.5 text-center lg:hidden">
                 <p className="font-heading text-sm font-bold tracking-[0.25em] text-white/90 drop-shadow">
-                  जय श्री श्याम
+                  {t("auth.welcome.heading")}
                 </p>
               </div>
             )}
@@ -576,7 +577,7 @@ export function AppShell() {
                       active ? "text-[#D97706]" : "text-muted-foreground",
                     )}
                   >
-                    {t(item.label.en, item.label.hi)}
+                    {t(`navigation.${item.key === 'book' ? 'darshan' : (item.key === 'shyam-ai' ? 'ai' : item.key)}`)}
                   </span>
                 </button>
               )

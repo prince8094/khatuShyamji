@@ -3,23 +3,25 @@
 import Image from "next/image"
 import { Icon, Ornament, SectionTitle, StatusDot } from "@/components/shared"
 import { aartiTimings, liveStatus, services, user, type ScreenKey } from "@/lib/data"
+import { useLanguage } from "@/lib/contexts/LanguageContext"
 
-const statusList = [
-  { ...liveStatus.crowd, icon: "Users" },
-  { ...liveStatus.traffic, icon: "TrafficCone" },
-  { ...liveStatus.parking, icon: "SquareParking" },
-  { ...liveStatus.darshan, icon: "DoorOpen" },
-]
-
-const quickActions: { key: ScreenKey; label: string; icon: string }[] = [
-  { key: "bookings", label: "My Bookings", icon: "Ticket" },
-  { key: "qr", label: "QR Pass", icon: "QrCode" },
-  { key: "reach", label: "How to Reach", icon: "MapPin" },
-  { key: "temple", label: "Temple Info", icon: "Landmark" },
+const quickActions: { key: ScreenKey; icon: string }[] = [
+  { key: "bookings", icon: "Ticket" },
+  { key: "qr", icon: "QrCode" },
+  { key: "reach", icon: "MapPin" },
+  { key: "temple", icon: "Landmark" },
 ]
 
 export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey) => void; currentUser?: any }) {
   const activeUser = currentUser || user
+  const { lang, t } = useLanguage()
+
+  const statusList = [
+    { key: "crowd", icon: "Users", tone: liveStatus.crowd.tone },
+    { key: "traffic", icon: "TrafficCone", tone: liveStatus.traffic.tone },
+    { key: "parking", icon: "SquareParking", tone: liveStatus.parking.tone },
+    { key: "darshan", icon: "DoorOpen", tone: liveStatus.darshan.tone },
+  ]
 
   return (
     <div className="space-y-6">
@@ -37,15 +39,15 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
           <div className="absolute right-3 top-3">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-black/35 px-2.5 py-1 text-[11px] font-semibold text-white backdrop-blur">
               <StatusDot tone="success" />
-              Darshan Open
+              {t("home.hero.darshanOpen")}
             </span>
           </div>
           <div className="absolute bottom-3 left-4 right-4 text-white">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#FFD54F]">
-              Hare Ka Sahara – Khatu Dham
+              {t("home.hero.tagline")}
             </p>
             <h2 className="mt-1 font-heading text-2xl font-bold leading-tight text-balance">
-              Shri Khatu Shyam Ji
+              {t("home.hero.title")}
             </h2>
           </div>
         </div>
@@ -62,14 +64,14 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
             </span>
           )}
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-muted-foreground font-medium">Welcome back,</p>
+            <p className="text-sm text-muted-foreground font-medium">{t("home.hero.welcomeBack")}</p>
             <p className="truncate font-heading font-semibold text-foreground">{activeUser.name} ji</p>
           </div>
           <button
             onClick={() => navigate("profile")}
             className="rounded-full border border-[#FFB74D] px-3 py-1.5 text-xs font-semibold text-[#FF8C00] transition hover:bg-[#FFF3E0]"
           >
-            Profile
+            {t("home.hero.profileBtn")}
           </button>
         </div>
       </section>
@@ -88,8 +90,8 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
             <Icon name="CalendarCheck" className="size-6" />
           </span>
           <span>
-            <span className="block font-heading text-lg font-bold">Book Darshan</span>
-            <span className="block font-heading text-sm text-white/80">दर्शन बुक करें · निःशुल्क</span>
+            <span className="block font-heading text-lg font-bold">{t("home.primaryCta.title")}</span>
+            <span className="block font-heading text-sm text-white/80">{t("home.primaryCta.subtitle")}</span>
           </span>
         </span>
         <span className="relative grid size-9 place-items-center rounded-full bg-white/15">
@@ -100,18 +102,17 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
       {/* Live status */}
       <section>
         <SectionTitle
-          title="Live Status"
-          hindi="लाइव स्थिति"
+          title={t("home.liveStatus.title")}
           action={
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-success">
               <StatusDot tone="success" />
-              Live now
+              {t("home.liveStatus.liveNow")}
             </span>
           }
         />
         <div className="grid grid-cols-2 gap-3">
           {statusList.map((s) => (
-            <div key={s.label} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div key={s.key} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className="flex items-center gap-2.5">
                 <span
                   className={`grid size-9 place-items-center rounded-xl ${
@@ -120,10 +121,10 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
                 >
                   <Icon name={s.icon} className="size-5" />
                 </span>
-                <p className="text-xs font-medium text-muted-foreground">{s.label}</p>
+                <p className="text-xs font-medium text-muted-foreground">{t(`home.liveStatus.${s.key}.label`)}</p>
               </div>
-              <p className="mt-3 font-heading text-lg font-bold leading-none text-foreground">{s.value}</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">{s.hint}</p>
+              <p className="mt-3 font-heading text-lg font-bold leading-none text-foreground">{t(`home.liveStatus.${s.key}.value`)}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">{t(`home.liveStatus.${s.key}.hint`)}</p>
             </div>
           ))}
         </div>
@@ -131,7 +132,7 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
 
       {/* Quick actions */}
       <section>
-        <SectionTitle title="Quick Actions" hindi="त्वरित सेवाएं" />
+        <SectionTitle title={t("home.quickActions.title")} />
         <div className="grid grid-cols-4 gap-3">
           {quickActions.map((q) => (
             <button
@@ -142,7 +143,7 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
               <span className="grid size-11 place-items-center rounded-2xl bg-[#FFF3E0] text-[#FF8C00]">
                 <Icon name={q.icon} className="size-5" />
               </span>
-              <span className="text-[11px] font-semibold leading-tight text-foreground">{q.label}</span>
+              <span className="text-[11px] font-semibold leading-tight text-foreground">{t("home.quickActions." + q.key)}</span>
             </button>
           ))}
         </div>
@@ -153,17 +154,18 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Icon name="Flame" className="size-5 text-[#FF8C00]" />
-            <h2 className="font-heading text-base font-bold text-foreground">Aarti Timings</h2>
+            <h2 className="font-heading text-base font-bold text-foreground">{t("home.aarti.title")}</h2>
           </div>
-          <span className="text-xs text-muted-foreground">आज · Today</span>
+          <span className="text-xs text-muted-foreground">{t("home.aarti.today")}</span>
         </div>
         <Ornament className="my-3" />
         <div className="grid grid-cols-2 gap-x-4 gap-y-3">
           {aartiTimings.map((a) => (
             <div key={a.name} className="flex items-center justify-between border-b border-dashed border-gold/30 pb-2">
               <div>
-                <p className="text-[13px] font-semibold leading-tight text-foreground">{a.name}</p>
-                <p className="text-[11px] text-muted-foreground">{a.hindi}</p>
+                <p className="text-[13px] font-semibold leading-tight text-foreground">
+                  {lang === "en" ? a.name : a.hindi}
+                </p>
               </div>
               <span className="font-heading text-sm font-bold text-[#FF8C00]">{a.time}</span>
             </div>
@@ -174,11 +176,10 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
       {/* Popular services */}
       <section>
         <SectionTitle
-          title="Popular Services"
-          hindi="लोकप्रिय सेवाएं"
+          title={t("home.popular.title")}
           action={
             <button onClick={() => navigate("services")} className="text-sm font-semibold text-[#FF8C00]">
-              View all
+              {t("home.popular.viewAll")}
             </button>
           }
         />
@@ -192,7 +193,9 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
               <span className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-[#FF8C00] to-[#FFA726] text-white shadow">
                 <Icon name={s.icon} className="size-6" />
               </span>
-              <span className="text-[11px] font-semibold leading-tight text-foreground">{s.label}</span>
+              <span className="text-[11px] font-semibold leading-tight text-foreground">
+                {lang === "en" ? s.label : s.hindi}
+              </span>
             </button>
           ))}
         </div>
@@ -204,10 +207,9 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
           <Icon name="Megaphone" className="size-5" />
         </span>
         <div>
-          <p className="font-heading text-sm font-bold text-[#8a4b12]">Temple Notice</p>
+          <p className="font-heading text-sm font-bold text-[#8a4b12]">{t("home.notice.title")}</p>
           <p className="mt-0.5 text-sm leading-relaxed text-[#8a5a22]">
-            Ekadashi rush expected this weekend. Devotees are advised to arrive before 7:00 AM for a
-            smooth darshan.
+            {t("home.notice.text")}
           </p>
         </div>
       </section>

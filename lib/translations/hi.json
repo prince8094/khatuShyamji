@@ -62,6 +62,9 @@
     "services": "सेवाएं",
     "ai": "श्याम एआई",
     "profile": "प्रोफ़ाइल",
+    "sidebar": {
+      "title": "जय श्री श्याम · खाटू धाम"
+    },
     "headings": {
       "main": "मुख्य",
       "account": "मेरा खाता",
@@ -71,21 +74,22 @@
     "items": {
       "home": "होम",
       "book": "दर्शन बुकिंग",
-      "live": "लाइव दर्शन",
-      "virtual": "आभासी दर्शन",
-      "path": "श्याम पथ",
+      "live-darshan": "लाइव दर्शन",
+      "virtual-darshan": "आभासी दर्शन",
+      "khatu-path": "श्याम पथ",
       "bookings": "मेरी बुकिंग",
       "qr": "क्यूआर पास",
       "services": "सेवाएं",
       "crowd": "भीड़ की स्थिति",
       "traffic": "ट्रैफिक अपडेट",
       "reach": "कैसे पहुंचें",
-      "lostFound": "खोया और पाया",
+      "lost-found": "खोया और पाया",
       "offline": "ऑफलाइन केंद्र",
       "temple": "मंदिर जानकारी",
       "emergency": "आपातकालीन सहायता",
       "notifications": "सूचनाएं",
-      "help": "सहायता केंद्र"
+      "help-support": "सहायता केंद्र",
+      "profile": "प्रोफ़ाइल"
     }
   },
   "app": {
@@ -128,10 +132,26 @@
     "liveStatus": {
       "title": "लाइव स्थिति",
       "liveNow": "लाइव अब",
-      "crowd": "भीड़ का स्तर",
-      "traffic": "ट्रैफिक स्थिति",
-      "parking": "पार्किंग उपलब्धता",
-      "darshan": "दर्शन द्वार"
+      "crowd": {
+        "label": "भीड़ का स्तर",
+        "value": "मध्यम",
+        "hint": "~ 6,400 भक्त"
+      },
+      "traffic": {
+        "label": "यातायात की स्थिति",
+        "value": "सुगम",
+        "hint": "NH-148 साफ है"
+      },
+      "parking": {
+        "label": "पार्किंग",
+        "value": "उपलब्ध",
+        "hint": "लॉट B · 320 शेष"
+      },
+      "darshan": {
+        "label": "दर्शन",
+        "value": "खुला है",
+        "hint": "प्रतीक्षा ~ 35 मिनट"
+      }
     },
     "quickActions": {
       "title": "त्वरित सेवाएं",
@@ -211,7 +231,39 @@
       "upcoming": "आने वाले",
       "completed": "पूर्ण",
       "cancelled": "रद्द"
-    }
+    },
+    "months": [
+      "जनवरी",
+      "फ़रवरी",
+      "मार्च",
+      "अप्रैल",
+      "मई",
+      "जून",
+      "जुलाई",
+      "अगस्त",
+      "सितंबर",
+      "अक्टूबर",
+      "नवंबर",
+      "दिसंबर"
+    ],
+    "passenger": {
+      "notes": [
+        "यात्रा के दौरान आईडी कार्ड की आवश्यकता होगी।",
+        "कृपया टिकट बुक करते समय अपनी वर्तमान नागरिकता की स्थिति भरें। गलत जानकारी विदेशी अधिनियम, 1946 के तहत कार्रवाई को आकर्षित कर सकती है।",
+        "दर्शन नि:शुल्क है। कोई शुल्क नहीं लिया जाएगा।",
+        "गर्भगृह के अंदर मोबाइल फोन और बड़े बैग की अनुमति नहीं है।",
+        "अपने स्लॉट समय से कम से कम 30 मिनट पहले मंदिर पहुंचें।"
+      ]
+    },
+    "weekdays": [
+      "र",
+      "सो",
+      "मं",
+      "बु",
+      "गु",
+      "शु",
+      "श"
+    ]
   },
   "info": {
     "crowd": {
@@ -245,18 +297,94 @@
     },
     "offline": {
       "infoText": "ऑफलाइन दर्शन बुक करने के लिए किसी भी अधिकृत केंद्र पर जाएं। साथ में एक वैध पहचान पत्र अवश्य रखें।",
-      "title": "बुकिंग केंद्र"
+      "title": "बुकिंग केंद्र",
+      "offlineCentersList": [
+        {
+          "name": "खाटू मुख्य काउंटर",
+          "area": "मंदिर गेट 1 के पास, खाटू",
+          "hours": "सुबह 5:00 – रात 10:00",
+          "phone": "01576-230011"
+        },
+        {
+          "name": "रींगस रेलवे केंद्र",
+          "area": "रींगस जंक्शन, प्लेटफार्म 1",
+          "hours": "सुबह 6:00 – रात 9:00",
+          "phone": "01576-230244"
+        },
+        {
+          "name": "सीकर शहर कार्यालय",
+          "area": "स्टेशन रोड, सीकर",
+          "hours": "सुबह 9:00 – शाम 7:00",
+          "phone": "01572-240900"
+        },
+        {
+          "name": "जयपुर बुकिंग डेस्क",
+          "area": "सिंधी कैंप बस स्टैंड, जयपुर",
+          "hours": "सुबह 8:00 – रात 8:00",
+          "phone": "0141-2200345"
+        }
+      ]
     },
     "temple": {
       "timingTitle": "दर्शन समय",
       "description": "खाटू श्याम जी, जिन्हें प्रेम से \"हारे का सहारा\" कहा जाता है, बर्बरीक के एक पूजनीय रूप हैं, जिन्हें भगवान कृष्ण ने कलियुग में पूजे जाने का वरदान दिया था। सीकर, राजस्थान के खाटू में स्थित यह मंदिर हर साल लाखों भक्तों को आकर्षित करता है।",
       "festivalsTitle": "प्रमुख उत्सव",
-      "festivalsText": "फाल्गुन मेला (फरवरी-मार्च) और एकादशी उत्सवों में सबसे अधिक भीड़ होती है। पहले से अग्रिम बुकिंग कराने की दृढ़ता से सलाह दी जाती है।"
+      "festivalsText": "फाल्गुन मेला (फरवरी-मार्च) और एकादशी उत्सवों में सबसे अधिक भीड़ होती है। पहले से अग्रिम बुकिंग कराने की दृढ़ता से सलाह दी जाती है।",
+      "darshanTimingsList": [
+        {
+          "name": "मंगला आरती",
+          "time": "सुबह 4:30 – 5:30"
+        },
+        {
+          "name": "प्रातः कालीन दर्शन",
+          "time": "सुबह 5:30 – दोपहर 1:00"
+        },
+        {
+          "name": "शृंगार आरती",
+          "time": "संध्याकाल · मौसमी"
+        },
+        {
+          "name": "सायं कालीन दर्शन",
+          "time": "शाम 4:00 – रात 10:00"
+        }
+      ]
     },
     "emergency": {
       "helpline": "आपातकालीन सहायता",
       "tapToCall": "तुरंत कॉल करने के लिए किसी भी नंबर पर टैप करें · 24 घंटे उपलब्ध",
-      "firstAidInfo": "दर्शन समय के दौरान गेट नंबर 2 और मुख्य कतार परिसर के पास प्राथमिक उपचार और चिकित्सा शिविर उपलब्ध रहते हैं।"
+      "firstAidInfo": "दर्शन समय के दौरान गेट नंबर 2 और मुख्य कतार परिसर के पास प्राथमिक उपचार और चिकित्सा शिविर उपलब्ध रहते हैं।",
+      "contactsList": [
+        {
+          "label": "मंदिर हेल्पलाइन",
+          "phone": "1800-180-6127",
+          "icon": "Phone"
+        },
+        {
+          "label": "पुलिस",
+          "phone": "100",
+          "icon": "ShieldCheck"
+        },
+        {
+          "label": "एम्बुलेंस",
+          "phone": "108",
+          "icon": "Ambulance"
+        },
+        {
+          "label": "दमकल विभाग",
+          "phone": "101",
+          "icon": "Flame"
+        },
+        {
+          "label": "चिकित्सा शिविर",
+          "phone": "01576-230055",
+          "icon": "HeartPulse"
+        },
+        {
+          "label": "खोया और पाया",
+          "phone": "01576-230011",
+          "icon": "Search"
+        }
+      ]
     }
   },
   "shyamAi": {
@@ -270,5 +398,721 @@
         "hotel": "होटल बुकिंग"
       }
     }
+  },
+  "components": {
+    "appShell": {
+      "login": "लॉगिन"
+    }
+  },
+  "features": {
+    "openingAnimation": {
+      "jaiShriShyam": "जय श्री श्याम",
+      "enterDarbar": "दरबार में प्रवेश करें",
+      "skip": "छोड़ें"
+    }
+  },
+  "screens": {
+    "bookDarshan": {
+      "bookYourDarshan": "दर्शन बुक करें",
+      "planYourSacredVisit": "अपनी पवित्र यात्रा की योजना बनाएं",
+      "selectBookingType": "बुकिंग प्रकार चुनें",
+      "soloFamily": "एकल / परिवार",
+      "upTo6MembersStandardQrPass": "6 सदस्य तक · मानक क्यूआर पास",
+      "groupBooking": "समूह बुकिंग",
+      "7MembersUnifiedGroupQrPass": "7+ सदस्य · एकीकृत समूह क्यूआर पास",
+      "groupBookingSelected": "समूह बुकिंग चुनी गई",
+      "for7DevoteesAUnifiedGroupQrPassIsIssuedY": "7+ श्रद्धालुओं के लिए एकीकृत समूह क्यूआर पास जारी होगा। अगली स्क्रीन पर समूह विवरण भरें।",
+      "howManyDevotees": "कितने श्रद्धालु?",
+      "standardBookingPassUpTo6Devotees": "मानक बुकिंग पास (6 श्रद्धालुओं तक)",
+      "selectDate": "तारीख चुनें",
+      "proceedToGroupBooking": "समूह बुकिंग पर जाएं",
+      "confirmProceed": "पुष्टि करें और आगे बढ़ें"
+    },
+    "bookingSuccess": {
+      "bookingConfirmed": "बुकिंग की पुष्टि हो गई!",
+      "yourDigitalPassHasBeenGeneratedSuccessfully": "आपका डिजिटल पास सफलतापूर्वक जेनरेट हो गया है।",
+      "bookingDetails": "बुकिंग का विवरण",
+      "bookingId": "बुकिंग आईडी",
+      "date": "दिनांक",
+      "devotees": "श्रद्धालु",
+      "primaryDevotee": "मुख्य श्रद्धालु",
+      "viewEPassQr": "ई-पास देखें (क्यूआर)",
+      "goToHome": "मुख्य पृष्ठ पर जाएं"
+    },
+    "groupBooking": {
+      "groupNameIsRequired": "समूह का नाम आवश्यक है",
+      "leaderNameIsRequired": "नेता का नाम आवश्यक है",
+      "phoneNumberIsRequired": "फ़ोन नंबर आवश्यक है",
+      "invalidPhoneNumber": "अमान्य फोन नंबर",
+      "minimum7PassengersRequired": "कम से कम 7 यात्री आवश्यक",
+      "backToBooking": "बुकिंग पर वापस",
+      "groupBooking": "समूह बुकिंग",
+      "forGroupsOf7Devotees": "7+ भक्तों के समूह के लिए।",
+      "aSingleGroupPassWillBeGenerated": "एक समूह पास जेनरेट किया जाएगा।",
+      "groupSanghaName": "समूह / संघ का नाम",
+      "egJaipurShyamMandal": "उदा. जयपुर श्याम मंडल",
+      "totalPassengers": "कुल यात्री",
+      "leaderDetails": "नेता का विवरण",
+      "leaderName": "नेता का नाम",
+      "enterLeadersFullName": "नेता का पूरा नाम दर्ज करें",
+      "phoneNumber": "फ़ोन नंबर",
+      "specialRequirementsOptional": "विशेष आवश्यकताएं (वैकल्पिक)",
+      "anySpecialNeedsWheelchairAccessEtc": "कोई विशेष आवश्यकता, व्हीलचेयर पहुंच, आदि।",
+      "processing": "संसाधित हो रहा है...",
+      "confirmGroupBooking": "समूह बुकिंग की पुष्टि करें"
+    },
+    "helpSupport": {
+      "helpSupport": "सहायता केंद्र",
+      "wereHereToHelpYou": "हम यहाँ आपकी सहायता के लिए हैं",
+      "callHelpline": "हेल्पलाइन पर कॉल करें",
+      "shyamAi": "श्याम एआई",
+      "instantAnswers": "तुरंत जवाब",
+      "supportCategories": "सहायता श्रेणियां",
+      "frequentlyAskedQuestions": "अक्सर पूछे जाने वाले प्रश्न",
+      "sendUsAMessage": "हमें संदेश भेजें",
+      "wellRespondWithin24Hours": "हम 24 घंटे के अंदर जवाब देंगे",
+      "messageSentWellGetBackToYouSoon": "संदेश भेज दिया गया! हम जल्द ही आपसे संपर्क करेंगे।",
+      "yourName": "आपका नाम",
+      "emailAddress": "ईमेल पता",
+      "describeYourIssueOrQuestion": "अपनी समस्या या प्रश्न लिखें...",
+      "sendMessage": "संदेश भेजें",
+      "emergency": "आपातकाल?",
+      "call112ForImmediatePoliceOrMedicalHelp": "तत्काल पुलिस या चिकित्सा सहायता के लिए 112 डायल करें",
+      "call": "कॉल"
+    },
+    "khatuPath": {
+      "congratulationsYouHaveCompletedYourSpiritual": "बधाई हो! आपने अपनी आध्यात्मिक पदयात्रा पूरी कर ली है और श्री श्याम दरबार पहुँच गए हैं।",
+      "areYouSureYouWantToRestartYourJourneyFrom": "क्या आप वाकई रींगस से अपनी यात्रा फिर से शुरू करना चाहते हैं?",
+      "audioStreamingIsComingSoonPlayingOfflineTem": "ऑडियो स्ट्रीमिंग जल्द आ रही है! अभी के लिए ऑफलाइन मंदिर मंत्र बज रहे हैं।",
+      "khatuPadyatra": "खाटू पदयात्रा",
+      "experienceTheSpiritualWalkFromRingasToKhatu": "रींगस से खाटू धाम तक की आध्यात्मिक यात्रा का अनुभव करें",
+      "journeyGuide": "यात्रा मार्गदर्शक",
+      "textsBhajans": "आरती व भजन",
+      "shyamJaapCounter": "जाप काउंटर",
+      "distanceLeft": "दूरी शेष",
+      "stageTaskExperience": "चरण का अनुभव व कर्म",
+      "ringas0": "रींगस (0%)",
+      "shreeShyamDarbar100": "श्याम दरबार (100%)",
+      "resetJourney": "यात्रा शुरू से करें",
+      "enterMainDarbar": "मुख्य दरबार में प्रवेश करें",
+      "continueToNextStage": "अगले चरण पर बढ़ें",
+      "padyatraMilestonesMap": "पदयात्रा पड़ाव मानचित्र",
+      "leftToTemple": "मंदिर शेष",
+      "current": "वर्तमान",
+      "bhajanAartiSangrah": "भजन एवं आरती संग्रह",
+      "listenOrReadLyricsOfPopularDevotionalPaths": "प्रसिद्ध भक्ति भजनों और आरती के बोल पढ़ें और सुनें",
+      "readLyrics": "लिरिक्स पढ़ें",
+      "listen": "सुनें",
+      "lyricsDevanagariRoman": "पाठ व भजन बोल",
+      "listenAudioChant": "ऑडियो भजन सुनें",
+      "shyamJaapMantra": "श्री श्याम जाप काउंटर",
+      "tapJaap": "स्पर्श करें",
+      "resetCount": "रीसेट करें",
+      "chantHareKaSaharaBabaShyamHamaraWhileWalki": "चलते हुए 'हारे का सहारा, बाबा श्याम हमारा' का जाप करें। प्रत्येक 11 जाप पर शंख ध्वनि होगी।",
+      "stageX": "चरण {id} / 6"
+    },
+    "liveDarshan": {
+      "liveDarshan": "लाइव दर्शन",
+      "shriKhatuShyamJi": "श्री खाटू श्याम जी",
+      "liveFromKhatuDhamSikarRajasthan": "खाटू धाम, सीकर, राजस्थान से सीधे प्रसारण",
+      "liveStreamComingSoon": "लाइव स्ट्रीम जल्द आएगा",
+      "liveDarshanWillBeAvailableDuringAartiTiming": "लाइव दर्शन आरती के समय उपलब्ध होगा। प्रत्येक आरती से 15 मिनट पहले स्ट्रीम शुरू होती है।",
+      "nextLiveSandhyaAarti730Pm": "अगला लाइव: संध्या आरती · 7:30 बजे",
+      "audio": "ऑडियो",
+      "khatuDhamOfficial": "खाटू धाम · आधिकारिक",
+      "aartiSchedule": "आरती कार्यक्रम",
+      "aboutLiveDarshan": "लाइव दर्शन के बारे में",
+      "bookPhysicalDarshan": "सशरीर दर्शन बुक करें",
+      "visitTheTempleInPerson": "स्वयं मंदिर आएं"
+    },
+    "lostFound": {
+      "lostFound": "खोया और पाया",
+      "reunitingDevoteesWithTheirBelongings": "भक्तों को उनकी वस्तुएं वापस दिलाना",
+      "lostFoundHelpline": "खोया पाया हेल्पलाइन",
+      "foundItems": "पाई गई वस्तुएं",
+      "reportLost": "खोई वस्तु दर्ज करें",
+      "itemsFoundInTheLast7DaysVisitTheLostFou": "पिछले 7 दिनों में मिली वस्तुएं। आईडी प्रूफ के साथ गेट 2 पर खोया-पाया डेस्क पर आएं।",
+      "lostFoundDesk": "खोया-पाया डेस्क",
+      "gate2NearMedicalCamp": "गेट 2, मेडिकल कैंप के पास",
+      "open500Am1000Pm": "खुलने का समय: सुबह 5 बजे – रात 10 बजे",
+      "reportSubmitted": "रिपोर्ट दर्ज हो गई!",
+      "ourTeamWillContactYouAtYourNumberIfYourI": "हमारी टीम वस्तु मिलने पर आपके नंबर पर संपर्क करेगी। संदर्भ: LF-2026-0628",
+      "fillInAsManyDetailsAsPossibleOurSecurityT": "जितनी अधिक जानकारी हो सकती है भरें। हमारी सुरक्षा टीम खोज करेगी और संपर्क करेगी।",
+      "itemName": "वस्तु का नाम *",
+      "egBlueWalletGoldRing": "जैसे नीला बटुआ, सोने की अंगूठी...",
+      "colorDescription": "रंग / विवरण *",
+      "colorBrandSizeMarkings": "रंग, ब्रांड, आकार, निशान...",
+      "whereWasItLost": "कहाँ खोया? *",
+      "selectLocation": "स्थान चुनें",
+      "dateOfLoss": "खोने की तारीख *",
+      "yourPhoneNumber": "आपका फोन नंबर *",
+      "additionalDetails": "अतिरिक्त जानकारी",
+      "anyOtherHelpfulDetails": "कोई अन्य उपयोगी जानकारी...",
+      "submitReport": "रिपोर्ट दर्ज करें",
+      "foundItemsList": [
+        {
+          "id": "LF-001",
+          "item": "नीला हैंडबैग",
+          "desc": "प्रसाद काउंटर के पास मिला · 25 जून 2026",
+          "location": "प्रसाद काउंटर",
+          "icon": "ShoppingBag",
+          "color": "bg-blue-50 text-blue-600"
+        },
+        {
+          "id": "LF-002",
+          "item": "चांदी की पायल",
+          "desc": "मुख्य मंदिर निकास पर मिला · 24 जून 2026",
+          "location": "मुख्य मंदिर",
+          "icon": "Gem",
+          "color": "bg-gray-50 text-gray-600"
+        },
+        {
+          "id": "LF-003",
+          "item": "बच्चे का लाल कुर्ता",
+          "desc": "क्यूू कॉम्प्लेक्स में मिला · 24 जून 2026",
+          "location": "क्यूू कॉम्प्लेक्स",
+          "icon": "Shirt",
+          "color": "bg-red-50 text-red-600"
+        },
+        {
+          "id": "LF-004",
+          "item": "सैमसंग फोन",
+          "desc": "पार्कंग लॉट B में मिला · 23 जून 2026",
+          "location": "पार्किंग लॉट B",
+          "icon": "Smartphone",
+          "color": "bg-indigo-50 text-indigo-600"
+        },
+        {
+          "id": "LF-005",
+          "item": "चश्मा",
+          "desc": "मंदिर की सीढ़ियों के पास मिला · 23 जून 2026",
+          "location": "मंदिर की सीढ़ियां",
+          "icon": "Glasses",
+          "color": "bg-yellow-50 text-yellow-600"
+        }
+      ]
+    },
+    "myBookings": {
+      "yourBookingsWillAppearHere": "आपकी बुकिंग यहां दिखाई देगी",
+      "bookDarshanNow": "अभी दर्शन बुक करें",
+      "confirmed": "पुष्टि की गई",
+      "completed": "पूर्ण",
+      "cancelled": "रद्द",
+      "visitors": "आगंतुक",
+      "viewTicket": "टिकट देखें",
+      "keep": "रखें",
+      "yesCancel": "हाँ, रद्द करें",
+      "cancel": "रद्द करें",
+      "bookNewDarshan": "नया दर्शन बुक करें"
+    },
+    "parking": {
+      "liveTracking": "लाइव ट्रैकिंग",
+      "parkingInformation": "पार्किंग जानकारी",
+      "realTimeLotAvailabilityKhatuDham": "खाटू धाम · रियल-टाइम पार्किंग स्थिति",
+      "totalSpots": "कुल स्थान",
+      "available": "उपलब्ध",
+      "occupied": "भरे हुए",
+      "total": "कुल",
+      "shuttle": "शटल ✓",
+      "freeShuttleService": "निःशुल्क शटल सेवा"
+    },
+    "passengerDetails": {
+      "nameIsRequired": "नाम आवश्यक है",
+      "pleaseEnterAValidName": "कृपया एक वैध नाम दर्ज करें",
+      "ageIsRequired": "आयु आवश्यक है",
+      "genderIsRequired": "लिंग आवश्यक है",
+      "mobileNumberIsRequired": "मोबाइल नंबर आवश्यक है",
+      "enterAValid10DigitNumber": "वैध 10 अंकों का नंबर दर्ज करें",
+      "enterAValidEmailAddress": "वैध ईमेल पता दर्ज करें",
+      "darshanDate": "दर्शन की तिथि",
+      "change": "बदलें",
+      "notes": "नोट:",
+      "passengerDetails": "यात्री विवरण",
+      "child": "बच्चा",
+      "passenger": "यात्री",
+      "remove": "हटाएं",
+      "fullNameAsPerGovtId": "सरकारी पहचान पत्र के अनुसार पूरा नाम",
+      "enterFullName": "पूरा नाम दर्ज करें",
+      "age": "आयु",
+      "gender": "लिंग",
+      "select": "चुनें",
+      "male": "पुरुष",
+      "female": "महिला",
+      "other": "अन्य",
+      "nationality": "राष्ट्रीयता",
+      "india": "भारत",
+      "nepal": "नेपाल",
+      "otherOption": "अन्य",
+      "addPassenger": "यात्री जोड़ें",
+      "addChild": "बच्चा जोड़ें",
+      "childrenUnder5YearsOfAgeShallBeContactFre": "5 वर्ष से कम आयु के बच्चों के लिए टिकट की आवश्यकता नहीं है।",
+      "contactDetails": "संपर्क विवरण",
+      "ticketDetailsWillBeSentToEmailAndRegistere": "(टिकट विवरण ईमेल और पंजीकृत मोबाइल नंबर पर भेजे जाएंगे)",
+      "mobileNumber": "मोबाइल नंबर",
+      "enter10DigitMobileNumber": "10 अंकों का मोबाइल नंबर दर्ज करें",
+      "emailAddress": "ईमेल पता",
+      "enterEmailAddress": "ईमेल पता दर्ज करें",
+      "processing": "संसाधित हो रहा है...",
+      "confirmBooking": "बुकिंग की पुष्टि करें"
+    },
+    "qrPass": {
+      "bookingId": "बुकिंग आईडी",
+      "devoteeGroupName": "श्रद्धालु / समूह नाम",
+      "darshanDate": "दर्शन तिथि",
+      "devoteesCount": "कुल श्रद्धालु संख्या",
+      "persons": "भक्त",
+      "backToMyBookings": "मेरी बुकिंग पर वापस",
+      "officialPass": "आधिकारिक प्रवेश पत्र",
+      "shriShyamMandirBoard": "श्री श्याम मंदिर बोर्ड, खाटू धाम",
+      "cancelled": "रद्द",
+      "verified": "सत्यापित",
+      "invalidPass": "अमान्य पास",
+      "scanAtToranDwar": "तोरण द्वार पर स्कैन करें",
+      "savedToPhone": "सहेज लिया गया!",
+      "downloadPass": "पास डाउनलोड करें",
+      "copiedLink": "लिंक कॉपी!",
+      "sharePass": "पास शेयर करें",
+      "mandatoryGuidelines": "अनिवार्य दिशानिर्देश",
+      "bookAnotherVisit": "एक और यात्रा बुक करें"
+    },
+    "services": {
+      "donation": {
+        "backToServices": "सेवाओं पर वापस",
+        "devotionalDonation": "श्रद्धा दान",
+        "supportTempleSevaGaushalaFreeBhandaras": "मंदिर सेवा, गौशाला और निःशुल्क भंडारों में सहयोग करें",
+        "selectCause": "सेवा का चयन करें",
+        "donationDetails": "दान का विवरण",
+        "cause": "सेवा:",
+        "donationReceivedWithThanks": "दान प्राप्त हुआ, धन्यवाद!",
+        "babasBlessingsUponYouATaxExemptionReceiptU": "बाबा की असीम कृपा आप पर बनी रहे। धारा 80G के तहत टैक्स छूट रसीद आपके ईमेल पर भेज दी गई है। संदर्भ: DN-2026-9284",
+        "selectAmount": "राशि चुनें (₹)",
+        "orEnterCustomAmount": "या अन्य राशि दर्ज करें (₹) *",
+        "donorFullName": "दाता का नाम *",
+        "contactNumber": "संपर्क नंबर *",
+        "emailAddress": "ईमेल पता *",
+        "panNumberFor80gReceipt": "पैन नंबर (80G रसीद के लिए)"
+      },
+      "emergencyHelpline": {
+        "emergencyHelpline": "Emergency Helpline",
+        "247MedicalPoliceAssistance": "24/7 medical & police assistance",
+        "inALifeThreateningEmergencyCall112Immediate": "In a life-threatening emergency, call 112 immediately."
+      },
+      "hotelBooking": {
+        "backToServices": "सेवाओं पर वापस",
+        "hotelDharamshala": "होटल और धर्मशाला",
+        "bookCleanTrustedStaysNearTheTemple": "मंदिर के पास साफ और विश्वसनीय ठहरने की जगह बुक करें",
+        "bookStay": "बुक करें",
+        "confirmStayDetails": "बुकिंग विवरण की पुष्टि",
+        "changeHotel": "होटल बदलें",
+        "stayBookedSuccessfully": "कमरा सफलतापूर्वक बुक हुआ!",
+        "aConfirmationSmsHasBeenSentPayDirectlyAtT": "पुष्टि एसएमएस भेजा गया है। आगमन पर सीधे होटल काउंटर पर भुगतान करें। संदर्भ: HT-2026-092",
+        "devoteeName": "भक्त का नाम *",
+        "contactNumber": "संपर्क नंबर *",
+        "checkInDate": "आगमन तिथि *",
+        "rooms": "कमरे *",
+        "numberOfGuests": "भक्तों की संख्या *",
+        "devotees": "भक्त",
+        "confirmStay": "बुकिंग पक्की करें"
+      },
+      "offerings": {
+        "offerings": "Offerings",
+        "selectItemsToOfferAtTheTempleCounter": "Select items to offer at the temple counter",
+        "orderPlacedCollectFromCounter2": "Order placed! Collect from Counter 2.",
+        "placeOrder": "Place Order"
+      },
+      "parkingInfo": {
+        "parkingInfo": "Parking Info",
+        "liveSlotAvailabilityNearTheTemple": "Live slot availability near the temple",
+        "slotDataRefreshesEvery5MinutesFollowTemple": "Slot data refreshes every 5 minutes. Follow temple staff instructions during peak hours."
+      },
+      "prashad": {
+        "backToServices": "सेवाओं पर वापस",
+        "sacredPrashad": "पावन प्रसाद",
+        "orderPureBhogPrashadForCounterPickupOrHome": "काउंटर से लेने या होम डिलीवरी के लिए शुद्ध भोग प्रसाद ऑर्डर करें",
+        "totalAmount": "कुल मूल्य",
+        "proceedToOrder": "ऑर्डर करें",
+        "bhogOrderCheckout": "प्रसाद ऑर्डर चेकआउट",
+        "editCart": "कार्ट बदलें",
+        "orderPlacedSuccessfully": "प्रसाद ऑर्डर हो गया!",
+        "collectYourPrashadBoxFromCounter4NearPrasa": "प्रसाद हॉल के पास काउंटर 4 से रसीद दिखाकर अपना प्रसाद बॉक्स प्राप्त करें। संदर्भ: PR-2026-993",
+        "yourPrashadPacketHasBeenPreparedAndWillRea": "आपका प्रसाद पैकेट तैयार है और 3-5 दिनों में आपके पते पर पहुंच जाएगा। संदर्भ: PR-2026-994",
+        "counterPickup": "काउंटर पिकअप",
+        "homeDelivery": "होम डिलीवरी",
+        "devoteeName": "भक्त का नाम *",
+        "contactNumber": "संपर्क नंबर *",
+        "deliveryAddress": "वितरण पता *",
+        "postalPinCode": "पिन कोड *",
+        "totalToPay": "कुल भुगतान",
+        "orderPay": "ऑर्डर और भुगतान करें",
+        "totalItemsLabel": "कुल: ₹{totalPrice} ({totalItemsCount} वस्तुएं)"
+      },
+      "restaurant": {
+        "backToServices": "सेवाओं पर वापस",
+        "pureVegDining": "शुद्ध शाकाहारी भोजन",
+        "exploreBestFamilyRestaurantsThalisSweetShop": "सर्वश्रेष्ठ पारिवारिक रेस्तरां, थाली और मिठाई की दुकानों का विवरण",
+        "strictPureVegGuideline": "सख्त शुद्ध शाकाहारी दिशानिर्देश",
+        "toMaintainTheSanctityOfKhatuDhamAllRegiste": "खाटू धाम की पवित्रता बनाए रखने के लिए, सभी पंजीकृत रेस्तरां 100% शाकाहारी भोजन परोसते हैं। प्याज और लहसुन रहित विकल्प अनुरोध पर उपलब्ध हैं।",
+        "speciality": "विशेषता:",
+        "reserveTable": "टेबल बुक करें",
+        "noReservationRequired": "किसी बुकिंग की आवश्यकता नहीं ✓",
+        "tableReservation": "टेबल बुकिंग",
+        "cancel": "रद्द करें",
+        "tableReservedSuccessfully": "टेबल बुक हो गई!",
+        "yourReservationDetailsHaveBeenSentShowSmsA": "बुकिंग विवरण एसएमएस द्वारा भेजा गया है। काउंटर पर एसएमएस दिखाएं। संदर्भ: RS-2026-104",
+        "yourName": "आपका नाम *",
+        "contactNumber": "संपर्क नंबर *",
+        "date": "तारीख *",
+        "people": "व्यक्ति *",
+        "preferredTime": "समय *",
+        "confirmTableReservation": "आरक्षण पक्का करें"
+      },
+      "sevaBooking": {
+        "sevaBooking": "Seva Booking",
+        "bookSpecialSevaPujaAtTheTemple": "Book special seva & puja at the temple",
+        "sevaBookedSuccessfully": "Seva booked successfully!",
+        "selectASevaBelowAndTapBookSevaToConfirmL": "Select a seva below and tap Book Seva to confirm. Limited slots available.",
+        "bookSeva": "Book Seva",
+        "sevaBookingsAreConfirmedByTheTempleCommitte": "Seva bookings are confirmed by the temple committee."
+      },
+      "shyamBus": {
+        "backToServices": "सेवाओं पर वापस",
+        "shyamBusService": "श्याम बस सेवा",
+        "officialPilgrimBusSchedulesSeatReservations": "आधिकारिक भक्त बस समय सारिणी और सीट बुकिंग",
+        "trustShuttleNotice": "ट्रस्ट शटल सूचना",
+        "busesFromRingasJunctionRunContinuouslyAndDo": "रींगस जंक्शन से बसें लगातार चलती हैं और प्री-बुकिंग की आवश्यकता नहीं होती है। आगमन पर बस स्टेशन काउंटर पर एक टोकन खरीदें।",
+        "seat": "सीट",
+        "availableDepartures": "प्रस्थान समय",
+        "reserveTicket": "टिकट बुक करें",
+        "bookBusTicket": "टिकट बुक करें",
+        "cancel": "रद्द करें",
+        "busTicketReserved": "टिकट बुक हो गया!",
+        "yourTicketDetailsHaveBeenSentViaSmsShowTh": "टिकट विवरण एसएमएस द्वारा भेजा गया है। बस काउंटर पर इसे दिखाएं। संदर्भ: BS-2026-928",
+        "devoteeName": "भक्त का नाम *",
+        "contactNumber": "संपर्क नंबर *",
+        "travelDate": "यात्रा तिथि *",
+        "seats": "सीटें *",
+        "selectDepartureTime": "प्रस्थान समय चुनें *",
+        "totalPrice": "कुल किराया"
+      },
+      "trafficUpdates": {
+        "trafficUpdates": "Traffic Updates",
+        "liveHighwayRoadStatusNearTheTemple": "Live highway & road status near the temple"
+      },
+      "transport": {
+        "backToServices": "सेवाओं पर वापस",
+        "transportServices": "परिवहन सेवाएं",
+        "bookCleanTrustedRidesFromStationsAirports": "स्टेशनों और हवाई अड्डों से स्वच्छ, विश्वसनीय सवारी बुक करें",
+        "officialRatesFareGuideline": "आधिकारिक दरें और किराया दिशानिर्देश",
+        "templeTrustVerifiedDriversOnlyTollAndState": "केवल मंदिर ट्रस्ट द्वारा सत्यापित ड्राइवर। अनुमानित किराए में टोल और राज्य कर शामिल हैं। यात्रा के बाद सीधे ड्राइवर को भुगतान करें।",
+        "estimatedFare": "अनुमानित किराया",
+        "bookCab": "सवारी बुक करें",
+        "confirmRideDetails": "सवारी विवरण की पुष्टि",
+        "changeRide": "वाहन बदलें",
+        "rideBookedSuccessfully": "सवारी सफलतापूर्वक बुक हुई!",
+        "driverDetailsOtpWillBeSentViaSms30MinsP": "ड्राइवर का विवरण और ओटीपी पिकअप से 30 मिनट पहले एसएमएस द्वारा भेजा जाएगा। सीधे ड्राइवर को भुगतान करें। संदर्भ: TR-2026-881",
+        "devoteeName": "भक्त का नाम *",
+        "contactNumber": "संपर्क नंबर *",
+        "pickupPoint": "पिकअप स्थान *",
+        "jaipurAirportJai": "जयपुर हवाई अड्डा (JAI)",
+        "jaipurRailwayStationJp": "जयपुर रेलवे स्टेशन (JP)",
+        "ringasJunctionRailwayStationRgs": "रींगस जंक्शन रेलवे स्टेशन (RGS)",
+        "sikarRailwayStationSikr": "सीकर रेलवे स्टेशन (SIKR)",
+        "otherSpecifyBelow": "अन्य (नीचे दर्ज करें)",
+        "enterPickupLocation": "पिकअप स्थान दर्ज करें *",
+        "pickupDate": "पिकअप तिथि *",
+        "pickupTime": "पिकअप समय *",
+        "confirmBooking": "बुकिंग पक्की करें"
+      },
+      "khatuDham": "खाटू धाम",
+      "servicesPlaces": "सेवाएं और स्थान",
+      "everythingYouNeedForYourPilgrimage": "यात्रा के लिए सब कुछ",
+      "services": "सेवाएं",
+      "touristPlaces": "पर्यटन स्थल",
+      "soon": "जल्द",
+      "allServicesAreVerifiedByTheShriShyamMandir": "सुरक्षित अनुभव के लिए सभी सेवाएं श्री श्याम मंदिर समिति द्वारा सत्यापित हैं।",
+      "exploreTheSpiritualAndHistoricalHeritageArou": "खाटू श्याम जी के आसपास आध्यात्मिक और ऐतिहासिक विरासत की खोज करें।",
+      "details": "विवरण",
+      "directions": "दिशा-निर्देश",
+      "distanceFromKhatuShyam": "खाटू श्याम से दूरी:",
+      "planYourFullItinerary": "अपनी पूरी यात्रा योजना बनाएं",
+      "combineYourDarshanWithVisitsToNearbySpiritu": "अपने दर्शन को पास के आध्यात्मिक और विरासत स्थलों की यात्रा के साथ जोड़ें।",
+      "howToReachKhatu": "खाटू कैसे पहुंचें",
+      "touristPlacesList": [
+        {
+          "name": "सालासर बालाजी मंदिर",
+          "desc": "भगवान हनुमान का प्रसिद्ध मंदिर, राजस्थान का एक प्रमुख तीर्थ स्थल",
+          "distance": "57 किमी",
+          "icon": "Landmark",
+          "gradient": "from-orange-500 to-amber-500",
+          "tag": "मंदिर"
+        },
+        {
+          "name": "रींगस जंक्शन",
+          "desc": "खाटू श्याम का निकटतम रेलवे जंक्शन, प्रमुख शहरों से अच्छी कनेक्टिविटी के साथ",
+          "distance": "17 किमी",
+          "icon": "TrainFront",
+          "gradient": "from-sky-500 to-blue-600",
+          "tag": "परिवहन"
+        },
+        {
+          "name": "जीणमाता मंदिर",
+          "desc": "अरावली पहाड़ियों में स्थित प्राचीन देवी मंदिर, 1000 वर्ष से अधिक पुराना",
+          "distance": "29 किमी",
+          "icon": "Mountain",
+          "gradient": "from-rose-500 to-pink-600",
+          "tag": "मंदिर"
+        },
+        {
+          "name": "श्याम कुंड",
+          "desc": "मंदिर के पास पवित्र तालाब जहां भक्त दर्शन से पहले पवित्र स्नान करते हैं",
+          "distance": "0.5 किमी",
+          "icon": "Droplets",
+          "gradient": "from-teal-500 to-cyan-600",
+          "tag": "पवित्र स्थल"
+        },
+        {
+          "name": "सीकर शहर",
+          "desc": "ऐतिहासिक व्यापारिक शहर चाँदी के गहनों और मिठाइयों के लिए प्रसिद्ध",
+          "distance": "43 किमी",
+          "icon": "ShoppingBag",
+          "gradient": "from-violet-500 to-purple-600",
+          "tag": "शहर"
+        },
+        {
+          "name": "लुहगढ़ किला",
+          "desc": "प्राचीन किले के अवशेष जो आसपास के परिदृश्य का मनोरम दृश्य प्रदान करते हैं",
+          "distance": "22 किमी",
+          "icon": "Castle",
+          "gradient": "from-yellow-600 to-orange-600",
+          "tag": "धरोहर"
+        }
+      ],
+      "items": {
+        "live-darshan": {
+          "label": "लाइव दर्शन",
+          "desc": "गर्भगृह की सीधी लाइव फीड",
+          "meta": "लाइव"
+        },
+        "aarti": {
+          "label": "आरती दर्शन समय",
+          "desc": "प्रतिदिन आरती और दर्शन समय",
+          "meta": "समय"
+        },
+        "temple": {
+          "label": "मंदिर मार्गदर्शिका",
+          "desc": "मंदिर का इतिहास व मार्गदर्शिका",
+          "meta": "गाइड"
+        },
+        "hotel": {
+          "label": "होटल बुकिंग",
+          "desc": "खाटू धाम के पास होटल और धर्मशाला",
+          "meta": "120+ होटल"
+        },
+        "transport": {
+          "label": "परिवहन सेवाएं",
+          "desc": "बस, टैक्सी और शेयरिंग गाड़ियाँ",
+          "meta": "अभी बुक करें"
+        },
+        "restaurant": {
+          "label": "भोजनालय",
+          "desc": "100% शुद्ध शाकाहारी भोजन",
+          "meta": "50+ भोजनालय"
+        },
+        "shyam-bus": {
+          "label": "श्याम बस सेवा",
+          "desc": "श्रद्धालुओं के लिए विशेष बसें",
+          "meta": "प्रतिदिन"
+        },
+        "prashad": {
+          "label": "प्रसाद सेवा",
+          "desc": "शुद्ध भोग प्रसाद ऑर्डर करें",
+          "meta": "प्रतिदिन ताज़ा"
+        },
+        "donation": {
+          "label": "दान और सेवा",
+          "desc": "मंदिर और गौशाला में दान दें",
+          "meta": "80G रसीद"
+        },
+        "seva": {
+          "label": "विशेष पूजा बुकिंग",
+          "desc": "विशेष पूजा और आरती बुकिंग",
+          "meta": "बुक करें"
+        },
+        "offerings": {
+          "label": "भेंट व पूजन सामग्री",
+          "desc": "नारियल, फूल व पूजन सामग्री",
+          "meta": "काउंटर 2"
+        },
+        "emergency": {
+          "label": "आपातकालीन हेल्पलाइन",
+          "desc": "24/7 चिकित्सा और पुलिस सहायता",
+          "meta": "डायल 112"
+        },
+        "parking": {
+          "label": "पार्किंग उपलब्धता",
+          "desc": "पार्किंग स्पेस की लाइव जानकारी",
+          "meta": "लाइव"
+        },
+        "lost-found": {
+          "label": "खोया-पाया विभाग",
+          "desc": "खोए हुए सामान की रिपोर्ट करें",
+          "meta": "डेस्क"
+        },
+        "traffic": {
+          "label": "ट्रैफिक स्थिति",
+          "desc": "हाईवे और सड़कों का लाइव ट्रैफिक",
+          "meta": "लाइव"
+        },
+        "notifications": {
+          "label": "महत्वपूर्ण सूचनाएं",
+          "desc": "मंदिर बोर्ड की आधिकारिक घोषणाएं",
+          "meta": "सूचनाएं"
+        },
+        "reach": {
+          "label": "श्रद्धालु सहायता",
+          "desc": "खाटू धाम यात्रा के दिशानिर्देश",
+          "meta": "सहायता"
+        }
+      }
+    },
+    "shyamSahayak": {
+      "khamaGhaniBhaktIAmShyamSahayakAskMeAnythi": "खम्मा घणी भक्त! मैं श्याम सहायक हूँ। खाटू श्याम जी मंदिर के बारे में कुछ भी पूछें।",
+      "templeTimings": "मंदिर का समय?",
+      "shyamSahayakAi": "श्याम सहायक",
+      "yourPersonalVoiceGuidedTempleAssistant": "आपका व्यक्तिगत आवाज-मार्गदर्शित मंदिर सहायक",
+      "listeningSaySomething": "सुन रहा है... कुछ बोलिए",
+      "tapToAskSpeak": "पूछने और सुनने के लिए दबाएं",
+      "stopListening": "सुनना बंद करें",
+      "startListening": "बोलना शुरू करें",
+      "tapToStopSpeaking": "रोकने के लिए दबाएं",
+      "tapMicToSpeakYourQuestion": "अपनी बात पूछने के लिए माइक दबाएं",
+      "templeInfo": "मंदिर जानकारी",
+      "howToReach": "कैसे पहुंचें",
+      "emergency": "आपातकाल"
+    },
+    "traffic": {
+      "liveTraffic": "लाइव ट्रैफिक",
+      "trafficUpdates": "ट्रैफिक अपडेट",
+      "liveHighwayRoadConditionsKhatuDham": "खाटू धाम · लाइव सड़क स्थिति",
+      "moderateCongestionOnRingasRoute": "रिंगस मार्ग पर मध्यम भीड़",
+      "updated5MinutesAgoUseAlternateRouteRecomme": "5 मिनट पहले अपडेट · वैकल्पिक मार्ग की सिफारिश"
+    },
+    "virtualDarshan": {
+      "rotateForBestExperience": "सर्वोत्तम अनुभव के लिए फोन घुमाएं",
+      "virtualDarshan": "अलौकिक आभासी दर्शन",
+      "step1RajasthanDesertRoute": "चरण 1: रींगस मरुभूमि मार्ग",
+      "step2KhatuTempleEntrance": "चरण 2: श्री श्याम मंदिर तोरण द्वार",
+      "step3MainDeityDarbar": "चरण 3: गर्भगृह - बाबा श्याम दर्शन",
+      "walkingToBabaShyamsDham": "बाबा श्याम के धाम की ओर पदयात्रा...",
+      "shreeKhatuShyamNaresh": "श्री खाटू श्याम नरेश की जय",
+      "goBack": "पीछे जाएं",
+      "offerFlowerShower": "पुष्प वर्षा करें",
+      "continueForward": "आगे बढ़ें",
+      "completeDarshan": "दर्शन पूर्ण"
+    },
+    "notifications": {
+      "notificationsList": [
+        {
+          "title": "दर्शन पक्का हुआ",
+          "body": "आपकी बुकिंग KSJ-2026-08841 दिनांक 28 जून के लिए पक्की हो गई है।",
+          "time": "2 घंटे पहले",
+          "icon": "CalendarCheck",
+          "tone": "success"
+        },
+        {
+          "title": "अत्यधिक भीड़ की संभावना",
+          "body": "कल एकादशी है — कृपया सुबह 7 बजे से पहले पहुंचें।",
+          "time": "6 घंटे पहले",
+          "icon": "TriangleAlert",
+          "tone": "warning"
+        },
+        {
+          "title": "पार्किंग लॉट A भरा हुआ",
+          "body": "गेट 3 के पास लॉट B का उपयोग करें। मुफ्त शटल सेवा उपलब्ध है।",
+          "time": "1 दिन पहले",
+          "icon": "CarFront",
+          "tone": "warning"
+        },
+        {
+          "title": "प्रसाद का ऑर्डर तैयार",
+          "body": "प्रसाद काउंटर 4 से प्रसाद एकत्र कर सकते हैं।",
+          "time": "2 दिन पहले",
+          "icon": "ShoppingBag",
+          "tone": "success"
+        }
+      ]
+    }
+  },
+  "padyatra": {
+    "stages": [
+      {
+        "id": 1,
+        "name": "रींगस – आरंभ बिंदु",
+        "distanceLeft": 17,
+        "desc": "भगवान खाटू श्याम की पवित्र भूमि की ओर आपकी आध्यात्मिक पदयात्रा यहाँ से आरंभ होती है। भजन और जयघोष से वातावरण भक्तिमय हो जाता है।",
+        "bgImage": "linear-gradient(to bottom, #d97706, #78350f)",
+        "activity": "जय श्री श्याम का जाप करते हुए अपनी यात्रा शुरू करें।"
+      },
+      {
+        "id": 2,
+        "name": "राजस्थानी ग्राम पथ",
+        "distanceLeft": 14,
+        "desc": "परंपरागत ग्रामीण पगडंडियों से गुजरें जहाँ भक्तजन जल और प्रसाद वितरित करते हैं।",
+        "bgImage": "linear-gradient(to bottom, #b45309, #451a03)",
+        "activity": "किसी भक्त से प्रसाद ग्रहण करें और यात्रा जारी रखें।"
+      },
+      {
+        "id": 3,
+        "name": "श्याम कुंड और बाजार",
+        "distanceLeft": 8,
+        "desc": "पवित्र श्याम कुंड पर पहुँचें। मंदिर का बाजार ध्वज, फूल और नारियल से सजा हुआ है।",
+        "bgImage": "linear-gradient(to bottom, #854d0e, #3f2c00)",
+        "activity": "श्याम कुंड पर विधिवत स्नान करें और एक निशान (पवित्र ध्वज) खरीदें।"
+      },
+      {
+        "id": 4,
+        "name": "मंदिर तोरण द्वार",
+        "distanceLeft": 3,
+        "desc": "भव्य स्वर्णिम प्रवेश द्वार। बाबा के दर्शन की उत्सुकता में यहाँ भीड़ बढ़ जाती है।",
+        "bgImage": "linear-gradient(to bottom, #78350f, #270e00)",
+        "activity": "तोरण द्वार पर नमन करें और निशान ऊँचा उठाकर चलें।"
+      },
+      {
+        "id": 5,
+        "name": "मंदिर प्रांगण",
+        "distanceLeft": 0.5,
+        "desc": "संगमरमर से बने आंतरिक प्रांगण में प्रवेश करें। घंटियों और भावपूर्ण जयकारों से माहौल दिव्य हो जाता है।",
+        "bgImage": "linear-gradient(to bottom, #451a03, #1c0a00)",
+        "activity": "मंदिर की कतार में लगें और द्वार खुलने की प्रतीक्षा करें।"
+      },
+      {
+        "id": 6,
+        "name": "श्री श्याम दरबार (मुख्य मंदिर)",
+        "distanceLeft": 0,
+        "desc": "फूलों से सजे दिव्य रूप, भगवान खाटू श्याम जी के साक्षात दर्शन। यह क्षण आपकी सम्पूर्ण यात्रा का फल है।",
+        "bgImage": "linear-gradient(to bottom, #78350f, #0d0907)",
+        "activity": "अपनी प्रार्थनाएँ अर्पित करें और दिव्य आशीर्वाद प्राप्त करें।"
+      }
+    ],
+    "devotionalItems": [
+      {
+        "id": "aarti",
+        "title": "श्री श्याम आरती",
+        "type": "aarti",
+        "lyrics": "ॐ जय श्री श्याम हरे, बाबा जय श्री श्याम हरे...\nभक्त जनों के संकट, क्षण में दूर करे...\nॐ जय श्री श्याम हरे...\n\nश्याम सुंदर मुख अरविंद, छवि अति प्यारी लगे...\nकमल नयन विशाला, शोभा मन भावे...\nॐ जय श्री श्याम हरे..."
+      },
+      {
+        "id": "chalisa",
+        "title": "श्री श्याम चालीसा",
+        "type": "chalisa",
+        "lyrics": "श्री गुरु चरण प्रताप से, बुद्धि कान्ति बल होय...\nश्याम देव के यश करन, कहूँ हर्षित होय...\nजय जय खाटू श्याम देव, जय जय खाटू धाम...\nद्वार तिहारे जो आवे, सिद्ध होय सब काम..."
+      },
+      {
+        "id": "bhajan",
+        "title": "हारे का सहारा बाबा श्याम हमारा",
+        "type": "bhajan",
+        "lyrics": "हारे का सहारा बाबा श्याम हमारा...\nजब दुनिया ठुकराये मुझे, तब तूने ही तो संभाला...\nमेरी नैया बीच भँवर में, खाटू वाले तूने निकाला...\nहारे का सहारा बाबा श्याम हमारा..."
+      }
+    ]
   }
 }

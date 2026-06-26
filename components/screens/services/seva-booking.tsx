@@ -35,10 +35,10 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
       <header>
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Khatu Dham</p>
         <h1 className="font-heading text-2xl font-bold text-foreground mt-1">
-          {t("Seva Booking", "Seva Booking")}
+          {t("screens.services.sevaBooking.sevaBooking")}
         </h1>
         <p className="text-xs text-muted-foreground mt-1">
-          {t("Book special seva & puja at the temple", "Book special seva & puja at the temple")}
+          {t("screens.services.sevaBooking.bookSpecialSevaPujaAtTheTemple")}
         </p>
       </header>
 
@@ -46,7 +46,7 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
         <div className="flex items-center gap-3 rounded-2xl bg-green-500/10 border border-green-500/30 p-4">
           <Icon name="CheckCircle" className="size-5 text-green-600 shrink-0" />
           <p className="text-sm font-semibold text-green-700">
-            {t("Seva booked successfully!", "Seva booked successfully!")}
+            {t("screens.services.sevaBooking.sevaBookedSuccessfully")}
           </p>
         </div>
       )}
@@ -54,7 +54,7 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
       <div className="flex items-start gap-3 rounded-2xl bg-primary/5 border border-primary/20 p-4">
         <Icon name="Info" className="size-5 shrink-0 text-primary mt-0.5" />
         <p className="text-xs text-foreground leading-relaxed">
-          {t("Select a seva below and tap Book Seva to confirm. Limited slots available.", "Select a seva below and tap Book Seva to confirm. Limited slots available.")}
+          {t("screens.services.sevaBooking.selectASevaBelowAndTapBookSevaToConfirmL")}
         </p>
       </div>
 
@@ -107,7 +107,7 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
             onClick={handleBook}
             className="w-full rounded-2xl bg-gradient-to-r from-primary to-[#D4AF37] py-3.5 text-sm font-bold text-white shadow-md transition hover:opacity-90 active:scale-95"
           >
-            {t("Book Seva", "Book Seva")}
+            {t("screens.services.sevaBooking.bookSeva")}
           </button>
         </div>
       )}
@@ -115,7 +115,7 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
       <div className="flex items-start gap-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 p-4">
         <Icon name="Flame" className="size-5 shrink-0 text-amber-600 mt-0.5" />
         <p className="text-xs leading-relaxed text-amber-900 font-medium">
-          {t("Seva bookings are confirmed by the temple committee.", "Seva bookings are confirmed by the temple committee.")}
+          {t("screens.services.sevaBooking.sevaBookingsAreConfirmedByTheTempleCommitte")}
         </p>
       </div>
     </div>

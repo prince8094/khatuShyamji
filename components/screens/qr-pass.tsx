@@ -79,10 +79,10 @@ export function QrPassScreen({ navigate }: { navigate?: (s: ScreenKey) => void }
   }, [])
 
   const details = [
-    { label: t("Booking ID", "बुकिंग आईडी"), value: booking?.id || "KSJ-2026-08841", icon: "Hash", mono: true },
-    { label: t("Devotee / Group Name", "श्रद्धालु / समूह नाम"), value: booking?.name || user.name, icon: "User" },
-    { label: t("Darshan Date", "दर्शन तिथि"), value: booking?.date || "28 Jun 2026", icon: "CalendarCheck" },
-    { label: t("Devotees Count", "कुल श्रद्धालु संख्या"), value: `${booking?.visitors || "4"} ${t("Persons", "भक्त")}`, icon: "Users" },
+    { label: t("screens.qrPass.bookingId"), value: booking?.id || "KSJ-2026-08841", icon: "Hash", mono: true },
+    { label: t("screens.qrPass.devoteeGroupName"), value: booking?.name || user.name, icon: "User" },
+    { label: t("screens.qrPass.darshanDate"), value: booking?.date || "28 Jun 2026", icon: "CalendarCheck" },
+    { label: t("screens.qrPass.devoteesCount"), value: `${booking?.visitors || "4"} ${t("screens.qrPass.persons")}`, icon: "Users" },
   ]
 
   const instructions = lang === "en" ? instructionsEn : instructionsHi
@@ -116,7 +116,7 @@ Shri Khatu Shyam Ji Mandir`
           className="flex items-center gap-2 text-sm font-semibold text-[#6b5440] transition hover:text-[#D97706]"
         >
           <Icon name="ArrowLeft" className="size-4" />
-          {t("Back to My Bookings", "मेरी बुकिंग पर वापस")}
+          {t("screens.qrPass.backToMyBookings")}
         </button>
       )}
 
@@ -148,10 +148,10 @@ Shri Khatu Shyam Ji Mandir`
               </span>
               <div>
                 <p className="font-heading text-lg font-bold tracking-widest text-[#D4AF37] drop-shadow-sm uppercase">
-                  {t("OFFICIAL PASS", "आधिकारिक प्रवेश पत्र")}
+                  {t("screens.qrPass.officialPass")}
                 </p>
                 <p className="mt-0.5 text-[9.5px] font-bold uppercase tracking-[0.2em] text-white/80">
-                  {t("Shri Shyam Mandir Board", "श्री श्याम मंदिर बोर्ड, खाटू धाम")}
+                  {t("screens.qrPass.shriShyamMandirBoard")}
                 </p>
               </div>
             </div>
@@ -163,7 +163,7 @@ Shri Khatu Shyam Ji Mandir`
                   ? "border-red-500 bg-red-950/40 text-red-400"
                   : "border-green-500 bg-green-950/40 text-green-400"
               )}>
-                {booking?.status === "cancelled" ? t("Cancelled", "रद्द") : t("VERIFIED", "सत्यापित")}
+                {booking?.status === "cancelled" ? t("screens.qrPass.cancelled") : t("screens.qrPass.verified")}
               </span>
             </div>
           </div>
@@ -187,7 +187,7 @@ Shri Khatu Shyam Ji Mandir`
             </div>
           </div>
           <p className="mt-6 text-[10.5px] font-bold uppercase tracking-widest text-[#D97706] mb-4">
-            {booking?.status === "cancelled" ? t("Invalid Pass", "अमान्य पास") : t("Scan at Toran Dwar", "तोरण द्वार पर स्कैन करें")}
+            {booking?.status === "cancelled" ? t("screens.qrPass.invalidPass") : t("screens.qrPass.scanAtToranDwar")}
           </p>
         </div>
 
@@ -232,12 +232,12 @@ Shri Khatu Shyam Ji Mandir`
             {downloadFeedback ? (
               <motion.div key="success" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center gap-2">
                 <Icon name="Check" className="size-5" />
-                {t("Saved to Phone!", "सहेज लिया गया!")}
+                {t("screens.qrPass.savedToPhone")}
               </motion.div>
             ) : (
               <motion.div key="default" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center gap-2">
                 <Icon name="Download" className="size-5" />
-                {t("Download Pass", "पास डाउनलोड करें")}
+                {t("screens.qrPass.downloadPass")}
               </motion.div>
             )}
           </AnimatePresence>
@@ -250,12 +250,12 @@ Shri Khatu Shyam Ji Mandir`
             {shareFeedback ? (
               <motion.div key="success" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center gap-2">
                 <Icon name="Check" className="size-5" />
-                {t("Copied Link!", "लिंक कॉपी!")}
+                {t("screens.qrPass.copiedLink")}
               </motion.div>
             ) : (
               <motion.div key="default" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.8 }} className="flex items-center gap-2">
                 <Icon name="Share2" className="size-5" />
-                {t("Share Pass", "पास शेयर करें")}
+                {t("screens.qrPass.sharePass")}
               </motion.div>
             )}
           </AnimatePresence>
@@ -268,7 +268,7 @@ Shri Khatu Shyam Ji Mandir`
           <span className="grid size-8 place-items-center rounded-full bg-[#D97706]/10 text-[#D97706]">
             <Icon name="Info" className="size-4" />
           </span>
-          {t("Mandatory Guidelines", "अनिवार्य दिशानिर्देश")}
+          {t("screens.qrPass.mandatoryGuidelines")}
         </h3>
         <ul className="space-y-3">
           {instructions.map((text, i) => (
@@ -289,7 +289,7 @@ Shri Khatu Shyam Ji Mandir`
           className="flex w-full items-center justify-center gap-2 rounded-2xl border border-[#E8D5B7] bg-transparent py-4 text-sm font-bold text-[#6b5440] transition hover:bg-[#FFF8F0] hover:text-[#D97706] active:scale-[0.98]"
         >
           <Icon name="CalendarPlus" className="size-5" />
-          {t("Book Another Visit", "एक और यात्रा बुक करें")}
+          {t("screens.qrPass.bookAnotherVisit")}
         </button>
       )}
     </div>

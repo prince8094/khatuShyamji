@@ -18,13 +18,13 @@ export function EmergencyHelplineScreen({ navigate }: { navigate?: (s: ScreenKey
     <div className="space-y-6 pb-10">
       <header>
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Khatu Dham</p>
-        <h1 className="font-heading text-2xl font-bold text-foreground mt-1">{t("Emergency Helpline", "Emergency Helpline")}</h1>
-        <p className="text-xs text-muted-foreground mt-1">{t("24/7 medical & police assistance", "24/7 medical & police assistance")}</p>
+        <h1 className="font-heading text-2xl font-bold text-foreground mt-1">{t("screens.services.emergencyHelpline.emergencyHelpline")}</h1>
+        <p className="text-xs text-muted-foreground mt-1">{t("screens.services.emergencyHelpline.247MedicalPoliceAssistance")}</p>
       </header>
       <div className="flex items-start gap-3 rounded-2xl bg-red-500/10 border border-red-500/20 p-4">
         <Icon name="AlertTriangle" className="size-5 shrink-0 text-red-600 mt-0.5" />
         <p className="text-xs text-red-800 font-semibold leading-relaxed">
-          {t("In a life-threatening emergency, call 112 immediately.", "In a life-threatening emergency, call 112 immediately.")}
+          {t("screens.services.emergencyHelpline.inALifeThreateningEmergencyCall112Immediate")}
         </p>
       </div>
       <div className="space-y-3">

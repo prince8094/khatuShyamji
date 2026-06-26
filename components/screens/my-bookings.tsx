@@ -49,14 +49,14 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
           <p className="mt-4 font-heading text-base font-bold text-foreground">
             {t(`No ${tab} bookings`, `${tab === 'upcoming' ? 'कोई आगामी' : tab === 'completed' ? 'कोई पूर्ण' : 'कोई रद्द'} बुकिंग नहीं`)}
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">{t("Your bookings will appear here", "आपकी बुकिंग यहां दिखाई देगी")}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{t("screens.myBookings.yourBookingsWillAppearHere")}</p>
           {tab === "upcoming" && (
             <button
               onClick={() => navigate("book")}
               className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary px-6 py-3 text-sm font-bold text-white shadow-lg"
             >
               <Icon name="CalendarCheck" className="size-4" />
-              {t("Book Darshan Now", "अभी दर्शन बुक करें")}
+              {t("screens.myBookings.bookDarshanNow")}
             </button>
           )}
         </div>
@@ -72,10 +72,10 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                 </div>
                 <Pill tone={tone(b.status)}>
                   {b.status === "upcoming"
-                    ? t("Confirmed", "पुष्टि की गई")
+                    ? t("screens.myBookings.confirmed")
                     : b.status === "completed"
-                    ? t("Completed", "पूर्ण")
-                    : t("Cancelled", "रद्द")}
+                    ? t("screens.myBookings.completed")
+                    : t("screens.myBookings.cancelled")}
                 </Pill>
               </div>
 
@@ -90,7 +90,7 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Icon name="Users" className="size-4 shrink-0" />
-                    <span>{b.visitors} {t("Visitors", "आगंतुक")}</span>
+                    <span>{b.visitors} {t("screens.myBookings.visitors")}</span>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Icon name="User" className="size-4 shrink-0" />
@@ -106,7 +106,7 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                     className="flex flex-1 items-center justify-center gap-2 py-3.5 font-heading text-sm font-bold text-primary transition hover:bg-secondary/40 border-r border-border"
                   >
                     <Icon name="Ticket" className="size-4" />
-                    {t("View Ticket", "टिकट देखें")}
+                    {t("screens.myBookings.viewTicket")}
                   </button>
                   {b.status === "upcoming" && (
                     <>
@@ -116,13 +116,13 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                             onClick={() => setCancelId(null)}
                             className="flex-1 flex items-center justify-center py-3.5 text-xs font-bold text-muted-foreground hover:bg-secondary/40"
                           >
-                            {t("Keep", "रखें")}
+                            {t("screens.myBookings.keep")}
                           </button>
                           <button
                             onClick={() => setCancelId(null)}
                             className="flex-1 flex items-center justify-center py-3.5 text-xs font-bold text-red-600 hover:bg-red-50 border-l border-border"
                           >
-                            {t("Yes, Cancel", "हाँ, रद्द करें")}
+                            {t("screens.myBookings.yesCancel")}
                           </button>
                         </div>
                       ) : (
@@ -131,7 +131,7 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                           className="flex flex-1 items-center justify-center gap-2 py-3.5 font-heading text-sm font-bold text-red-500 transition hover:bg-red-50"
                         >
                           <Icon name="X" className="size-4" />
-                          {t("Cancel", "रद्द करें")}
+                          {t("screens.myBookings.cancel")}
                         </button>
                       )}
                     </>
@@ -150,7 +150,7 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
           className="flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary py-4 font-heading text-base font-bold text-white shadow-lg shadow-primary/20 transition hover:shadow-xl active:scale-[0.99]"
         >
           <Icon name="CalendarCheck" className="size-5" />
-          {t("Book New Darshan", "नया दर्शन बुक करें")}
+          {t("screens.myBookings.bookNewDarshan")}
         </button>
       )}
     </div>

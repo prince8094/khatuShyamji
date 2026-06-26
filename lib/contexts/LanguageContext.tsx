@@ -10,6 +10,7 @@ interface LanguageContextType {
   lang: Language
   setLang: (lang: Language) => void
   t: (key: string, fallbackOrReplacements?: any, legacyHi?: string) => string
+  tObject: (key: string) => any
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined)
@@ -128,8 +129,40 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     return key
   }
 
+  // Load objects/arrays directly from the active catalog
+  const tObject = (key: string): any => {
+    const translations = lang === 'en' ? en : hi
+    const parts = key.split('.')
+    let current: any = translations
+
+    for (const part of parts) {
+      if (current && typeof current === 'object' && part in current) {
+        current = current[part]
+      } else {
+        current = null
+        break
+      }
+    }
+
+    if (current !== null && current !== undefined) {
+      return current
+    }
+
+    // Fallback to English catalog
+    let enCurrent: any = en
+    for (const part of parts) {
+      if (enCurrent && typeof enCurrent === 'object' && part in enCurrent) {
+        enCurrent = enCurrent[part]
+      } else {
+        enCurrent = null
+        break
+      }
+    }
+    return enCurrent
+  }
+
   return (
-    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, t }}>
+    <LanguageContext.Provider value={{ lang, setLang: handleSetLang, t, tObject }}>
       {children}
     </LanguageContext.Provider>
   )

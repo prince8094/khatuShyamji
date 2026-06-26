@@ -40,15 +40,13 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
   const [chatHistory, setChatHistory] = useState<{ role: "user" | "ai"; text: string }[]>([])
   
   const recognitionRef = useRef<any>(null)
+  const isRunningRef = useRef(false)       // tracks whether .start() has been called
   const isComponentMounted = useRef(true)
 
   // Initialize SpeechSynthesis greeting
   useEffect(() => {
     isComponentMounted.current = true
-    const greeting = t(
-      "Khama Ghani Bhakt! I am Shyam Sahayak. Ask me anything about Khatu Shyam Ji Mandir.",
-      "खम्मा घणी भक्त! मैं श्याम सहायक हूँ। खाटू श्याम जी मंदिर के बारे में कुछ भी पूछें।"
-    )
+    const greeting = t("screens.shyamSahayak.khamaGhaniBhaktIAmShyamSahayakAskMeAnythi")
     setResponse(greeting)
     
     return () => {
@@ -61,6 +59,21 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
 
   // Setup browser SpeechRecognition
   useEffect(() => {
+    // Tear down any existing instance before creating a new one
+    if (recognitionRef.current) {
+      try {
+        recognitionRef.current.onresult = null
+        recognitionRef.current.onerror = null
+        recognitionRef.current.onend = null
+        if (isRunningRef.current) {
+          recognitionRef.current.stop()
+          isRunningRef.current = false
+        }
+      } catch (_) {}
+      recognitionRef.current = null
+    }
+    setIsListening(false)
+
     if (typeof window !== "undefined") {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition
       if (SpeechRecognition) {
@@ -71,33 +84,32 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
 
         rec.onresult = (event: any) => {
           if (!isComponentMounted.current) return
+          isRunningRef.current = false
           const text = event.results[0][0].transcript
           setTranscript(text)
           setChatHistory((prev) => [...prev, { role: "user", text }])
-          
+
           // Match speech query to FAQs
           let matchedAnswer = ""
           const lowerText = text.toLowerCase()
           if (lowerText.includes("time") || lowerText.includes("timing") || lowerText.includes("समय") || lowerText.includes("आरती") || lowerText.includes("खुल")) {
             const ans = faqAnswers["Temple timings?"]
-            matchedAnswer = t(ans.en, ans.hi)
+            matchedAnswer = lang === "hi" ? ans.hi : ans.en
           } else if (lowerText.includes("park") || lowerText.includes("praking") || lowerText.includes("पार्किंग") || lowerText.includes("गाड़ी")) {
             const ans = faqAnswers["Where to park?"]
-            matchedAnswer = t(ans.en, ans.hi)
+            matchedAnswer = lang === "hi" ? ans.hi : ans.en
           } else if (lowerText.includes("reach") || lowerText.includes("route") || lowerText.includes("मार्ग") || lowerText.includes("पहुंचें") || lowerText.includes("रास्ता") || lowerText.includes("रेलवे")) {
             const ans = faqAnswers["How to reach?"]
-            matchedAnswer = t(ans.en, ans.hi)
+            matchedAnswer = lang === "hi" ? ans.hi : ans.en
           } else if (lowerText.includes("crowd") || lowerText.includes("rush") || lowerText.includes("भीड़") || lowerText.includes("स्थिति") || lowerText.includes("लाइन")) {
             const ans = faqAnswers["Crowd status?"]
-            matchedAnswer = t(ans.en, ans.hi)
+            matchedAnswer = lang === "hi" ? ans.hi : ans.en
           } else {
-            // General fallback answer
-            matchedAnswer = t(
-              `I heard you say "${text}". I can help with temple timings, parking, route directions, or crowd status. Please ask one of these topics!`,
-              `मैंने आपको "${text}" कहते सुना। मैं मंदिर के समय, पार्किंग, मार्ग या भीड़ की स्थिति में सहायता कर सकता हूँ। कृपया इनमें से कुछ पूछें!`
-            )
+            matchedAnswer = lang === "hi"
+              ? `मैंने आपको "${text}" कहते सुना। मैं मंदिर के समय, पार्किंग, मार्ग या भीड़ की स्थिति में सहायता कर सकता हूँ। कृपया इनमें से कुछ पूछें!`
+              : `I heard you say "${text}". I can help with temple timings, parking, route directions, or crowd status. Please ask one of these topics!`
           }
-          
+
           setTimeout(() => {
             if (!isComponentMounted.current) return
             setResponse(matchedAnswer)
@@ -107,18 +119,24 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
         }
 
         rec.onerror = (e: any) => {
-          console.error("Speech recognition error", e)
+          // e.error is a string like "aborted", "no-speech", "not-allowed" etc.
+          const code = e?.error ?? "unknown"
+          if (code !== "aborted") {
+            console.warn("Speech recognition error:", code)
+          }
+          isRunningRef.current = false
           setIsListening(false)
         }
 
         rec.onend = () => {
+          isRunningRef.current = false
           setIsListening(false)
         }
 
         recognitionRef.current = rec
       }
     }
-  }, [lang, t])
+  }, [lang])
 
   // Helper to speak output text
   const speakText = (text: string) => {
@@ -141,36 +159,51 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
 
   const handleMicClick = () => {
     if (isListening) {
-      if (recognitionRef.current) {
-        recognitionRef.current.stop()
+      // User tapped Stop — abort the session
+      if (recognitionRef.current && isRunningRef.current) {
+        try { recognitionRef.current.stop() } catch (_) {}
       }
+      isRunningRef.current = false
       setIsListening(false)
     } else {
-      setIsListening(true)
       setTranscript("")
       setResponse(null)
-      
+
       if (recognitionRef.current) {
-        // Stop speech synthesis if playing
+        // Guard: don't call .start() if already running
+        if (isRunningRef.current) return
+
         if (typeof window !== "undefined" && window.speechSynthesis) {
           window.speechSynthesis.cancel()
         }
-        recognitionRef.current.start()
+
+        try {
+          recognitionRef.current.start()
+          isRunningRef.current = true
+          setIsListening(true)
+        } catch (err: any) {
+          // InvalidStateError means recognition is already active — ignore
+          if (err?.name !== "InvalidStateError") {
+            console.warn("Failed to start recognition:", err)
+          }
+        }
       } else {
         // Fallback mock if speech recognition is not supported in this browser
+        setIsListening(true)
         setTimeout(() => {
           if (!isComponentMounted.current) return
-          const mockQ = t("Temple timings?", "मंदिर का समय?")
+          const mockQ = t("screens.shyamSahayak.templeTimings")
           setTranscript(mockQ)
           setChatHistory((prev) => [...prev, { role: "user", text: mockQ }])
-          
+
           setTimeout(() => {
             if (!isComponentMounted.current) return
             const ans = faqAnswers["Temple timings?"]
-            const ansText = t(ans.en, ans.hi)
+            const ansText = lang === "hi" ? ans.hi : ans.en
             setResponse(ansText)
             setChatHistory((prev) => [...prev, { role: "ai", text: ansText }])
             speakText(ansText)
+            setIsListening(false)
           }, 900)
         }, 2000)
       }
@@ -181,13 +214,13 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
     if (typeof window !== "undefined" && window.speechSynthesis) {
       window.speechSynthesis.cancel()
     }
-    
-    const qText = t(q.en, q.hi)
+
+    const qText = lang === "hi" ? q.hi : q.en
     setChatHistory((prev) => [...prev, { role: "user", text: qText }])
-    
+
     const ans = faqAnswers[q.en]
     if (ans) {
-      const ansText = t(ans.en, ans.hi)
+      const ansText = lang === "hi" ? ans.hi : ans.en
       setTimeout(() => {
         if (!isComponentMounted.current) return
         setResponse(ansText)
@@ -202,10 +235,10 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
       {/* Header */}
       <div className="text-center">
         <h2 className="font-heading text-2xl font-bold text-primary">
-          {t("Shyam Sahayak AI", "श्याम सहायक")}
+          {t("screens.shyamSahayak.shyamSahayakAi")}
         </h2>
         <p className="text-xs text-muted-foreground mt-1">
-          {t("Your personal voice-guided temple assistant", "आपका व्यक्तिगत आवाज-मार्गदर्शित मंदिर सहायक")}
+          {t("screens.shyamSahayak.yourPersonalVoiceGuidedTempleAssistant")}
         </p>
       </div>
 
@@ -252,7 +285,7 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
         {isListening && (
           <div className="flex items-center gap-2 text-primary text-xs font-bold animate-pulse">
             <Icon name="Mic" className="size-4" />
-            {t("Listening... Say something", "सुन रहा है... कुछ बोलिए")}
+            {t("screens.shyamSahayak.listeningSaySomething")}
           </div>
         )}
       </div>
@@ -260,7 +293,7 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
       {/* Quick suggestions */}
       <div>
         <p className="mb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          {t("Tap to ask & speak", "पूछने और सुनने के लिए दबाएं")}
+          {t("screens.shyamSahayak.tapToAskSpeak")}
         </p>
         <div className="grid grid-cols-2 gap-2">
           {suggestions.map((s, i) => (
@@ -269,7 +302,7 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
               onClick={() => handleSuggestion(s)}
               className="rounded-xl border border-border bg-card px-3 py-2.5 text-left text-xs font-semibold text-foreground shadow-sm transition hover:border-primary/40 hover:bg-secondary/40 active:scale-[0.97]"
             >
-              {t(s.en, s.hi)}
+              {lang === "hi" ? s.hi : s.en}
             </button>
           ))}
         </div>
@@ -291,23 +324,23 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
               ? "bg-red-500 text-white shadow-red-500/40 scale-110"
               : "bg-gradient-to-br from-primary to-secondary text-white shadow-primary/30 hover:scale-105"
           )}
-          aria-label={isListening ? t("Stop listening", "सुनना बंद करें") : t("Start listening", "बोलना शुरू करें")}
+          aria-label={isListening ? t("screens.shyamSahayak.stopListening") : t("screens.shyamSahayak.startListening")}
         >
           <Icon name={isListening ? "Square" : "Mic"} className="size-9" />
         </button>
         <p className="text-xs text-muted-foreground text-center font-medium">
           {isListening
-            ? t("Tap to stop speaking", "रोकने के लिए दबाएं")
-            : t("Tap mic to speak your question", "अपनी बात पूछने के लिए माइक दबाएं")}
+            ? t("screens.shyamSahayak.tapToStopSpeaking")
+            : t("screens.shyamSahayak.tapMicToSpeakYourQuestion")}
         </p>
       </div>
 
       {/* Quick nav links */}
       <div className="grid grid-cols-3 gap-2 pt-2">
         {[
-          { key: "temple" as ScreenKey, label: t("Temple Info", "मंदिर जानकारी"), icon: "Landmark" },
-          { key: "reach" as ScreenKey, label: t("How to Reach", "कैसे पहुंचें"), icon: "MapPin" },
-          { key: "emergency" as ScreenKey, label: t("Emergency", "आपातकाल"), icon: "Siren" },
+          { key: "temple" as ScreenKey, label: t("screens.shyamSahayak.templeInfo"), icon: "Landmark" },
+          { key: "reach" as ScreenKey, label: t("screens.shyamSahayak.howToReach"), icon: "MapPin" },
+          { key: "emergency" as ScreenKey, label: t("screens.shyamSahayak.emergency"), icon: "Siren" },
         ].map((item) => (
           <button
             key={item.key}

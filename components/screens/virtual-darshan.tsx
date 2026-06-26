@@ -51,7 +51,7 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
       {/* ── Landscape Banner Force message for mobile ── */}
       <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 border border-white/20 backdrop-blur-md rounded-full px-4 py-1.5 z-50 text-[10px] uppercase tracking-widest text-[#D4AF37] font-bold flex items-center gap-2 pointer-events-none md:hidden">
         <Icon name="RotateCw" className="size-3 animate-spin" />
-        {t("Rotate for Best Experience", "सर्वोत्तम अनुभव के लिए फोन घुमाएं")}
+        {t("screens.virtualDarshan.rotateForBestExperience")}
       </div>
 
       {/* ── Top Header ── */}
@@ -65,12 +65,12 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
         
         <div className="text-center">
           <h2 className="font-heading text-lg font-bold text-[#D4AF37] tracking-widest">
-            {t("VIRTUAL DARSHAN", "अलौकिक आभासी दर्शन")}
+            {t("screens.virtualDarshan.virtualDarshan")}
           </h2>
           <p className="text-[10px] text-white/60 tracking-wider mt-0.5 uppercase">
-            {step === 1 && t("Step 1: Rajasthan Desert Route", "चरण 1: रींगस मरुभूमि मार्ग")}
-            {step === 2 && t("Step 2: Khatu Temple Entrance", "चरण 2: श्री श्याम मंदिर तोरण द्वार")}
-            {step === 3 && t("Step 3: Main Deity Darbar", "चरण 3: गर्भगृह - बाबा श्याम दर्शन")}
+            {step === 1 && t("screens.virtualDarshan.step1RajasthanDesertRoute")}
+            {step === 2 && t("screens.virtualDarshan.step2KhatuTempleEntrance")}
+            {step === 3 && t("screens.virtualDarshan.step3MainDeityDarbar")}
           </p>
         </div>
 
@@ -97,7 +97,7 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
               {/* Devotional particles */}
               <div className="absolute bottom-12 flex flex-col items-center">
                 <span className="text-sm font-heading font-semibold text-white/95 drop-shadow-md">
-                  {t("Walking to Baba Shyam's Dham...", "बाबा श्याम के धाम की ओर पदयात्रा...")}
+                  {t("screens.virtualDarshan.walkingToBabaShyamsDham")}
                 </span>
                 <span className="text-[10px] uppercase tracking-widest text-[#FFF8F0]/70 mt-1 italic">
                   "हारे का सहारा, बाबा श्याम हमारा"
@@ -165,7 +165,7 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
 
               <div className="mt-4 text-center z-10">
                 <h3 className="font-heading text-xl font-bold text-[#D4AF37] tracking-widest drop-shadow-md">
-                  {t("SHREE KHATU SHYAM NARESH", "श्री खाटू श्याम नरेश की जय")}
+                  {t("screens.virtualDarshan.shreeKhatuShyamNaresh")}
                 </h3>
               </div>
             </motion.div>
@@ -200,7 +200,7 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
             className="flex items-center gap-2 rounded-full bg-black/40 border border-white/10 backdrop-blur-md px-5 py-2.5 text-xs font-bold transition hover:bg-white/20 active:scale-95"
           >
             <Icon name="ArrowLeft" className="size-4" />
-            {t("Go Back", "पीछे जाएं")}
+            {t("screens.virtualDarshan.goBack")}
           </button>
         ) : (
           <div className="w-24" /> // Spacer
@@ -218,7 +218,7 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
             className="flex items-center gap-2 rounded-full bg-gradient-to-r from-[#D97706] to-[#D4AF37] px-6 py-3 text-xs font-bold text-white shadow-lg active:scale-95 transition"
           >
             <Icon name="Flame" className="size-4 text-white" />
-            {t("Offer Flower Shower", "पुष्प वर्षा करें")}
+            {t("screens.virtualDarshan.offerFlowerShower")}
           </button>
         ) : (
           <div />
@@ -229,7 +229,7 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
             onClick={handleNextStep}
             className="flex items-center gap-2 rounded-full bg-[#D4AF37] px-6 py-3 text-xs font-bold text-black shadow-lg hover:bg-white active:scale-95 transition"
           >
-            <span>{t("Continue Forward", "आगे बढ़ें")}</span>
+            <span>{t("screens.virtualDarshan.continueForward")}</span>
             <Icon name="ArrowRight" className="size-4" />
           </button>
         ) : (
@@ -237,7 +237,7 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
             onClick={() => navigate("home")}
             className="flex items-center gap-2 rounded-full bg-green-600 px-6 py-3 text-xs font-bold text-white shadow-lg active:scale-95 transition"
           >
-            {t("Complete Darshan", "दर्शन पूर्ण")}
+            {t("screens.virtualDarshan.completeDarshan")}
             <Icon name="Check" className="size-4" />
           </button>
         )}

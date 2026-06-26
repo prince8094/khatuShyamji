@@ -34,13 +34,13 @@ export function OfferingsScreen({ navigate }: { navigate?: (s: ScreenKey) => voi
     <div className="space-y-6 pb-10">
       <header>
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Khatu Dham</p>
-        <h1 className="font-heading text-2xl font-bold text-foreground mt-1">{t("Offerings", "Offerings")}</h1>
-        <p className="text-xs text-muted-foreground mt-1">{t("Select items to offer at the temple counter", "Select items to offer at the temple counter")}</p>
+        <h1 className="font-heading text-2xl font-bold text-foreground mt-1">{t("screens.services.offerings.offerings")}</h1>
+        <p className="text-xs text-muted-foreground mt-1">{t("screens.services.offerings.selectItemsToOfferAtTheTempleCounter")}</p>
       </header>
       {ordered && (
         <div className="flex items-center gap-3 rounded-2xl bg-green-500/10 border border-green-500/30 p-4">
           <Icon name="CheckCircle" className="size-5 text-green-600 shrink-0" />
-          <p className="text-sm font-semibold text-green-700">{t("Order placed! Collect from Counter 2.", "Order placed! Collect from Counter 2.")}</p>
+          <p className="text-sm font-semibold text-green-700">{t("screens.services.offerings.orderPlacedCollectFromCounter2")}</p>
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -76,7 +76,7 @@ export function OfferingsScreen({ navigate }: { navigate?: (s: ScreenKey) => voi
             onClick={placeOrder}
             className="w-full rounded-2xl bg-gradient-to-r from-primary to-[#D4AF37] py-3.5 text-sm font-bold text-white shadow-md transition hover:opacity-90 active:scale-95"
           >
-            {t("Place Order", "Place Order")}
+            {t("screens.services.offerings.placeOrder")}
           </button>
         </div>
       )}

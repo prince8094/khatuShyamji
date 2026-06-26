@@ -225,7 +225,7 @@ export function OpeningAnimation({ onComplete }: { onComplete: () => void }) {
               className="mt-12 flex flex-col items-center"
             >
               <h1 className="font-heading text-4xl font-bold text-[#D4AF37] tracking-[0.2em] drop-shadow-lg mb-8 text-center">
-                {t("JAI SHRI SHYAM", "जय श्री श्याम")}
+                {t("features.openingAnimation.jaiShriShyam")}
               </h1>
               
               <button
@@ -233,7 +233,7 @@ export function OpeningAnimation({ onComplete }: { onComplete: () => void }) {
                 className="group relative flex items-center justify-center gap-2 overflow-hidden rounded-full bg-gradient-to-r from-[#D97706] to-[#D4AF37] px-8 py-3 text-lg font-bold text-white shadow-[0_0_30px_rgba(212,175,55,0.4)] transition active:scale-[0.98]"
               >
                 <span className="absolute inset-0 bg-white/20 opacity-0 transition group-hover:opacity-100" />
-                {t("Enter Darbar", "दरबार में प्रवेश करें")}
+                {t("features.openingAnimation.enterDarbar")}
               </button>
             </motion.div>
           </motion.div>
@@ -257,7 +257,7 @@ export function OpeningAnimation({ onComplete }: { onComplete: () => void }) {
             onClick={handleSkip}
             className="text-white/50 hover:text-white transition text-xs uppercase tracking-widest"
           >
-            {t("Skip", "छोड़ें")}
+            {t("features.openingAnimation.skip")}
           </button>
         </div>
       )}

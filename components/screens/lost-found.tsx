@@ -6,16 +6,11 @@ import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 
-const foundItems = [
-  { id: "LF-001", item: "Blue Handbag", hindi: "नीला हैंडबैग", desc: "Found near Prasad Counter · 25 Jun 2026", location: "Prasad Counter", icon: "ShoppingBag", color: "bg-blue-50 text-blue-600" },
-  { id: "LF-002", item: "Silver Anklet", hindi: "चांदी की पायल", desc: "Found at Main Sanctum Exit · 24 Jun 2026", location: "Main Sanctum", icon: "Gem", color: "bg-gray-50 text-gray-600" },
-  { id: "LF-003", item: "Child's Kurta (Red)", hindi: "बच्चे का लाल कुर्ता", desc: "Found at Queue Complex · 24 Jun 2026", location: "Queue Complex", icon: "Shirt", color: "bg-red-50 text-red-600" },
-  { id: "LF-004", item: "Samsung Phone", hindi: "सैमसंग फोन", desc: "Found at Parking Lot B · 23 Jun 2026", location: "Parking Lot B", icon: "Smartphone", color: "bg-indigo-50 text-indigo-600" },
-  { id: "LF-005", item: "Reading Glasses", hindi: "चश्मा", desc: "Found near Temple Steps · 23 Jun 2026", location: "Temple Steps", icon: "Glasses", color: "bg-yellow-50 text-yellow-600" },
-]
+
 
 export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
-  const { t } = useLanguage()
+  const { t, tObject } = useLanguage()
+  const foundItems: any[] = tObject("screens.lostFound.foundItemsList") || []
   const [activeTab, setActiveTab] = useState<"found" | "report">("found")
   const [submitted, setSubmitted] = useState(false)
   const [form, setForm] = useState({
@@ -41,8 +36,8 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
         <div className="relative flex items-start justify-between">
           <div>
-            <h1 className="font-heading text-xl font-bold">{t("Lost & Found", "खोया और पाया")}</h1>
-            <p className="text-sm text-white/80 mt-1">{t("Reuniting devotees with their belongings", "भक्तों को उनकी वस्तुएं वापस दिलाना")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.lostFound.lostFound")}</h1>
+            <p className="text-sm text-white/80 mt-1">{t("screens.lostFound.reunitingDevoteesWithTheirBelongings")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/20 border border-white/20">
             <Icon name="PackageSearch" className="size-6" />
@@ -52,7 +47,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
         <a href="tel:01576-230011" className="relative mt-4 flex items-center gap-2 rounded-2xl bg-black/20 backdrop-blur-sm border border-white/15 px-4 py-2.5">
           <Icon name="Phone" className="size-4 text-white" />
           <div>
-            <p className="text-[10px] text-white/70 uppercase tracking-wider">{t("Lost & Found Helpline", "खोया पाया हेल्पलाइन")}</p>
+            <p className="text-[10px] text-white/70 uppercase tracking-wider">{t("screens.lostFound.lostFoundHelpline")}</p>
             <p className="text-sm font-bold text-white">01576-230011</p>
           </div>
         </a>
@@ -69,7 +64,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
           }`}
         >
           <Icon name="Search" className="size-4" />
-          {t("Found Items", "पाई गई वस्तुएं")}
+          {t("screens.lostFound.foundItems")}
         </button>
         <button
           onClick={() => setActiveTab("report")}
@@ -80,7 +75,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
           }`}
         >
           <Icon name="TriangleAlert" className="size-4" />
-          {t("Report Lost", "खोई वस्तु दर्ज करें")}
+          {t("screens.lostFound.reportLost")}
         </button>
       </div>
 
@@ -90,7 +85,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
           <div className="flex items-center gap-2 rounded-2xl bg-green-50 border border-green-200 px-4 py-3">
             <Icon name="Info" className="size-4 text-green-600 shrink-0" />
             <p className="text-xs text-green-700 font-medium">
-              {t("Items found in the last 7 days. Visit the Lost & Found desk at Gate 2 with ID proof.", "पिछले 7 दिनों में मिली वस्तुएं। आईडी प्रूफ के साथ गेट 2 पर खोया-पाया डेस्क पर आएं।")}
+              {t("screens.lostFound.itemsFoundInTheLast7DaysVisitTheLostFou")}
             </p>
           </div>
 
@@ -105,7 +100,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
                 <Icon name={item.icon} className="size-6" />
               </span>
               <div className="flex-1 min-w-0">
-                <p className="font-heading font-bold text-sm text-foreground truncate">{t(item.item, item.hindi)}</p>
+                <p className="font-heading font-bold text-sm text-foreground truncate">{item.item}</p>
                 <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
                 <div className="flex items-center gap-1 mt-1">
                   <Icon name="MapPin" className="size-3 text-primary" />
@@ -119,10 +114,10 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
           <Ornament />
 
           <section className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-            <h3 className="font-heading text-sm font-bold text-foreground mb-2">{t("Lost & Found Desk", "खोया-पाया डेस्क")}</h3>
+            <h3 className="font-heading text-sm font-bold text-foreground mb-2">{t("screens.lostFound.lostFoundDesk")}</h3>
             <div className="space-y-2 text-xs text-muted-foreground">
-              <div className="flex items-center gap-2"><Icon name="MapPin" className="size-3.5 text-primary" />{t("Gate 2, Near Medical Camp", "गेट 2, मेडिकल कैंप के पास")}</div>
-              <div className="flex items-center gap-2"><Icon name="Clock" className="size-3.5 text-primary" />{t("Open: 5:00 AM – 10:00 PM", "खुलने का समय: सुबह 5 बजे – रात 10 बजे")}</div>
+              <div className="flex items-center gap-2"><Icon name="MapPin" className="size-3.5 text-primary" />{t("screens.lostFound.gate2NearMedicalCamp")}</div>
+              <div className="flex items-center gap-2"><Icon name="Clock" className="size-3.5 text-primary" />{t("screens.lostFound.open500Am1000Pm")}</div>
               <div className="flex items-center gap-2"><Icon name="Phone" className="size-3.5 text-primary" />01576-230011</div>
             </div>
           </section>
@@ -143,55 +138,55 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
                   <Icon name="CheckCircle" className="size-7" />
                 </span>
                 <h3 className="font-heading text-base font-bold text-green-700">
-                  {t("Report Submitted!", "रिपोर्ट दर्ज हो गई!")}
+                  {t("screens.lostFound.reportSubmitted")}
                 </h3>
                 <p className="text-xs text-green-600 leading-relaxed">
-                  {t("Our team will contact you at your number if your item is found. Reference: LF-2026-0628", "हमारी टीम वस्तु मिलने पर आपके नंबर पर संपर्क करेगी। संदर्भ: LF-2026-0628")}
+                  {t("screens.lostFound.ourTeamWillContactYouAtYourNumberIfYourI")}
                 </p>
               </motion.div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div className="rounded-2xl bg-primary/5 border border-primary/20 px-4 py-3">
                   <p className="text-xs text-foreground font-medium">
-                    {t("Fill in as many details as possible. Our security team will search and contact you.", "जितनी अधिक जानकारी हो सकती है भरें। हमारी सुरक्षा टीम खोज करेगी और संपर्क करेगी।")}
+                    {t("screens.lostFound.fillInAsManyDetailsAsPossibleOurSecurityT")}
                   </p>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Item Name *", "वस्तु का नाम *")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.itemName")}</label>
                   <input
                     type="text"
                     required
-                    placeholder={t("e.g. Blue wallet, Gold ring...", "जैसे नीला बटुआ, सोने की अंगूठी...")}
+                    placeholder={t("screens.lostFound.egBlueWalletGoldRing")}
                     value={form.itemName}
                     onChange={e => setForm({ ...form, itemName: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Color / Description *", "रंग / विवरण *")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.colorDescription")}</label>
                   <input
                     type="text"
                     required
-                    placeholder={t("Color, brand, size, markings...", "रंग, ब्रांड, आकार, निशान...")}
+                    placeholder={t("screens.lostFound.colorBrandSizeMarkings")}
                     value={form.color}
                     onChange={e => setForm({ ...form, color: e.target.value })}
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Where was it lost? *", "कहाँ खोया? *")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.whereWasItLost")}</label>
                   <select
                     required
                     value={form.location}
                     onChange={e => setForm({ ...form, location: e.target.value })}
                   >
-                    <option value="">{t("Select location", "स्थान चुनें")}</option>
+                    <option value="">{t("screens.lostFound.selectLocation")}</option>
                     {["Main Sanctum", "Queue Complex", "Prasad Counter", "Parking Lot A", "Parking Lot B", "Gate 1", "Gate 2", "Gate 3", "Shyam Kund", "Other"].map(l => (
                       <option key={l} value={l}>{l}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Date of Loss *", "खोने की तारीख *")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.dateOfLoss")}</label>
                   <input
                     type="date"
                     required
@@ -200,7 +195,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Your Phone Number *", "आपका फोन नंबर *")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.yourPhoneNumber")}</label>
                   <input
                     type="tel"
                     required
@@ -210,10 +205,10 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Additional Details", "अतिरिक्त जानकारी")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.additionalDetails")}</label>
                   <textarea
                     rows={2}
-                    placeholder={t("Any other helpful details...", "कोई अन्य उपयोगी जानकारी...")}
+                    placeholder={t("screens.lostFound.anyOtherHelpfulDetails")}
                     value={form.description}
                     onChange={e => setForm({ ...form, description: e.target.value })}
                     className="resize-none"
@@ -225,7 +220,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
                   className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] py-3.5 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
                 >
                   <Icon name="Send" className="size-4" />
-                  {t("Submit Report", "रिपोर्ट दर्ज करें")}
+                  {t("screens.lostFound.submitReport")}
                 </button>
               </form>
             )}

@@ -16,8 +16,8 @@ export function ParkingInfoScreen({ navigate }: { navigate?: (s: ScreenKey) => v
     <div className="space-y-6 pb-10">
       <header>
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary">Khatu Dham</p>
-        <h1 className="font-heading text-2xl font-bold text-foreground mt-1">{t("Parking Info", "Parking Info")}</h1>
-        <p className="text-xs text-muted-foreground mt-1">{t("Live slot availability near the temple", "Live slot availability near the temple")}</p>
+        <h1 className="font-heading text-2xl font-bold text-foreground mt-1">{t("screens.services.parkingInfo.parkingInfo")}</h1>
+        <p className="text-xs text-muted-foreground mt-1">{t("screens.services.parkingInfo.liveSlotAvailabilityNearTheTemple")}</p>
       </header>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {lots.map((lot) => {
@@ -52,7 +52,7 @@ export function ParkingInfoScreen({ navigate }: { navigate?: (s: ScreenKey) => v
       <div className="flex items-start gap-3 rounded-2xl bg-primary/5 border border-primary/20 p-4">
         <Icon name="Info" className="size-5 shrink-0 text-primary mt-0.5" />
         <p className="text-xs text-foreground leading-relaxed">
-          {t("Slot data refreshes every 5 minutes. Follow temple staff instructions during peak hours.", "Slot data refreshes every 5 minutes. Follow temple staff instructions during peak hours.")}
+          {t("screens.services.parkingInfo.slotDataRefreshesEvery5MinutesFollowTemple")}
         </p>
       </div>
     </div>

@@ -21,11 +21,11 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.groupName) newErrors.groupName = t("Group Name is required", "समूह का नाम आवश्यक है")
-    if (!formData.leaderName) newErrors.leaderName = t("Leader Name is required", "नेता का नाम आवश्यक है")
-    if (!formData.leaderPhone) newErrors.leaderPhone = t("Phone Number is required", "फ़ोन नंबर आवश्यक है")
-    else if (!/^\d{10}$/.test(formData.leaderPhone)) newErrors.leaderPhone = t("Invalid phone number", "अमान्य फोन नंबर")
-    if (formData.totalPassengers < 7) newErrors.totalPassengers = t("Minimum 7 passengers required", "कम से कम 7 यात्री आवश्यक")
+    if (!formData.groupName) newErrors.groupName = t("screens.groupBooking.groupNameIsRequired")
+    if (!formData.leaderName) newErrors.leaderName = t("screens.groupBooking.leaderNameIsRequired")
+    if (!formData.leaderPhone) newErrors.leaderPhone = t("screens.groupBooking.phoneNumberIsRequired")
+    else if (!/^\d{10}$/.test(formData.leaderPhone)) newErrors.leaderPhone = t("screens.groupBooking.invalidPhoneNumber")
+    if (formData.totalPassengers < 7) newErrors.totalPassengers = t("screens.groupBooking.minimum7PassengersRequired")
     
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -74,7 +74,7 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
         className="flex items-center gap-2 text-sm font-semibold text-[#6b5440] transition hover:text-[#D97706]"
       >
         <Icon name="ArrowLeft" className="size-4" />
-        {t("Back to Booking", "बुकिंग पर वापस")}
+        {t("screens.groupBooking.backToBooking")}
       </button>
 
       {/* Header */}
@@ -84,10 +84,10 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
           <span className="mx-auto mb-4 grid size-16 place-items-center rounded-full bg-gradient-to-br from-[#D97706] to-[#D4AF37] text-white shadow-[0_0_20px_rgba(212,175,55,0.4)]">
             <Icon name="Users" className="size-8" />
           </span>
-          <h2 className="font-heading text-2xl font-bold text-[#D4AF37] tracking-wide">{t("Group Booking", "समूह बुकिंग")}</h2>
+          <h2 className="font-heading text-2xl font-bold text-[#D4AF37] tracking-wide">{t("screens.groupBooking.groupBooking")}</h2>
           <p className="mt-2 text-xs font-semibold uppercase tracking-widest text-white/70 leading-relaxed">
-            {t("For groups of 7+ devotees.", "7+ भक्तों के समूह के लिए।")} <br/>
-            {t("A single group pass will be generated.", "एक समूह पास जेनरेट किया जाएगा।")}
+            {t("screens.groupBooking.forGroupsOf7Devotees")} <br/>
+            {t("screens.groupBooking.aSingleGroupPassWillBeGenerated")}
           </p>
         </div>
       </div>
@@ -99,11 +99,11 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
           {/* Group Name */}
           <div>
             <label className="mb-1.5 block text-xs font-bold text-[#6b5440] uppercase tracking-wider">
-              {t("Group / Sangha Name", "समूह / संघ का नाम")}
+              {t("screens.groupBooking.groupSanghaName")}
             </label>
             <input
               type="text"
-              placeholder={t("e.g. Jaipur Shyam Mandal", "उदा. जयपुर श्याम मंडल")}
+              placeholder={t("screens.groupBooking.egJaipurShyamMandal")}
               value={formData.groupName}
               onChange={(e) => setFormData(f => ({ ...f, groupName: e.target.value }))}
               className={cn(
@@ -121,7 +121,7 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
           {/* Total Passengers */}
           <div>
             <label className="mb-1.5 block text-xs font-bold text-[#6b5440] uppercase tracking-wider">
-              {t("Total Passengers", "कुल यात्री")}
+              {t("screens.groupBooking.totalPassengers")}
             </label>
             <input
               type="number"
@@ -146,17 +146,17 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
             <span className="grid size-8 place-items-center rounded-full bg-[#D97706]/10 text-[#D97706]">
               <Icon name="User" className="size-4" />
             </span>
-            {t("Leader Details", "नेता का विवरण")}
+            {t("screens.groupBooking.leaderDetails")}
           </h3>
 
           {/* Leader Name */}
           <div>
             <label className="mb-1.5 block text-xs font-bold text-[#6b5440] uppercase tracking-wider">
-              {t("Leader Name", "नेता का नाम")}
+              {t("screens.groupBooking.leaderName")}
             </label>
             <input
               type="text"
-              placeholder={t("Enter leader's full name", "नेता का पूरा नाम दर्ज करें")}
+              placeholder={t("screens.groupBooking.enterLeadersFullName")}
               value={formData.leaderName}
               onChange={(e) => setFormData(f => ({ ...f, leaderName: e.target.value }))}
               className={cn(
@@ -174,7 +174,7 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
           {/* Leader Phone */}
           <div>
             <label className="mb-1.5 block text-xs font-bold text-[#6b5440] uppercase tracking-wider">
-              {t("Phone Number", "फ़ोन नंबर")}
+              {t("screens.groupBooking.phoneNumber")}
             </label>
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#6b5440] font-semibold bg-white border-r border-[#E8D5B7] pr-3 py-1">
@@ -204,10 +204,10 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
           {/* Special Requirements */}
           <div>
             <label className="mb-1.5 block text-xs font-bold text-[#6b5440] uppercase tracking-wider">
-              {t("Special Requirements (Optional)", "विशेष आवश्यकताएं (वैकल्पिक)")}
+              {t("screens.groupBooking.specialRequirementsOptional")}
             </label>
             <textarea
-              placeholder={t("Any special needs, wheelchair access, etc.", "कोई विशेष आवश्यकता, व्हीलचेयर पहुंच, आदि।")}
+              placeholder={t("screens.groupBooking.anySpecialNeedsWheelchairAccessEtc")}
               rows={3}
               value={formData.specialRequirements}
               onChange={(e) => setFormData(f => ({ ...f, specialRequirements: e.target.value }))}
@@ -226,11 +226,11 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
         {isSubmitting ? (
           <>
             <span className="size-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-            {t("Processing...", "संसाधित हो रहा है...")}
+            {t("screens.groupBooking.processing")}
           </>
         ) : (
           <>
-            {t("Confirm Group Booking", "समूह बुकिंग की पुष्टि करें")}
+            {t("screens.groupBooking.confirmGroupBooking")}
             <Icon name="ArrowRight" className="size-5" />
           </>
         )}

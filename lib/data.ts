@@ -36,7 +36,14 @@ export type ScreenKey =
   | "seva-booking"
   | "offerings"
 
-export const user = {
+export type AppUser = {
+  name: string
+  phone: string
+  initials: string
+  photo?: string
+}
+
+export const user: AppUser = {
   name: "Nand Kumar",
   phone: "+91 98290 12345",
   initials: "NK",
@@ -85,25 +92,25 @@ export const services = [
   { key: "reach", label: "Pilgrim Assistance", hindi: "भक्त सहायता", icon: "MapPin", desc: "Dham travel guidelines", meta: "Help desk", screenKey: "reach" as const },
 ]
 
-export const drawerItems: { key: ScreenKey; label: string; hindi: string; icon: string }[] = [
-  { key: "home", label: "Home", hindi: "होम", icon: "Home" },
-  { key: "book", label: "Book Darshan", hindi: "दर्शन बुकिंग", icon: "CalendarCheck" },
-  { key: "live-darshan", label: "Live Darshan", hindi: "लाइव दर्शन", icon: "Video" },
-  { key: "virtual-darshan", label: "Virtual Darshan", hindi: "आभासी दर्शन", icon: "Compass" },
-  { key: "khatu-path", label: "Shyam Path", hindi: "श्याम पथ", icon: "Footprints" },
-  { key: "bookings", label: "My Bookings", hindi: "मेरी बुकिंग", icon: "Ticket" },
-  { key: "qr", label: "QR Pass", hindi: "क्यूआर पास", icon: "QrCode" },
-  { key: "services", label: "Services", hindi: "सेवाएं", icon: "LayoutGrid" },
-  { key: "crowd", label: "Live Crowd Status", hindi: "भीड़ स्थिति", icon: "Users" },
-  { key: "traffic", label: "Traffic Updates", hindi: "ट्रैफिक", icon: "TrafficCone" },
-  { key: "reach", label: "How to Reach", hindi: "कैसे पहुंचें", icon: "MapPin" },
-  { key: "lost-found", label: "Lost & Found", hindi: "खोया और पाया", icon: "PackageSearch" },
-  { key: "offline", label: "Offline Centers", hindi: "ऑफलाइन केंद्र", icon: "Building2" },
-  { key: "temple", label: "Temple Information", hindi: "मंदिर जानकारी", icon: "Landmark" },
-  { key: "emergency", label: "Emergency Help", hindi: "आपातकालीन", icon: "Siren" },
-  { key: "notifications", label: "Notifications", hindi: "सूचनाएं", icon: "Bell" },
-  { key: "help-support", label: "Help & Support", hindi: "सहायता", icon: "CircleHelp" },
-  { key: "profile", label: "Profile", hindi: "प्रोफ़ाइल", icon: "User" },
+export const drawerItems: { key: ScreenKey; icon: string }[] = [
+  { key: "home", icon: "Home" },
+  { key: "book", icon: "CalendarCheck" },
+  { key: "live-darshan", icon: "Video" },
+  { key: "virtual-darshan", icon: "Compass" },
+  { key: "khatu-path", icon: "Footprints" },
+  { key: "bookings", icon: "Ticket" },
+  { key: "qr", icon: "QrCode" },
+  { key: "services", icon: "LayoutGrid" },
+  { key: "crowd", icon: "Users" },
+  { key: "traffic", icon: "TrafficCone" },
+  { key: "reach", icon: "MapPin" },
+  { key: "lost-found", icon: "PackageSearch" },
+  { key: "offline", icon: "Building2" },
+  { key: "temple", icon: "Landmark" },
+  { key: "emergency", icon: "Siren" },
+  { key: "notifications", icon: "Bell" },
+  { key: "help-support", icon: "CircleHelp" },
+  { key: "profile", icon: "User" },
 ]
 
 export const offlineCenters = [

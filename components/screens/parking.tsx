@@ -98,11 +98,11 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
             <div className="flex items-center gap-2 mb-2">
               <StatusDot tone="success" />
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
-                {t("LIVE TRACKING", "लाइव ट्रैकिंग")}
+                {t("screens.parking.liveTracking")}
               </span>
             </div>
-            <h1 className="font-heading text-xl font-bold">{t("Parking Information", "पार्किंग जानकारी")}</h1>
-            <p className="text-xs text-white/70 mt-1">{t("Real-time lot availability · Khatu Dham", "खाटू धाम · रियल-टाइम पार्किंग स्थिति")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.parking.parkingInformation")}</h1>
+            <p className="text-xs text-white/70 mt-1">{t("screens.parking.realTimeLotAvailabilityKhatuDham")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/15 border border-white/15">
             <Icon name="SquareParking" className="size-6 text-[#D4AF37]" />
@@ -113,15 +113,15 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
         <div className="relative mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/10 p-3 text-center">
           <div>
             <p className="font-heading text-lg font-bold text-white">4,150</p>
-            <p className="text-[10px] text-white/70">{t("Total Spots", "कुल स्थान")}</p>
+            <p className="text-[10px] text-white/70">{t("screens.parking.totalSpots")}</p>
           </div>
           <div>
             <p className="font-heading text-lg font-bold text-green-400">1,782</p>
-            <p className="text-[10px] text-white/70">{t("Available", "उपलब्ध")}</p>
+            <p className="text-[10px] text-white/70">{t("screens.parking.available")}</p>
           </div>
           <div>
             <p className="font-heading text-lg font-bold text-red-400">2,368</p>
-            <p className="text-[10px] text-white/70">{t("Occupied", "भरे हुए")}</p>
+            <p className="text-[10px] text-white/70">{t("screens.parking.occupied")}</p>
           </div>
         </div>
       </section>
@@ -150,8 +150,8 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
               {/* Availability bar */}
               <div className="mb-3">
                 <div className="flex justify-between text-[11px] text-muted-foreground mb-1">
-                  <span>{t("Available", "उपलब्ध")}: {lot.available}</span>
-                  <span>{t("Total", "कुल")}: {lot.capacity}</span>
+                  <span>{t("screens.parking.available")}: {lot.available}</span>
+                  <span>{t("screens.parking.total")}: {lot.capacity}</span>
                 </div>
                 <div className="h-2 rounded-full bg-muted overflow-hidden">
                   <div
@@ -173,7 +173,7 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
                 {lot.shuttle && (
                   <span className="flex items-center gap-1 text-[#D97706] font-semibold">
                     <Icon name="BusFront" className="size-3" />
-                    {t("Shuttle ✓", "शटल ✓")}
+                    {t("screens.parking.shuttle")}
                   </span>
                 )}
               </div>
@@ -201,7 +201,7 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
       <section className="rounded-3xl border border-border bg-card p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-4">
           <Icon name="BusFront" className="size-5 text-[#D97706]" />
-          <h2 className="font-heading font-bold text-foreground">{t("Free Shuttle Service", "निःशुल्क शटल सेवा")}</h2>
+          <h2 className="font-heading font-bold text-foreground">{t("screens.parking.freeShuttleService")}</h2>
         </div>
         <div className="space-y-2">
           {["Lot B to Gate: 4:00 AM – 10:30 PM, every 15 min", "Lot C to Gate: 5:00 AM – 10:30 PM, every 20 min"].map((s, i) => (

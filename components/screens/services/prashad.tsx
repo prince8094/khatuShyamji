@@ -85,10 +85,10 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
         <div className="relative flex items-center justify-between">
           <div>
             <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
-              <Icon name="ArrowLeft" className="size-4" /> {t("Back to Services", "सेवाओं पर वापस")}
+              <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.prashad.backToServices")}
             </button>
-            <h1 className="font-heading text-xl font-bold">{t("Sacred Prashad", "पावन प्रसाद")}</h1>
-            <p className="text-xs text-white/80 mt-1">{t("Order pure bhog prashad for counter pickup or home delivery", "काउंटर से लेने या होम डिलीवरी के लिए शुद्ध भोग प्रसाद ऑर्डर करें")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.services.prashad.sacredPrashad")}</h1>
+            <p className="text-xs text-white/80 mt-1">{t("screens.services.prashad.orderPureBhogPrashadForCounterPickupOrHome")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/25 border border-white/20">
             <Icon name="ShoppingBag" className="size-6 text-white" />
@@ -142,14 +142,14 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
               className="sticky bottom-20 lg:bottom-4 rounded-3xl bg-gradient-to-r from-primary to-secondary p-4 text-white shadow-lg flex items-center justify-between gap-4 z-40"
             >
               <div>
-                <p className="text-xs text-white/80">{t("Total Amount", "कुल मूल्य")}</p>
+                <p className="text-xs text-white/80">{t("screens.services.prashad.totalAmount")}</p>
                 <p className="font-heading font-bold text-lg">₹{totalPrice}</p>
               </div>
               <button
                 onClick={() => setCheckout(true)}
                 className="rounded-2xl bg-white text-primary px-6 py-3 text-xs font-bold shadow-md hover:bg-white/95 active:scale-[0.98] transition"
               >
-                {t("Proceed to Order", "ऑर्डर करें")}
+                {t("screens.services.prashad.proceedToOrder")}
               </button>
             </motion.div>
           )}
@@ -159,11 +159,11 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
         <div className="rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30 space-y-5">
           <div className="flex justify-between items-center border-b border-border/50 pb-4 dark:border-border/20">
             <div>
-              <h2 className="font-heading text-lg font-bold text-foreground">{t("Bhog Order Checkout", "प्रसाद ऑर्डर चेकआउट")}</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">{t(`Total: ₹${totalPrice} (${totalItemsCount} items)`, `कुल: ₹${totalPrice} (${totalItemsCount} वस्तुएं)`)}</p>
+              <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.prashad.bhogOrderCheckout")}</h2>
+              <p className="text-xs text-muted-foreground mt-0.5">{t("screens.services.prashad.totalItemsLabel", { totalPrice, totalItemsCount })}</p>
             </div>
             <button onClick={() => setCheckout(false)} className="text-xs font-bold text-primary hover:underline">
-              {t("Edit Cart", "कार्ट बदलें")}
+              {t("screens.services.prashad.editCart")}
             </button>
           </div>
 
@@ -178,12 +178,12 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                   <Icon name="CheckCircle" className="size-8" />
                 </span>
                 <h3 className="font-heading text-lg font-bold text-green-600 dark:text-green-400">
-                  {t("Order Placed Successfully!", "प्रसाद ऑर्डर हो गया!")}
+                  {t("screens.services.prashad.orderPlacedSuccessfully")}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
                   {deliveryType === "pickup"
-                    ? t("Collect your prashad box from Counter 4 near Prasad Hall by showing this booking receipt. Ref: PR-2026-993", "प्रसाद हॉल के पास काउंटर 4 से रसीद दिखाकर अपना प्रसाद बॉक्स प्राप्त करें। संदर्भ: PR-2026-993")
-                    : t("Your prashad packet has been prepared and will reach your address in 3-5 days. Ref: PR-2026-994", "आपका प्रसाद पैकेट तैयार है और 3-5 दिनों में आपके पते पर पहुंच जाएगा। संदर्भ: PR-2026-994")}
+                    ? t("screens.services.prashad.collectYourPrashadBoxFromCounter4NearPrasa")
+                    : t("screens.services.prashad.yourPrashadPacketHasBeenPreparedAndWillRea")}
                 </p>
               </motion.div>
             ) : (
@@ -198,7 +198,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                     }`}
                   >
                     <Icon name="Package" className="size-3.5" />
-                    {t("Counter Pickup", "काउंटर पिकअप")}
+                    {t("screens.services.prashad.counterPickup")}
                   </button>
                   <button
                     type="button"
@@ -208,13 +208,13 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                     }`}
                   >
                     <Icon name="Home" className="size-3.5" />
-                    {t("Home Delivery", "होम डिलीवरी")}
+                    {t("screens.services.prashad.homeDelivery")}
                   </button>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Devotee Name *", "भक्त का नाम *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.prashad.devoteeName")}</label>
                     <input
                       type="text"
                       required
@@ -225,7 +225,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Contact Number *", "संपर्क नंबर *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.prashad.contactNumber")}</label>
                     <input
                       type="tel"
                       required
@@ -240,7 +240,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                 {deliveryType === "home" && (
                   <>
                     <div>
-                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("Delivery Address *", "वितरण पता *")}</label>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.prashad.deliveryAddress")}</label>
                       <textarea
                         required
                         rows={2}
@@ -251,7 +251,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("Postal PIN Code *", "पिन कोड *")}</label>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.prashad.postalPinCode")}</label>
                       <input
                         type="text"
                         required
@@ -265,7 +265,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                 )}
 
                 <div className="flex justify-between items-center rounded-2xl bg-secondary/20 p-4 border border-primary/10 dark:bg-muted/50 dark:border-border/20">
-                  <span className="text-xs font-bold text-foreground">{t("Total to Pay", "कुल भुगतान")}</span>
+                  <span className="text-xs font-bold text-foreground">{t("screens.services.prashad.totalToPay")}</span>
                   <span className="font-heading font-bold text-lg text-primary">
                     ₹{totalPrice + (deliveryType === "home" ? 50 : 0)} {deliveryType === "home" && <span className="text-[10px] text-muted-foreground font-semibold">(+ ₹50 shipping)</span>}
                   </span>
@@ -276,7 +276,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                   className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary py-3.5 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
                 >
                   <Icon name="Heart" className="size-4" />
-                  {t("Order & Pay", "ऑर्डर और भुगतान करें")}
+                  {t("screens.services.prashad.orderPay")}
                 </button>
               </form>
             )}

@@ -30,11 +30,11 @@ export function LiveDarshanScreen({ navigate }: { navigate: (s: ScreenKey) => vo
             <div className="flex items-center gap-2 mb-2">
               <StatusDot tone="success" />
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
-                {t("LIVE DARSHAN", "लाइव दर्शन")}
+                {t("screens.liveDarshan.liveDarshan")}
               </span>
             </div>
-            <h1 className="font-heading text-xl font-bold leading-tight">{t("Shri Khatu Shyam Ji", "श्री खाटू श्याम जी")}</h1>
-            <p className="text-xs text-white/70 mt-1">{t("Live from Khatu Dham, Sikar, Rajasthan", "खाटू धाम, सीकर, राजस्थान से सीधे प्रसारण")}</p>
+            <h1 className="font-heading text-xl font-bold leading-tight">{t("screens.liveDarshan.shriKhatuShyamJi")}</h1>
+            <p className="text-xs text-white/70 mt-1">{t("screens.liveDarshan.liveFromKhatuDhamSikarRajasthan")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/15 border border-white/15 text-white">
             <Icon name="Video" className="size-6" />
@@ -70,15 +70,15 @@ export function LiveDarshanScreen({ navigate }: { navigate: (s: ScreenKey) => vo
             </motion.div>
 
             <div className="relative text-center px-6">
-              <p className="font-heading text-lg font-bold text-[#D4AF37]">{t("Live Stream Coming Soon", "लाइव स्ट्रीम जल्द आएगा")}</p>
+              <p className="font-heading text-lg font-bold text-[#D4AF37]">{t("screens.liveDarshan.liveStreamComingSoon")}</p>
               <p className="text-xs text-white/50 mt-1 leading-relaxed">
-                {t("Live Darshan will be available during Aarti timings. The stream goes live 15 minutes before each Aarti.", "लाइव दर्शन आरती के समय उपलब्ध होगा। प्रत्येक आरती से 15 मिनट पहले स्ट्रीम शुरू होती है।")}
+                {t("screens.liveDarshan.liveDarshanWillBeAvailableDuringAartiTiming")}
               </p>
             </div>
 
             <div className="relative flex items-center gap-2 rounded-full bg-[#D97706]/20 border border-[#D97706]/30 px-4 py-2">
               <StatusDot tone="warning" />
-              <span className="text-xs font-bold text-[#D4AF37]">{t("Next Live: Sandhya Aarti · 7:30 PM", "अगला लाइव: संध्या आरती · 7:30 बजे")}</span>
+              <span className="text-xs font-bold text-[#D4AF37]">{t("screens.liveDarshan.nextLiveSandhyaAarti730Pm")}</span>
             </div>
           </div>
         )}
@@ -88,7 +88,7 @@ export function LiveDarshanScreen({ navigate }: { navigate: (s: ScreenKey) => vo
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-1.5 rounded-lg bg-white/10 px-3 py-1.5 text-xs font-bold text-white hover:bg-white/15 transition">
               <Icon name="Volume2" className="size-3.5" />
-              {t("Audio", "ऑडियो")}
+              {t("screens.liveDarshan.audio")}
             </button>
             <div className="relative">
               <button
@@ -122,7 +122,7 @@ export function LiveDarshanScreen({ navigate }: { navigate: (s: ScreenKey) => vo
             </div>
           </div>
           <span className="text-[10px] text-white/40 font-semibold uppercase tracking-wider">
-            {t("Khatu Dham · Official", "खाटू धाम · आधिकारिक")}
+            {t("screens.liveDarshan.khatuDhamOfficial")}
           </span>
         </div>
       </section>
@@ -131,7 +131,7 @@ export function LiveDarshanScreen({ navigate }: { navigate: (s: ScreenKey) => vo
       <section className="rounded-3xl border border-[#D4AF37]/30 bg-gradient-to-b from-[#FFF8F0] to-card p-5 shadow-sm">
         <div className="flex items-center gap-2 mb-1">
           <Icon name="Flame" className="size-5 text-primary" />
-          <h2 className="font-heading text-base font-bold text-foreground">{t("Aarti Schedule", "आरती कार्यक्रम")}</h2>
+          <h2 className="font-heading text-base font-bold text-foreground">{t("screens.liveDarshan.aartiSchedule")}</h2>
         </div>
         <Ornament className="my-3" />
         <div className="space-y-3">
@@ -154,7 +154,7 @@ export function LiveDarshanScreen({ navigate }: { navigate: (s: ScreenKey) => vo
 
       {/* What to expect */}
       <section className="rounded-3xl border border-border bg-card p-5 shadow-sm">
-        <h2 className="font-heading text-sm font-bold text-foreground mb-3">{t("About Live Darshan", "लाइव दर्शन के बारे में")}</h2>
+        <h2 className="font-heading text-sm font-bold text-foreground mb-3">{t("screens.liveDarshan.aboutLiveDarshan")}</h2>
         <div className="space-y-3">
           {[
             { icon: "Video", text: { en: "Live stream goes active 15 min before each Aarti", hi: "प्रत्येक आरती से 15 मिनट पहले लाइव स्ट्रीम शुरू होती है" } },
@@ -180,8 +180,8 @@ export function LiveDarshanScreen({ navigate }: { navigate: (s: ScreenKey) => vo
         <div className="flex items-center gap-3">
           <Icon name="CalendarCheck" className="size-6" />
           <div className="text-left">
-            <p className="font-heading text-sm font-bold">{t("Book Physical Darshan", "सशरीर दर्शन बुक करें")}</p>
-            <p className="text-xs text-white/80">{t("Visit the temple in person", "स्वयं मंदिर आएं")}</p>
+            <p className="font-heading text-sm font-bold">{t("screens.liveDarshan.bookPhysicalDarshan")}</p>
+            <p className="text-xs text-white/80">{t("screens.liveDarshan.visitTheTempleInPerson")}</p>
           </div>
         </div>
         <Icon name="ChevronRight" className="size-5" />

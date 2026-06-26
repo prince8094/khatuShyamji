@@ -62,6 +62,9 @@
     "services": "Services",
     "ai": "Shyam AI",
     "profile": "Profile",
+    "sidebar": {
+      "title": "Jai Shri Shyam · Khatu Dham"
+    },
     "headings": {
       "main": "Main",
       "account": "My Account",
@@ -71,21 +74,22 @@
     "items": {
       "home": "Home",
       "book": "Book Darshan",
-      "live": "Live Darshan",
-      "virtual": "Virtual Darshan",
-      "path": "Shyam Path",
+      "live-darshan": "Live Darshan",
+      "virtual-darshan": "Virtual Darshan",
+      "khatu-path": "Shyam Path",
       "bookings": "My Bookings",
       "qr": "QR Pass",
       "services": "Services",
       "crowd": "Live Crowd Status",
       "traffic": "Traffic Updates",
       "reach": "How to Reach",
-      "lostFound": "Lost & Found",
+      "lost-found": "Lost & Found",
       "offline": "Offline Centers",
       "temple": "Temple Information",
       "emergency": "Emergency Help",
       "notifications": "Notifications",
-      "help": "Help & Support"
+      "help-support": "Help & Support",
+      "profile": "Profile"
     }
   },
   "app": {
@@ -122,10 +126,26 @@
     "liveStatus": {
       "title": "Live Status",
       "liveNow": "Live now",
-      "crowd": "Crowd Level",
-      "traffic": "Traffic Status",
-      "parking": "Parking",
-      "darshan": "Darshan"
+      "crowd": {
+        "label": "Crowd Level",
+        "value": "Moderate",
+        "hint": "~ 6,400 devotees"
+      },
+      "traffic": {
+        "label": "Traffic Status",
+        "value": "Smooth",
+        "hint": "NH-148 clear"
+      },
+      "parking": {
+        "label": "Parking",
+        "value": "Available",
+        "hint": "Lot B · 320 left"
+      },
+      "darshan": {
+        "label": "Darshan",
+        "value": "Open",
+        "hint": "Wait ~ 35 min"
+      }
     },
     "quickActions": {
       "title": "Quick Actions",
@@ -205,7 +225,39 @@
       "upcoming": "Upcoming",
       "completed": "Completed",
       "cancelled": "Cancelled"
-    }
+    },
+    "months": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "passenger": {
+      "notes": [
+        "The ID card will be required during journey.",
+        "Please fill your current citizenship status while booking the ticket. Incorrect information may attract action under the Foreigners Act, 1946.",
+        "Darshan is free of charge. No fees will be collected.",
+        "Mobile phones and large bags are not allowed inside the sanctum.",
+        "Reach the temple at least 30 minutes before your slot time."
+      ]
+    },
+    "weekdays": [
+      "S",
+      "M",
+      "T",
+      "W",
+      "T",
+      "F",
+      "S"
+    ]
   },
   "info": {
     "crowd": {
@@ -239,18 +291,94 @@
     },
     "offline": {
       "infoText": "Visit any authorized center to book darshan offline. Carry a valid ID proof.",
-      "title": "Booking Centers"
+      "title": "Booking Centers",
+      "offlineCentersList": [
+        {
+          "name": "Khatu Main Counter",
+          "area": "Near Temple Gate 1, Khatu",
+          "hours": "5:00 AM – 10:00 PM",
+          "phone": "01576-230011"
+        },
+        {
+          "name": "Reengus Railway Center",
+          "area": "Reengus Junction, Platform 1",
+          "hours": "6:00 AM – 9:00 PM",
+          "phone": "01576-230244"
+        },
+        {
+          "name": "Sikar City Office",
+          "area": "Station Road, Sikar",
+          "hours": "9:00 AM – 7:00 PM",
+          "phone": "01572-240900"
+        },
+        {
+          "name": "Jaipur Booking Desk",
+          "area": "Sindhi Camp Bus Stand, Jaipur",
+          "hours": "8:00 AM – 8:00 PM",
+          "phone": "0141-2200345"
+        }
+      ]
     },
     "temple": {
       "timingTitle": "Darshan Timings",
       "description": "Khatu Shyam Ji, lovingly known as \"Hare ka Sahara\" (support of the defeated), is a revered form of Barbarika, blessed by Lord Krishna to be worshipped in Kali Yuga. The temple at Khatu in Sikar, Rajasthan draws millions of devotees every year.",
       "festivalsTitle": "Major Festival",
-      "festivalsText": "The grand Phalguna Mela (Feb–Mar) and Ekadashi celebrations witness the highest footfall. Advance booking is strongly recommended."
+      "festivalsText": "The grand Phalguna Mela (Feb–Mar) and Ekadashi celebrations witness the highest footfall. Advance booking is strongly recommended.",
+      "darshanTimingsList": [
+        {
+          "name": "Mangala Aarti",
+          "time": "4:30 AM – 5:30 AM"
+        },
+        {
+          "name": "Morning Darshan",
+          "time": "5:30 AM – 1:00 PM"
+        },
+        {
+          "name": "Shringaar Aarti",
+          "time": "Evening · seasonal"
+        },
+        {
+          "name": "Evening Darshan",
+          "time": "4:00 PM – 10:00 PM"
+        }
+      ]
     },
     "emergency": {
       "helpline": "Emergency Help",
       "tapToCall": "Tap any number to call instantly · 24×7",
-      "firstAidInfo": "First-aid and medical camps are available near Gate 2 and the main queue complex throughout darshan hours."
+      "firstAidInfo": "First-aid and medical camps are available near Gate 2 and the main queue complex throughout darshan hours.",
+      "contactsList": [
+        {
+          "label": "Temple Helpline",
+          "phone": "1800-180-6127",
+          "icon": "Phone"
+        },
+        {
+          "label": "Police",
+          "phone": "100",
+          "icon": "ShieldCheck"
+        },
+        {
+          "label": "Ambulance",
+          "phone": "108",
+          "icon": "Ambulance"
+        },
+        {
+          "label": "Fire Brigade",
+          "phone": "101",
+          "icon": "Flame"
+        },
+        {
+          "label": "Medical Camp",
+          "phone": "01576-230055",
+          "icon": "HeartPulse"
+        },
+        {
+          "label": "Lost & Found",
+          "phone": "01576-230011",
+          "icon": "Search"
+        }
+      ]
     }
   },
   "shyamAi": {
@@ -264,5 +392,724 @@
         "hotel": "Hotel stays"
       }
     }
+  },
+  "components": {
+    "appShell": {
+      "login": "Login"
+    }
+  },
+  "features": {
+    "openingAnimation": {
+      "jaiShriShyam": "JAI SHRI SHYAM",
+      "enterDarbar": "Enter Darbar",
+      "skip": "Skip"
+    }
+  },
+  "screens": {
+    "bookDarshan": {
+      "bookYourDarshan": "Book Your Darshan",
+      "planYourSacredVisit": "Plan your sacred visit",
+      "selectBookingType": "Select Booking Type",
+      "soloFamily": "Solo / Family",
+      "upTo6MembersStandardQrPass": "Up to 6 members · Standard QR Pass",
+      "groupBooking": "Group Booking",
+      "7MembersUnifiedGroupQrPass": "7+ members · Unified Group QR Pass",
+      "groupBookingSelected": "Group Booking Selected",
+      "for7DevoteesAUnifiedGroupQrPassIsIssuedY": "For 7+ devotees, a unified Group QR Pass is issued. You'll fill group details on the next screen.",
+      "howManyDevotees": "How many devotees?",
+      "standardBookingPassUpTo6Devotees": "Standard Booking Pass (Up to 6 devotees)",
+      "selectDate": "Select Date",
+      "proceedToGroupBooking": "Proceed to Group Booking",
+      "confirmProceed": "Confirm & Proceed"
+    },
+    "bookingSuccess": {
+      "bookingConfirmed": "Booking Confirmed!",
+      "yourDigitalPassHasBeenGeneratedSuccessfully": "Your digital pass has been generated successfully.",
+      "bookingDetails": "Booking Details",
+      "bookingId": "Booking ID",
+      "date": "Date",
+      "devotees": "Devotees",
+      "primaryDevotee": "Primary Devotee",
+      "viewEPassQr": "View E-Pass (QR)",
+      "goToHome": "Go to Home"
+    },
+    "groupBooking": {
+      "groupNameIsRequired": "Group Name is required",
+      "leaderNameIsRequired": "Leader Name is required",
+      "phoneNumberIsRequired": "Phone Number is required",
+      "invalidPhoneNumber": "Invalid phone number",
+      "minimum7PassengersRequired": "Minimum 7 passengers required",
+      "backToBooking": "Back to Booking",
+      "groupBooking": "Group Booking",
+      "forGroupsOf7Devotees": "For groups of 7+ devotees.",
+      "aSingleGroupPassWillBeGenerated": "A single group pass will be generated.",
+      "groupSanghaName": "Group / Sangha Name",
+      "egJaipurShyamMandal": "e.g. Jaipur Shyam Mandal",
+      "totalPassengers": "Total Passengers",
+      "leaderDetails": "Leader Details",
+      "leaderName": "Leader Name",
+      "enterLeadersFullName": "Enter leader's full name",
+      "phoneNumber": "Phone Number",
+      "specialRequirementsOptional": "Special Requirements (Optional)",
+      "anySpecialNeedsWheelchairAccessEtc": "Any special needs, wheelchair access, etc.",
+      "processing": "Processing...",
+      "confirmGroupBooking": "Confirm Group Booking"
+    },
+    "helpSupport": {
+      "helpSupport": "Help & Support",
+      "wereHereToHelpYou": "We're here to help you",
+      "callHelpline": "Call Helpline",
+      "shyamAi": "Shyam AI",
+      "instantAnswers": "Instant answers",
+      "supportCategories": "Support Categories",
+      "frequentlyAskedQuestions": "Frequently Asked Questions",
+      "sendUsAMessage": "Send Us a Message",
+      "wellRespondWithin24Hours": "We'll respond within 24 hours",
+      "messageSentWellGetBackToYouSoon": "Message sent! We'll get back to you soon.",
+      "yourName": "Your Name",
+      "emailAddress": "Email Address",
+      "describeYourIssueOrQuestion": "Describe your issue or question...",
+      "sendMessage": "Send Message",
+      "emergency": "Emergency?",
+      "call112ForImmediatePoliceOrMedicalHelp": "Call 112 for immediate police or medical help",
+      "call": "Call"
+    },
+    "khatuPath": {
+      "congratulationsYouHaveCompletedYourSpiritual": "Congratulations! You have completed your spiritual Padyatra and reached Shree Shyam Darbar.",
+      "areYouSureYouWantToRestartYourJourneyFrom": "Are you sure you want to restart your journey from Ringas?",
+      "audioStreamingIsComingSoonPlayingOfflineTem": "Audio streaming is coming soon! Playing offline temple chants for now.",
+      "khatuPadyatra": "Khatu Padyatra",
+      "experienceTheSpiritualWalkFromRingasToKhatu": "Experience the spiritual walk from Ringas to Khatu Dham",
+      "journeyGuide": "Journey Guide",
+      "textsBhajans": "Texts & Bhajans",
+      "shyamJaapCounter": "Shyam Jaap Counter",
+      "distanceLeft": "Distance Left",
+      "stageTaskExperience": "Stage Task / Experience",
+      "ringas0": "Ringas (0%)",
+      "shreeShyamDarbar100": "Shree Shyam Darbar (100%)",
+      "resetJourney": "Reset Journey",
+      "enterMainDarbar": "Enter Main Darbar",
+      "continueToNextStage": "Continue to Next Stage",
+      "padyatraMilestonesMap": "Padyatra Milestones Map",
+      "leftToTemple": "left to temple",
+      "current": "Current",
+      "bhajanAartiSangrah": "Bhajan & Aarti Sangrah",
+      "listenOrReadLyricsOfPopularDevotionalPaths": "Listen or read lyrics of popular devotional paths",
+      "readLyrics": "Read lyrics",
+      "listen": "Listen",
+      "lyricsDevanagariRoman": "Lyrics (Devanagari & Roman)",
+      "listenAudioChant": "Listen Audio Chant",
+      "shyamJaapMantra": "SHYAM JAAP MANTRA",
+      "tapJaap": "TAP JAAP",
+      "resetCount": "Reset Count",
+      "chantHareKaSaharaBabaShyamHamaraWhileWalki": "Chant 'Hare Ka Sahara, Baba Shyam Hamara' while walking. Every 11 chants sounds a bell.",
+      "stageX": "Stage {id} of 6"
+    },
+    "liveDarshan": {
+      "liveDarshan": "LIVE DARSHAN",
+      "shriKhatuShyamJi": "Shri Khatu Shyam Ji",
+      "liveFromKhatuDhamSikarRajasthan": "Live from Khatu Dham, Sikar, Rajasthan",
+      "liveStreamComingSoon": "Live Stream Coming Soon",
+      "liveDarshanWillBeAvailableDuringAartiTiming": "Live Darshan will be available during Aarti timings. The stream goes live 15 minutes before each Aarti.",
+      "nextLiveSandhyaAarti730Pm": "Next Live: Sandhya Aarti · 7:30 PM",
+      "audio": "Audio",
+      "khatuDhamOfficial": "Khatu Dham · Official",
+      "aartiSchedule": "Aarti Schedule",
+      "aboutLiveDarshan": "About Live Darshan",
+      "bookPhysicalDarshan": "Book Physical Darshan",
+      "visitTheTempleInPerson": "Visit the temple in person"
+    },
+    "lostFound": {
+      "lostFound": "Lost & Found",
+      "reunitingDevoteesWithTheirBelongings": "Reuniting devotees with their belongings",
+      "lostFoundHelpline": "Lost & Found Helpline",
+      "foundItems": "Found Items",
+      "reportLost": "Report Lost",
+      "itemsFoundInTheLast7DaysVisitTheLostFou": "Items found in the last 7 days. Visit the Lost & Found desk at Gate 2 with ID proof.",
+      "lostFoundDesk": "Lost & Found Desk",
+      "gate2NearMedicalCamp": "Gate 2, Near Medical Camp",
+      "open500Am1000Pm": "Open: 5:00 AM – 10:00 PM",
+      "reportSubmitted": "Report Submitted!",
+      "ourTeamWillContactYouAtYourNumberIfYourI": "Our team will contact you at your number if your item is found. Reference: LF-2026-0628",
+      "fillInAsManyDetailsAsPossibleOurSecurityT": "Fill in as many details as possible. Our security team will search and contact you.",
+      "itemName": "Item Name *",
+      "egBlueWalletGoldRing": "e.g. Blue wallet, Gold ring...",
+      "colorDescription": "Color / Description *",
+      "colorBrandSizeMarkings": "Color, brand, size, markings...",
+      "whereWasItLost": "Where was it lost? *",
+      "selectLocation": "Select location",
+      "dateOfLoss": "Date of Loss *",
+      "yourPhoneNumber": "Your Phone Number *",
+      "additionalDetails": "Additional Details",
+      "anyOtherHelpfulDetails": "Any other helpful details...",
+      "submitReport": "Submit Report",
+      "foundItemsList": [
+        {
+          "id": "LF-001",
+          "item": "Blue Handbag",
+          "desc": "Found near Prasad Counter · 25 Jun 2026",
+          "location": "Prasad Counter",
+          "icon": "ShoppingBag",
+          "color": "bg-blue-50 text-blue-600"
+        },
+        {
+          "id": "LF-002",
+          "item": "Silver Anklet",
+          "desc": "Found at Main Sanctum Exit · 24 Jun 2026",
+          "location": "Main Sanctum",
+          "icon": "Gem",
+          "color": "bg-gray-50 text-gray-600"
+        },
+        {
+          "id": "LF-003",
+          "item": "Child's Kurta (Red)",
+          "desc": "Found at Queue Complex · 24 Jun 2026",
+          "location": "Queue Complex",
+          "icon": "Shirt",
+          "color": "bg-red-50 text-red-600"
+        },
+        {
+          "id": "LF-004",
+          "item": "Samsung Phone",
+          "desc": "Found at Parking Lot B · 23 Jun 2026",
+          "location": "Parking Lot B",
+          "icon": "Smartphone",
+          "color": "bg-indigo-50 text-indigo-600"
+        },
+        {
+          "id": "LF-005",
+          "item": "Reading Glasses",
+          "desc": "Found near Temple Steps · 23 Jun 2026",
+          "location": "Temple Steps",
+          "icon": "Glasses",
+          "color": "bg-yellow-50 text-yellow-600"
+        }
+      ]
+    },
+    "myBookings": {
+      "yourBookingsWillAppearHere": "Your bookings will appear here",
+      "bookDarshanNow": "Book Darshan Now",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "visitors": "Visitors",
+      "viewTicket": "View Ticket",
+      "keep": "Keep",
+      "yesCancel": "Yes, Cancel",
+      "cancel": "Cancel",
+      "bookNewDarshan": "Book New Darshan"
+    },
+    "parking": {
+      "liveTracking": "LIVE TRACKING",
+      "parkingInformation": "Parking Information",
+      "realTimeLotAvailabilityKhatuDham": "Real-time lot availability · Khatu Dham",
+      "totalSpots": "Total Spots",
+      "available": "Available",
+      "occupied": "Occupied",
+      "total": "Total",
+      "shuttle": "Shuttle ✓",
+      "freeShuttleService": "Free Shuttle Service"
+    },
+    "passengerDetails": {
+      "nameIsRequired": "Name is required",
+      "pleaseEnterAValidName": "Please enter a valid name",
+      "ageIsRequired": "Age is required",
+      "genderIsRequired": "Gender is required",
+      "mobileNumberIsRequired": "Mobile number is required",
+      "enterAValid10DigitNumber": "Enter a valid 10-digit number",
+      "enterAValidEmailAddress": "Enter a valid email address",
+      "darshanDate": "Darshan Date",
+      "change": "Change",
+      "notes": "Notes:",
+      "passengerDetails": "Passenger Details",
+      "child": "Child",
+      "passenger": "Passenger",
+      "remove": "Remove",
+      "fullNameAsPerGovtId": "Full Name as per Govt. ID",
+      "enterFullName": "Enter full name",
+      "age": "Age",
+      "gender": "Gender",
+      "select": "Select",
+      "male": "Male",
+      "female": "Female",
+      "other": "Other",
+      "nationality": "Nationality",
+      "india": "India",
+      "nepal": "Nepal",
+      "otherOption": "Other",
+      "addPassenger": "Add Passenger",
+      "addChild": "Add Child",
+      "childrenUnder5YearsOfAgeShallBeContactFre": "Children under 5 years of age shall be contact free and no purchase of any ticket is required.",
+      "contactDetails": "Contact Details",
+      "ticketDetailsWillBeSentToEmailAndRegistere": "(Ticket details will be sent to email and registered mobile number)",
+      "mobileNumber": "Mobile Number",
+      "enter10DigitMobileNumber": "Enter 10-digit mobile number",
+      "emailAddress": "Email Address",
+      "enterEmailAddress": "Enter email address",
+      "processing": "Processing...",
+      "confirmBooking": "Confirm Booking"
+    },
+    "qrPass": {
+      "bookingId": "Booking ID",
+      "devoteeGroupName": "Devotee / Group Name",
+      "darshanDate": "Darshan Date",
+      "devoteesCount": "Devotees Count",
+      "persons": "Persons",
+      "backToMyBookings": "Back to My Bookings",
+      "officialPass": "OFFICIAL PASS",
+      "shriShyamMandirBoard": "Shri Shyam Mandir Board",
+      "cancelled": "Cancelled",
+      "verified": "VERIFIED",
+      "invalidPass": "Invalid Pass",
+      "scanAtToranDwar": "Scan at Toran Dwar",
+      "savedToPhone": "Saved to Phone!",
+      "downloadPass": "Download Pass",
+      "copiedLink": "Copied Link!",
+      "sharePass": "Share Pass",
+      "mandatoryGuidelines": "Mandatory Guidelines",
+      "bookAnotherVisit": "Book Another Visit"
+    },
+    "services": {
+      "donation": {
+        "backToServices": "Back to Services",
+        "devotionalDonation": "Devotional Donation",
+        "supportTempleSevaGaushalaFreeBhandaras": "Support temple seva, gaushala & free bhandaras",
+        "selectCause": "Select Cause",
+        "donationDetails": "Donation Details",
+        "cause": "Cause:",
+        "donationReceivedWithThanks": "Donation Received with Thanks!",
+        "babasBlessingsUponYouATaxExemptionReceiptU": "Baba's blessings upon you. A tax exemption receipt under Section 80G has been sent to your email. Ref: DN-2026-9284",
+        "selectAmount": "Select Amount (₹)",
+        "orEnterCustomAmount": "Or Enter Custom Amount (₹) *",
+        "donorFullName": "Donor Full Name *",
+        "contactNumber": "Contact Number *",
+        "emailAddress": "Email Address *",
+        "panNumberFor80gReceipt": "PAN Number (For 80G Receipt)"
+      },
+      "emergencyHelpline": {
+        "emergencyHelpline": "Emergency Helpline",
+        "247MedicalPoliceAssistance": "24/7 medical & police assistance",
+        "inALifeThreateningEmergencyCall112Immediate": "In a life-threatening emergency, call 112 immediately."
+      },
+      "hotelBooking": {
+        "backToServices": "Back to Services",
+        "hotelDharamshala": "Hotel & Dharamshala",
+        "bookCleanTrustedStaysNearTheTemple": "Book clean & trusted stays near the temple",
+        "bookStay": "Book Stay",
+        "confirmStayDetails": "Confirm Stay Details",
+        "changeHotel": "Change Hotel",
+        "stayBookedSuccessfully": "Stay Booked Successfully!",
+        "aConfirmationSmsHasBeenSentPayDirectlyAtT": "A confirmation SMS has been sent. Pay directly at the hotel counter on arrival. Ref: HT-2026-092",
+        "devoteeName": "Devotee Name *",
+        "contactNumber": "Contact Number *",
+        "checkInDate": "Check-In Date *",
+        "rooms": "Rooms *",
+        "numberOfGuests": "Number of Guests *",
+        "devotees": "Devotees",
+        "confirmStay": "Confirm Stay"
+      },
+      "offerings": {
+        "offerings": "Offerings",
+        "selectItemsToOfferAtTheTempleCounter": "Select items to offer at the temple counter",
+        "orderPlacedCollectFromCounter2": "Order placed! Collect from Counter 2.",
+        "placeOrder": "Place Order"
+      },
+      "parkingInfo": {
+        "parkingInfo": "Parking Info",
+        "liveSlotAvailabilityNearTheTemple": "Live slot availability near the temple",
+        "slotDataRefreshesEvery5MinutesFollowTemple": "Slot data refreshes every 5 minutes. Follow temple staff instructions during peak hours."
+      },
+      "prashad": {
+        "backToServices": "Back to Services",
+        "sacredPrashad": "Sacred Prashad",
+        "orderPureBhogPrashadForCounterPickupOrHome": "Order pure bhog prashad for counter pickup or home delivery",
+        "totalAmount": "Total Amount",
+        "proceedToOrder": "Proceed to Order",
+        "bhogOrderCheckout": "Bhog Order Checkout",
+        "editCart": "Edit Cart",
+        "orderPlacedSuccessfully": "Order Placed Successfully!",
+        "collectYourPrashadBoxFromCounter4NearPrasa": "Collect your prashad box from Counter 4 near Prasad Hall by showing this booking receipt. Ref: PR-2026-993",
+        "yourPrashadPacketHasBeenPreparedAndWillRea": "Your prashad packet has been prepared and will reach your address in 3-5 days. Ref: PR-2026-994",
+        "counterPickup": "Counter Pickup",
+        "homeDelivery": "Home Delivery",
+        "devoteeName": "Devotee Name *",
+        "contactNumber": "Contact Number *",
+        "deliveryAddress": "Delivery Address *",
+        "postalPinCode": "Postal PIN Code *",
+        "totalToPay": "Total to Pay",
+        "orderPay": "Order & Pay",
+        "totalItemsLabel": "Total: ₹{totalPrice} ({totalItemsCount} items)"
+      },
+      "restaurant": {
+        "backToServices": "Back to Services",
+        "pureVegDining": "Pure Veg dining",
+        "exploreBestFamilyRestaurantsThalisSweetShop": "Explore best family restaurants, thalis & sweet shops",
+        "strictPureVegGuideline": "Strict Pure Veg Guideline",
+        "toMaintainTheSanctityOfKhatuDhamAllRegiste": "To maintain the sanctity of Khatu Dham, all registered restaurants serve 100% vegetarian food without onion & garlic (Garlic-free options are available upon request).",
+        "speciality": "Speciality:",
+        "reserveTable": "Reserve Table",
+        "noReservationRequired": "No Reservation Required ✓",
+        "tableReservation": "Table Reservation",
+        "cancel": "Cancel",
+        "tableReservedSuccessfully": "Table Reserved Successfully!",
+        "yourReservationDetailsHaveBeenSentShowSmsA": "Your reservation details have been sent. Show SMS at the reception. Res: RS-2026-104",
+        "yourName": "Your Name *",
+        "contactNumber": "Contact Number *",
+        "date": "Date *",
+        "people": "People *",
+        "preferredTime": "Preferred Time *",
+        "confirmTableReservation": "Confirm Table Reservation"
+      },
+      "sevaBooking": {
+        "sevaBooking": "Seva Booking",
+        "bookSpecialSevaPujaAtTheTemple": "Book special seva & puja at the temple",
+        "sevaBookedSuccessfully": "Seva booked successfully!",
+        "selectASevaBelowAndTapBookSevaToConfirmL": "Select a seva below and tap Book Seva to confirm. Limited slots available.",
+        "bookSeva": "Book Seva",
+        "sevaBookingsAreConfirmedByTheTempleCommitte": "Seva bookings are confirmed by the temple committee."
+      },
+      "shyamBus": {
+        "backToServices": "Back to Services",
+        "shyamBusService": "Shyam Bus Service",
+        "officialPilgrimBusSchedulesSeatReservations": "Official pilgrim bus schedules & seat reservations",
+        "trustShuttleNotice": "Trust Shuttle Notice",
+        "busesFromRingasJunctionRunContinuouslyAndDo": "Buses from Ringas Junction run continuously and do not require pre-booking. Simply buy a token at the station counter on arrival.",
+        "seat": "seat",
+        "availableDepartures": "Available Departures",
+        "reserveTicket": "Reserve Ticket",
+        "bookBusTicket": "Book Bus Ticket",
+        "cancel": "Cancel",
+        "busTicketReserved": "Bus Ticket Reserved!",
+        "yourTicketDetailsHaveBeenSentViaSmsShowTh": "Your ticket details have been sent via SMS. Show this booking at the bus counter. Ref: BS-2026-928",
+        "devoteeName": "Devotee Name *",
+        "contactNumber": "Contact Number *",
+        "travelDate": "Travel Date *",
+        "seats": "Seats *",
+        "selectDepartureTime": "Select Departure Time *",
+        "totalPrice": "Total Price"
+      },
+      "trafficUpdates": {
+        "trafficUpdates": "Traffic Updates",
+        "liveHighwayRoadStatusNearTheTemple": "Live highway & road status near the temple"
+      },
+      "transport": {
+        "backToServices": "Back to Services",
+        "transportServices": "Transport Services",
+        "bookCleanTrustedRidesFromStationsAirports": "Book clean, trusted rides from stations & airports",
+        "officialRatesFareGuideline": "Official Rates & Fare Guideline",
+        "templeTrustVerifiedDriversOnlyTollAndState": "Temple Trust verified drivers only. Toll and state tax included in estimated fare. Pay driver directly after the trip.",
+        "estimatedFare": "Estimated Fare",
+        "bookCab": "Book Cab",
+        "confirmRideDetails": "Confirm Ride Details",
+        "changeRide": "Change Ride",
+        "rideBookedSuccessfully": "Ride Booked Successfully!",
+        "driverDetailsOtpWillBeSentViaSms30MinsP": "Driver details & OTP will be sent via SMS 30 mins prior to pickup time. Pay driver directly. Ref: TR-2026-881",
+        "devoteeName": "Devotee Name *",
+        "contactNumber": "Contact Number *",
+        "pickupPoint": "Pickup Point *",
+        "jaipurAirportJai": "Jaipur Airport (JAI)",
+        "jaipurRailwayStationJp": "Jaipur Railway Station (JP)",
+        "ringasJunctionRailwayStationRgs": "Ringas Junction Railway Station (RGS)",
+        "sikarRailwayStationSikr": "Sikar Railway Station (SIKR)",
+        "otherSpecifyBelow": "Other (Specify below)",
+        "enterPickupLocation": "Enter Pickup Location *",
+        "pickupDate": "Pickup Date *",
+        "pickupTime": "Pickup Time *",
+        "confirmBooking": "Confirm Booking"
+      },
+      "khatuDham": "Khatu Dham",
+      "servicesPlaces": "Services & Places",
+      "everythingYouNeedForYourPilgrimage": "Everything you need for your pilgrimage",
+      "services": "Services",
+      "touristPlaces": "Tourist Places",
+      "soon": "Soon",
+      "allServicesAreVerifiedByTheShriShyamMandir": "All services are verified by the Shri Shyam Mandir Committee for a safe and trusted experience.",
+      "exploreTheSpiritualAndHistoricalHeritageArou": "Explore the spiritual and historical heritage around Khatu Shyam Ji.",
+      "details": "Details",
+      "directions": "Directions",
+      "distanceFromKhatuShyam": "Distance from Khatu Shyam:",
+      "planYourFullItinerary": "Plan Your Full Itinerary",
+      "combineYourDarshanWithVisitsToNearbySpiritu": "Combine your darshan with visits to nearby spiritual and heritage sites.",
+      "howToReachKhatu": "How to Reach Khatu",
+      "touristPlacesList": [
+        {
+          "name": "Salasar Balaji Temple",
+          "desc": "Famous temple of Lord Hanuman, a major pilgrimage site in Rajasthan",
+          "distance": "57 km",
+          "icon": "Landmark",
+          "gradient": "from-orange-500 to-amber-500",
+          "tag": "Temple"
+        },
+        {
+          "name": "Ringas Junction",
+          "desc": "Nearest railway junction to Khatu Shyam, with good connectivity to major cities",
+          "distance": "17 km",
+          "icon": "TrainFront",
+          "gradient": "from-sky-500 to-blue-600",
+          "tag": "Transit"
+        },
+        {
+          "name": "Jeenmata Temple",
+          "desc": "Ancient goddess temple nestled in Aravalli hills, over 1000 years old",
+          "distance": "29 km",
+          "icon": "Mountain",
+          "gradient": "from-rose-500 to-pink-600",
+          "tag": "Temple"
+        },
+        {
+          "name": "Shyam Kund",
+          "desc": "Sacred pond near the temple where devotees take a holy dip before darshan",
+          "distance": "0.5 km",
+          "icon": "Droplets",
+          "gradient": "from-teal-500 to-cyan-600",
+          "tag": "Sacred Site"
+        },
+        {
+          "name": "Sikar City",
+          "desc": "Historic trading city with vibrant bazaars, famous for silver jewelry and sweets",
+          "distance": "43 km",
+          "icon": "ShoppingBag",
+          "gradient": "from-violet-500 to-purple-600",
+          "tag": "City"
+        },
+        {
+          "name": "Luhgarh Fort",
+          "desc": "Ancient fort ruins offering panoramic views of the surrounding landscape",
+          "distance": "22 km",
+          "icon": "Castle",
+          "gradient": "from-yellow-600 to-orange-600",
+          "tag": "Heritage"
+        }
+      ],
+      "items": {
+        "live-darshan": {
+          "label": "Live Darshan",
+          "desc": "Real-time shrine feed",
+          "meta": "Live"
+        },
+        "aarti": {
+          "label": "Aarti Timings",
+          "desc": "Daily aarti timings",
+          "meta": "Timings"
+        },
+        "temple": {
+          "label": "Temple Guide",
+          "desc": "Temple information",
+          "meta": "Guide"
+        },
+        "hotel": {
+          "label": "Hotel Booking",
+          "desc": "Stays near Khatu Dham",
+          "meta": "120+ stays"
+        },
+        "transport": {
+          "label": "Transport",
+          "desc": "Buses, taxis & shared rides",
+          "meta": "Book now"
+        },
+        "restaurant": {
+          "label": "Restaurant",
+          "desc": "Pure veg dining options",
+          "meta": "50+ places"
+        },
+        "shyam-bus": {
+          "label": "Shyam Bus",
+          "desc": "Dedicated pilgrim buses",
+          "meta": "Daily"
+        },
+        "prashad": {
+          "label": "Prashad",
+          "desc": "Order sacred prasad",
+          "meta": "Fresh daily"
+        },
+        "donation": {
+          "label": "Donation",
+          "desc": "Support the temple",
+          "meta": "Tax receipt"
+        },
+        "seva": {
+          "label": "Seva Booking",
+          "desc": "Book special seva & puja",
+          "meta": "Book"
+        },
+        "offerings": {
+          "label": "Offerings",
+          "desc": "Flowers, coconut & more",
+          "meta": "Counter 2"
+        },
+        "emergency": {
+          "label": "Emergency Helpline",
+          "desc": "24/7 medical & police help",
+          "meta": "Dial 112"
+        },
+        "parking": {
+          "label": "Parking Info",
+          "desc": "Find spot availability",
+          "meta": "Live"
+        },
+        "lost-found": {
+          "label": "Lost and Found",
+          "desc": "Claim lost belongings",
+          "meta": "Desk"
+        },
+        "traffic": {
+          "label": "Traffic Updates",
+          "desc": "Live highway status",
+          "meta": "Live"
+        },
+        "notifications": {
+          "label": "Announcements",
+          "desc": "Temple notices & updates",
+          "meta": "Prayers"
+        },
+        "reach": {
+          "label": "Pilgrim Assistance",
+          "desc": "Dham travel guidelines",
+          "meta": "Help desk"
+        }
+      }
+    },
+    "shyamSahayak": {
+      "khamaGhaniBhaktIAmShyamSahayakAskMeAnythi": "Khama Ghani Bhakt! I am Shyam Sahayak. Ask me anything about Khatu Shyam Ji Mandir.",
+      "templeTimings": "Temple timings?",
+      "shyamSahayakAi": "Shyam Sahayak AI",
+      "yourPersonalVoiceGuidedTempleAssistant": "Your personal voice-guided temple assistant",
+      "listeningSaySomething": "Listening... Say something",
+      "tapToAskSpeak": "Tap to ask & speak",
+      "stopListening": "Stop listening",
+      "startListening": "Start listening",
+      "tapToStopSpeaking": "Tap to stop speaking",
+      "tapMicToSpeakYourQuestion": "Tap mic to speak your question",
+      "templeInfo": "Temple Info",
+      "howToReach": "How to Reach",
+      "emergency": "Emergency"
+    },
+    "traffic": {
+      "liveTraffic": "LIVE TRAFFIC",
+      "trafficUpdates": "Traffic Updates",
+      "liveHighwayRoadConditionsKhatuDham": "Live highway & road conditions · Khatu Dham",
+      "moderateCongestionOnRingasRoute": "Moderate Congestion on Ringas Route",
+      "updated5MinutesAgoUseAlternateRouteRecomme": "Updated 5 minutes ago · Use alternate route recommended"
+    },
+    "virtualDarshan": {
+      "rotateForBestExperience": "Rotate for Best Experience",
+      "virtualDarshan": "VIRTUAL DARSHAN",
+      "step1RajasthanDesertRoute": "Step 1: Rajasthan Desert Route",
+      "step2KhatuTempleEntrance": "Step 2: Khatu Temple Entrance",
+      "step3MainDeityDarbar": "Step 3: Main Deity Darbar",
+      "walkingToBabaShyamsDham": "Walking to Baba Shyam's Dham...",
+      "shreeKhatuShyamNaresh": "SHREE KHATU SHYAM NARESH",
+      "goBack": "Go Back",
+      "offerFlowerShower": "Offer Flower Shower",
+      "continueForward": "Continue Forward",
+      "completeDarshan": "Complete Darshan"
+    },
+    "notifications": {
+      "notificationsList": [
+        {
+          "title": "Darshan confirmed",
+          "body": "Your booking KSJ-2026-08841 for 28 Jun is confirmed.",
+          "time": "2h ago",
+          "icon": "CalendarCheck",
+          "tone": "success"
+        },
+        {
+          "title": "Heavy rush expected",
+          "body": "Ekadashi tomorrow — please arrive before 7 AM.",
+          "time": "6h ago",
+          "icon": "TriangleAlert",
+          "tone": "warning"
+        },
+        {
+          "title": "Parking Lot A full",
+          "body": "Use Lot B near Gate 3. Free shuttle available.",
+          "time": "1d ago",
+          "icon": "CarFront",
+          "tone": "warning"
+        },
+        {
+          "title": "Prasad order ready",
+          "body": "Your prasad packet can be collected at counter 4.",
+          "time": "2d ago",
+          "icon": "ShoppingBag",
+          "tone": "success"
+        }
+      ]
+    }
+  },
+  "padyatra": {
+    "aarti": "Aarti",
+    "chalisa": "Chalisa",
+    "bhajan": "Bhajan",
+    "stages": [
+      {
+        "id": 1,
+        "name": "Ringas Desert Route",
+        "distanceLeft": 17,
+        "desc": "Start of your spiritual Padyatra. Walk through the scenic desert sands with the chant of Shyam Baba.",
+        "bgImage": "linear-gradient(to bottom, #d97706, #78350f)",
+        "activity": "Chant 'Jai Shree Shyam' and start your journey."
+      },
+      {
+        "id": 2,
+        "name": "Rajasthan Village Path",
+        "distanceLeft": 14,
+        "desc": "Pass through traditional village pathways filled with devotional stalls offering water and prasad.",
+        "bgImage": "linear-gradient(to bottom, #b45309, #451a03)",
+        "activity": "Accept refreshment from a devotee and keep moving."
+      },
+      {
+        "id": 3,
+        "name": "Shyam Kund & Bazaar",
+        "distanceLeft": 8,
+        "desc": "Reach the sacred Shyam Kund. The vibrant temple market is decorated with flags, flowers, and coconuts.",
+        "bgImage": "linear-gradient(to bottom, #854d0e, #3f2c00)",
+        "activity": "Perform ritual cleansing at Shyam Kund and buy a Nishan (Holy Flag)."
+      },
+      {
+        "id": 4,
+        "name": "Temple Toran Dwar",
+        "distanceLeft": 3,
+        "desc": "The majestic golden entrance gate. The crowd swells here in anticipation of Baba's darshan.",
+        "bgImage": "linear-gradient(to bottom, #78350f, #270e00)",
+        "activity": "Offer salutations at the Toran Dwar and carry the Nishan high."
+      },
+      {
+        "id": 5,
+        "name": "Temple Courtyard",
+        "distanceLeft": 0.5,
+        "desc": "Enter the marble-tiled inner courtyard. The atmosphere is charged with bells ringing and emotional chants.",
+        "bgImage": "linear-gradient(to bottom, #451a03, #1c0a00)",
+        "activity": "Join the line in the temple queue and wait for the doors to open."
+      },
+      {
+        "id": 6,
+        "name": "Shree Shyam Darbar",
+        "distanceLeft": 0,
+        "desc": "Standing face to face with the mesmerizing, flower-adorned divine form of Lord Khatu Shyam Ji.",
+        "bgImage": "linear-gradient(to bottom, #78350f, #0d0907)",
+        "activity": "Offer your prayers and seek divine blessings."
+      }
+    ],
+    "devotionalItems": [
+      {
+        "id": "aarti",
+        "title": "Shri Shyam Aarti",
+        "type": "aarti",
+        "lyrics": "Om Jai Shri Shyam Hare, Baba Jai Shri Shyam Hare...\nBhakt Jano Ke Sankat, Kshan Mein Door Kare...\nOm Jai Shri Shyam Hare...\n\nShyam Sundar Mukh Aravinda, Chavi Ati Pyari Lage...\nKamal Nayan Vishala, Shobha Man Bhave...\nOm Jai Shri Shyam Hare..."
+      },
+      {
+        "id": "chalisa",
+        "title": "Shree Shyam Chalisa",
+        "type": "chalisa",
+        "lyrics": "Shree Guru Charan Pratap Se, Buddhi Kanti Bal Hoye...\nShyam Dev Ke Yash Karan, Kahoon Harshit Hoye...\nJai Jai Khatu Shyam Dev, Jai Jai Khatu Dham...\nDwar Tihare Jo Aave, Sidh Hoye Sab Kaam..."
+      },
+      {
+        "id": "bhajan",
+        "title": "Hare Ka Sahara",
+        "type": "bhajan",
+        "lyrics": "Hare ka sahara Baba Shyam hamara...\nJab duniya thukraye mujhe, tab tune hi to sambhala...\nMeri naiya beech bhanwar mein, Khatu wale tune nikala...\nHare ka sahara Baba Shyam hamara..."
+      }
+    ]
   }
 }

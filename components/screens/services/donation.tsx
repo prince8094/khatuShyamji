@@ -43,10 +43,10 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
         <div className="relative flex items-center justify-between">
           <div>
             <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
-              <Icon name="ArrowLeft" className="size-4" /> {t("Back to Services", "सेवाओं पर वापस")}
+              <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.donation.backToServices")}
             </button>
-            <h1 className="font-heading text-xl font-bold">{t("Devotional Donation", "श्रद्धा दान")}</h1>
-            <p className="text-xs text-white/80 mt-1">{t("Support temple seva, gaushala & free bhandaras", "मंदिर सेवा, गौशाला और निःशुल्क भंडारों में सहयोग करें")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.services.donation.devotionalDonation")}</h1>
+            <p className="text-xs text-white/80 mt-1">{t("screens.services.donation.supportTempleSevaGaushalaFreeBhandaras")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/25 border border-white/20">
             <Icon name="HandCoins" className="size-6 text-white" />
@@ -57,7 +57,7 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left column: Categories */}
         <div className="lg:col-span-1 space-y-3">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1">{t("Select Cause", "सेवा का चयन करें")}</p>
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider pl-1">{t("screens.services.donation.selectCause")}</p>
           {categories.map(c => (
             <button
               key={c.id}
@@ -79,10 +79,10 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
           <div className="rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30 space-y-5">
             <div className="border-b border-border/50 pb-4 dark:border-border/20">
               <h3 className="font-heading text-base font-bold text-foreground">
-                {t("Donation Details", "दान का विवरण")}
+                {t("screens.services.donation.donationDetails")}
               </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                {t("Cause:", "सेवा:")} <span className="font-bold text-foreground">{t(selectedCat.name, selectedCat.nameHi)}</span>
+                {t("screens.services.donation.cause")} <span className="font-bold text-foreground">{t(selectedCat.name, selectedCat.nameHi)}</span>
               </p>
             </div>
 
@@ -97,17 +97,17 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                     <Icon name="CheckCircle" className="size-8" />
                   </span>
                   <h3 className="font-heading text-lg font-bold text-green-600 dark:text-green-400">
-                    {t("Donation Received with Thanks!", "दान प्राप्त हुआ, धन्यवाद!")}
+                    {t("screens.services.donation.donationReceivedWithThanks")}
                   </h3>
                   <p className="text-xs text-muted-foreground leading-relaxed max-w-md">
-                    {t("Baba's blessings upon you. A tax exemption receipt under Section 80G has been sent to your email. Ref: DN-2026-9284", "बाबा की असीम कृपा आप पर बनी रहे। धारा 80G के तहत टैक्स छूट रसीद आपके ईमेल पर भेज दी गई है। संदर्भ: DN-2026-9284")}
+                    {t("screens.services.donation.babasBlessingsUponYouATaxExemptionReceiptU")}
                   </p>
                 </motion.div>
               ) : (
                 <form onSubmit={handleDonation} className="space-y-4">
                   {/* Amount Selectors */}
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Select Amount (₹)", "राशि चुनें (₹)")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.donation.selectAmount")}</label>
                     <div className="grid grid-cols-4 gap-2">
                       {["101", "501", "1100", "2100"].map(amt => (
                         <button
@@ -127,7 +127,7 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Or Enter Custom Amount (₹) *", "या अन्य राशि दर्ज करें (₹) *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.donation.orEnterCustomAmount")}</label>
                     <input
                       type="number"
                       required
@@ -141,7 +141,7 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("Donor Full Name *", "दाता का नाम *")}</label>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.donation.donorFullName")}</label>
                       <input
                         type="text"
                         required
@@ -152,7 +152,7 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("Contact Number *", "संपर्क नंबर *")}</label>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.donation.contactNumber")}</label>
                       <input
                         type="tel"
                         required
@@ -166,7 +166,7 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("Email Address *", "ईमेल पता *")}</label>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.donation.emailAddress")}</label>
                       <input
                         type="email"
                         required
@@ -177,7 +177,7 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("PAN Number (For 80G Receipt)", "पैन नंबर (80G रसीद के लिए)")}</label>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.donation.panNumberFor80gReceipt")}</label>
                       <input
                         type="text"
                         placeholder="ABCDE1234F"

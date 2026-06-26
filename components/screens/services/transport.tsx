@@ -73,10 +73,10 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
         <div className="relative flex items-center justify-between">
           <div>
             <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
-              <Icon name="ArrowLeft" className="size-4" /> {t("Back to Services", "सेवाओं पर वापस")}
+              <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.transport.backToServices")}
             </button>
-            <h1 className="font-heading text-xl font-bold">{t("Transport Services", "परिवहन सेवाएं")}</h1>
-            <p className="text-xs text-white/80 mt-1">{t("Book clean, trusted rides from stations & airports", "स्टेशनों और हवाई अड्डों से स्वच्छ, विश्वसनीय सवारी बुक करें")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.services.transport.transportServices")}</h1>
+            <p className="text-xs text-white/80 mt-1">{t("screens.services.transport.bookCleanTrustedRidesFromStationsAirports")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/25 border border-white/20">
             <Icon name="Bus" className="size-6 text-white" />
@@ -87,9 +87,9 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
       {!selectedVehicle ? (
         <div className="space-y-4">
           <div className="rounded-2xl border border-border bg-card p-4 shadow-sm dark:bg-card dark:border-border/30">
-            <h3 className="font-heading text-sm font-bold text-foreground mb-2">{t("Official Rates & Fare Guideline", "आधिकारिक दरें और किराया दिशानिर्देश")}</h3>
+            <h3 className="font-heading text-sm font-bold text-foreground mb-2">{t("screens.services.transport.officialRatesFareGuideline")}</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              {t("Temple Trust verified drivers only. Toll and state tax included in estimated fare. Pay driver directly after the trip.", "केवल मंदिर ट्रस्ट द्वारा सत्यापित ड्राइवर। अनुमानित किराए में टोल और राज्य कर शामिल हैं। यात्रा के बाद सीधे ड्राइवर को भुगतान करें।")}
+              {t("screens.services.transport.templeTrustVerifiedDriversOnlyTollAndState")}
             </p>
           </div>
 
@@ -111,14 +111,14 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                 </div>
                 <div className="w-full sm:w-auto text-left sm:text-right shrink-0 flex sm:flex-col justify-between items-center sm:items-end gap-2 border-t sm:border-t-0 border-border/55 pt-3 sm:pt-0">
                   <div>
-                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t("Estimated Fare", "अनुमानित किराया")}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">{t("screens.services.transport.estimatedFare")}</p>
                     <p className="font-heading font-bold text-base text-primary mt-0.5">{v.fare}</p>
                   </div>
                   <button
                     onClick={() => setSelectedVehicle(v)}
                     className="rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-2 text-xs font-bold text-white shadow transition hover:shadow-md active:scale-[0.98]"
                   >
-                    {t("Book Cab", "सवारी बुक करें")}
+                    {t("screens.services.transport.bookCab")}
                   </button>
                 </div>
               </div>
@@ -130,11 +130,11 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
         <div className="rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30 space-y-5">
           <div className="flex justify-between items-center border-b border-border/50 pb-4 dark:border-border/20">
             <div>
-              <h2 className="font-heading text-lg font-bold text-foreground">{t("Confirm Ride Details", "सवारी विवरण की पुष्टि")}</h2>
+              <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.transport.confirmRideDetails")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t(selectedVehicle.name, selectedVehicle.nameHi)}</p>
             </div>
             <button onClick={() => setSelectedVehicle(null)} className="text-xs font-bold text-primary hover:underline">
-              {t("Change Ride", "वाहन बदलें")}
+              {t("screens.services.transport.changeRide")}
             </button>
           </div>
 
@@ -149,17 +149,17 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                   <Icon name="CheckCircle" className="size-8" />
                 </span>
                 <h3 className="font-heading text-lg font-bold text-green-600 dark:text-green-400">
-                  {t("Ride Booked Successfully!", "सवारी सफलतापूर्वक बुक हुई!")}
+                  {t("screens.services.transport.rideBookedSuccessfully")}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-                  {t("Driver details & OTP will be sent via SMS 30 mins prior to pickup time. Pay driver directly. Ref: TR-2026-881", "ड्राइवर का विवरण और ओटीपी पिकअप से 30 मिनट पहले एसएमएस द्वारा भेजा जाएगा। सीधे ड्राइवर को भुगतान करें। संदर्भ: TR-2026-881")}
+                  {t("screens.services.transport.driverDetailsOtpWillBeSentViaSms30MinsP")}
                 </p>
               </motion.div>
             ) : (
               <form onSubmit={handleBooking} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Devotee Name *", "भक्त का नाम *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.devoteeName")}</label>
                     <input
                       type="text"
                       required
@@ -170,7 +170,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Contact Number *", "संपर्क नंबर *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.contactNumber")}</label>
                     <input
                       type="tel"
                       required
@@ -183,23 +183,23 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Pickup Point *", "पिकअप स्थान *")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.pickupPoint")}</label>
                   <select
                     value={bookingForm.pickup}
                     onChange={e => setBookingForm({ ...bookingForm, pickup: e.target.value })}
                     className="dark:bg-muted dark:border-border/30"
                   >
-                    <option value="jaipur-airport">{t("Jaipur Airport (JAI)", "जयपुर हवाई अड्डा (JAI)")}</option>
-                    <option value="jaipur-railway">{t("Jaipur Railway Station (JP)", "जयपुर रेलवे स्टेशन (JP)")}</option>
-                    <option value="ringas-junction">{t("Ringas Junction Railway Station (RGS)", "रींगस जंक्शन रेलवे स्टेशन (RGS)")}</option>
-                    <option value="sikar-railway">{t("Sikar Railway Station (SIKR)", "सीकर रेलवे स्टेशन (SIKR)")}</option>
-                    <option value="other">{t("Other (Specify below)", "अन्य (नीचे दर्ज करें)")}</option>
+                    <option value="jaipur-airport">{t("screens.services.transport.jaipurAirportJai")}</option>
+                    <option value="jaipur-railway">{t("screens.services.transport.jaipurRailwayStationJp")}</option>
+                    <option value="ringas-junction">{t("screens.services.transport.ringasJunctionRailwayStationRgs")}</option>
+                    <option value="sikar-railway">{t("screens.services.transport.sikarRailwayStationSikr")}</option>
+                    <option value="other">{t("screens.services.transport.otherSpecifyBelow")}</option>
                   </select>
                 </div>
 
                 {bookingForm.pickup === "other" && (
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Enter Pickup Location *", "पिकअप स्थान दर्ज करें *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.enterPickupLocation")}</label>
                     <input
                       type="text"
                       required
@@ -213,7 +213,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Pickup Date *", "पिकअप तिथि *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.pickupDate")}</label>
                     <input
                       type="date"
                       required
@@ -223,7 +223,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Pickup Time *", "पिकअप समय *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.pickupTime")}</label>
                     <input
                       type="time"
                       required
@@ -239,7 +239,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                   className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary py-3.5 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
                 >
                   <Icon name="Check" className="size-4" />
-                  {t("Confirm Booking", "बुकिंग पक्की करें")}
+                  {t("screens.services.transport.confirmBooking")}
                 </button>
               </form>
             )}

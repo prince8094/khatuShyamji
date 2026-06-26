@@ -64,8 +64,8 @@ export function HelpSupportScreen({ navigate }: { navigate: (s: ScreenKey) => vo
             <Icon name="CircleHelp" className="size-7" />
           </span>
           <div>
-            <h1 className="font-heading text-xl font-bold">{t("Help & Support", "सहायता केंद्र")}</h1>
-            <p className="text-sm text-white/80">{t("We're here to help you", "हम यहाँ आपकी सहायता के लिए हैं")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.helpSupport.helpSupport")}</h1>
+            <p className="text-sm text-white/80">{t("screens.helpSupport.wereHereToHelpYou")}</p>
           </div>
         </div>
       </section>
@@ -77,7 +77,7 @@ export function HelpSupportScreen({ navigate }: { navigate: (s: ScreenKey) => vo
           <span className="grid size-12 place-items-center rounded-2xl bg-green-100 text-green-600">
             <Icon name="Phone" className="size-6" />
           </span>
-          <p className="font-heading text-sm font-bold text-green-800">{t("Call Helpline", "हेल्पलाइन पर कॉल करें")}</p>
+          <p className="font-heading text-sm font-bold text-green-800">{t("screens.helpSupport.callHelpline")}</p>
           <p className="text-xs text-green-600 font-semibold">1800-180-6127</p>
         </a>
         <button
@@ -86,14 +86,14 @@ export function HelpSupportScreen({ navigate }: { navigate: (s: ScreenKey) => vo
           <span className="grid size-12 place-items-center rounded-2xl bg-[#D4AF37]/15 text-[#D97706]">
             <Icon name="Bot" className="size-6" />
           </span>
-          <p className="font-heading text-sm font-bold text-foreground">{t("Shyam AI", "श्याम एआई")}</p>
-          <p className="text-xs text-muted-foreground">{t("Instant answers", "तुरंत जवाब")}</p>
+          <p className="font-heading text-sm font-bold text-foreground">{t("screens.helpSupport.shyamAi")}</p>
+          <p className="text-xs text-muted-foreground">{t("screens.helpSupport.instantAnswers")}</p>
         </button>
       </section>
 
       {/* Support Categories */}
       <section>
-        <h2 className="font-heading text-base font-bold text-foreground mb-3">{t("Support Categories", "सहायता श्रेणियां")}</h2>
+        <h2 className="font-heading text-base font-bold text-foreground mb-3">{t("screens.helpSupport.supportCategories")}</h2>
         <div className="grid grid-cols-3 gap-3">
           {categories.map((c, i) => (
             <button key={i}
@@ -110,7 +110,7 @@ export function HelpSupportScreen({ navigate }: { navigate: (s: ScreenKey) => vo
       {/* FAQs */}
       <section>
         <h2 className="font-heading text-base font-bold text-foreground mb-3">
-          {t("Frequently Asked Questions", "अक्सर पूछे जाने वाले प्रश्न")}
+          {t("screens.helpSupport.frequentlyAskedQuestions")}
         </h2>
         <div className="space-y-2">
           {faqs.map((faq, i) => (
@@ -136,34 +136,34 @@ export function HelpSupportScreen({ navigate }: { navigate: (s: ScreenKey) => vo
 
       {/* Send Message */}
       <section className="rounded-3xl border border-[#D4AF37]/30 bg-card p-5 shadow-sm">
-        <h2 className="font-heading text-base font-bold text-foreground mb-1">{t("Send Us a Message", "हमें संदेश भेजें")}</h2>
-        <p className="text-xs text-muted-foreground mb-4">{t("We'll respond within 24 hours", "हम 24 घंटे के अंदर जवाब देंगे")}</p>
+        <h2 className="font-heading text-base font-bold text-foreground mb-1">{t("screens.helpSupport.sendUsAMessage")}</h2>
+        <p className="text-xs text-muted-foreground mb-4">{t("screens.helpSupport.wellRespondWithin24Hours")}</p>
 
         {msgSent ? (
           <div className="flex items-center gap-3 rounded-2xl bg-green-50 border border-green-200 p-4">
             <Icon name="CheckCircle" className="size-5 text-green-600 shrink-0" />
-            <p className="text-sm font-semibold text-green-700">{t("Message sent! We'll get back to you soon.", "संदेश भेज दिया गया! हम जल्द ही आपसे संपर्क करेंगे।")}</p>
+            <p className="text-sm font-semibold text-green-700">{t("screens.helpSupport.messageSentWellGetBackToYouSoon")}</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
             <input
               type="text"
               required
-              placeholder={t("Your Name", "आपका नाम")}
+              placeholder={t("screens.helpSupport.yourName")}
               value={form.name}
               onChange={e => setForm({ ...form, name: e.target.value })}
             />
             <input
               type="email"
               required
-              placeholder={t("Email Address", "ईमेल पता")}
+              placeholder={t("screens.helpSupport.emailAddress")}
               value={form.email}
               onChange={e => setForm({ ...form, email: e.target.value })}
             />
             <textarea
               required
               rows={3}
-              placeholder={t("Describe your issue or question...", "अपनी समस्या या प्रश्न लिखें...")}
+              placeholder={t("screens.helpSupport.describeYourIssueOrQuestion")}
               value={form.message}
               onChange={e => setForm({ ...form, message: e.target.value })}
               className="resize-none"
@@ -173,7 +173,7 @@ export function HelpSupportScreen({ navigate }: { navigate: (s: ScreenKey) => vo
               className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] py-3 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
             >
               <Icon name="Send" className="size-4" />
-              {t("Send Message", "संदेश भेजें")}
+              {t("screens.helpSupport.sendMessage")}
             </button>
           </form>
         )}
@@ -183,11 +183,11 @@ export function HelpSupportScreen({ navigate }: { navigate: (s: ScreenKey) => vo
       <section className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50/60 p-4">
         <Icon name="Siren" className="size-5 shrink-0 text-red-600" />
         <div className="flex-1">
-          <p className="text-sm font-bold text-red-700">{t("Emergency?", "आपातकाल?")}</p>
-          <p className="text-xs text-red-500">{t("Call 112 for immediate police or medical help", "तत्काल पुलिस या चिकित्सा सहायता के लिए 112 डायल करें")}</p>
+          <p className="text-sm font-bold text-red-700">{t("screens.helpSupport.emergency")}</p>
+          <p className="text-xs text-red-500">{t("screens.helpSupport.call112ForImmediatePoliceOrMedicalHelp")}</p>
         </div>
         <a href="tel:112" className="rounded-xl bg-red-600 px-3 py-2 text-xs font-bold text-white">
-          {t("Call", "कॉल")}
+          {t("screens.helpSupport.call")}
         </a>
       </section>
     </div>

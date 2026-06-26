@@ -7,12 +7,6 @@ import { Icon } from "@/components/shared"
 import type { ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 
-const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"]
-const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-]
-
 const BOOKED = [7, 14, 22]
 
 type BookingType = "solo" | "group" | null
@@ -24,7 +18,12 @@ export function BookDarshanScreen({
   navigate: (s: ScreenKey) => void
   navigateWithDate: (s: ScreenKey, date: string) => void
 }) {
-  const { t } = useLanguage()
+  const { t, tObject } = useLanguage()
+  const MONTHS = tObject("booking.months") || [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ]
+  const WEEKDAYS = tObject("booking.weekdays") || ["S", "M", "T", "W", "T", "F", "S"]
   const [bookingType, setBookingType] = useState<BookingType>(null)
   const [month, setMonth] = useState(5) // June (0-indexed)
   const year = 2026
@@ -66,8 +65,8 @@ export function BookDarshanScreen({
           <div className="mx-auto mb-3 grid size-12 place-items-center rounded-full bg-[#D4AF37]/20 border border-[#D4AF37]/30 text-[#D4AF37]">
             <Icon name="CalendarCheck" className="size-6" />
           </div>
-          <h2 className="font-heading text-2xl font-bold tracking-wide text-[#D4AF37]">{t("Book Your Darshan", "दर्शन बुक करें")}</h2>
-          <p className="mt-1 text-sm text-white/70 uppercase tracking-wider">{t("Plan your sacred visit", "अपनी पवित्र यात्रा की योजना बनाएं")}</p>
+          <h2 className="font-heading text-2xl font-bold tracking-wide text-[#D4AF37]">{t("screens.bookDarshan.bookYourDarshan")}</h2>
+          <p className="mt-1 text-sm text-white/70 uppercase tracking-wider">{t("screens.bookDarshan.planYourSacredVisit")}</p>
         </div>
       </div>
 
@@ -78,7 +77,7 @@ export function BookDarshanScreen({
         <div className="relative z-10 mb-5">
           <span className="inline-block rounded-full bg-[#D97706]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#D97706] mb-2">Step 1</span>
           <h3 className="font-heading text-xl font-bold text-[#1A120B]">
-            {t("Select Booking Type", "बुकिंग प्रकार चुनें")}
+            {t("screens.bookDarshan.selectBookingType")}
           </h3>
         </div>
 
@@ -107,8 +106,8 @@ export function BookDarshanScreen({
               <Icon name="Users" className="size-6" />
             </span>
             <div>
-              <p className="font-heading text-base font-bold text-[#1A120B]">{t("Solo / Family", "एकल / परिवार")}</p>
-              <p className="text-xs text-[#6b5440] mt-0.5 leading-relaxed">{t("Up to 6 members · Standard QR Pass", "6 सदस्य तक · मानक क्यूआर पास")}</p>
+              <p className="font-heading text-base font-bold text-[#1A120B]">{t("screens.bookDarshan.soloFamily")}</p>
+              <p className="text-xs text-[#6b5440] mt-0.5 leading-relaxed">{t("screens.bookDarshan.upTo6MembersStandardQrPass")}</p>
             </div>
           </button>
 
@@ -136,8 +135,8 @@ export function BookDarshanScreen({
               <Icon name="UserPlus" className="size-6" />
             </span>
             <div>
-              <p className="font-heading text-base font-bold text-[#1A120B]">{t("Group Booking", "समूह बुकिंग")}</p>
-              <p className="text-xs text-[#6b5440] mt-0.5 leading-relaxed">{t("7+ members · Unified Group QR Pass", "7+ सदस्य · एकीकृत समूह क्यूआर पास")}</p>
+              <p className="font-heading text-base font-bold text-[#1A120B]">{t("screens.bookDarshan.groupBooking")}</p>
+              <p className="text-xs text-[#6b5440] mt-0.5 leading-relaxed">{t("screens.bookDarshan.7MembersUnifiedGroupQrPass")}</p>
             </div>
           </button>
         </div>
@@ -154,10 +153,10 @@ export function BookDarshanScreen({
           >
             <div className="flex items-center gap-2.5 text-[#8B1E1E] font-bold text-sm mb-2">
               <Icon name="Info" className="size-4" />
-              <span>{t("Group Booking Selected", "समूह बुकिंग चुनी गई")}</span>
+              <span>{t("screens.bookDarshan.groupBookingSelected")}</span>
             </div>
             <p className="text-xs text-[#6b5440] leading-relaxed">
-              {t("For 7+ devotees, a unified Group QR Pass is issued. You'll fill group details on the next screen.", "7+ श्रद्धालुओं के लिए एकीकृत समूह क्यूआर पास जारी होगा। अगली स्क्रीन पर समूह विवरण भरें।")}
+              {t("screens.bookDarshan.for7DevoteesAUnifiedGroupQrPassIsIssuedY")}
             </p>
           </motion.section>
         )}
@@ -177,7 +176,7 @@ export function BookDarshanScreen({
               <div className="relative z-10 mb-4">
                 <span className="inline-block rounded-full bg-[#D97706]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#D97706] mb-2">Step 2</span>
                 <h3 className="font-heading text-xl font-bold text-[#1A120B]">
-                  {t("How many devotees?", "कितने श्रद्धालु?")}
+                  {t("screens.bookDarshan.howManyDevotees")}
                 </h3>
               </div>
 
@@ -199,7 +198,7 @@ export function BookDarshanScreen({
                 </button>
               </div>
               <p className="text-center text-xs text-[#6b5440] font-semibold">
-                {t("Standard Booking Pass (Up to 6 devotees)", "मानक बुकिंग पास (6 श्रद्धालुओं तक)")}
+                {t("screens.bookDarshan.standardBookingPassUpTo6Devotees")}
               </p>
             </section>
 
@@ -211,7 +210,7 @@ export function BookDarshanScreen({
                 <div>
                   <span className="inline-block rounded-full bg-[#D97706]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#D97706] mb-2">Step 3</span>
                   <h3 className="font-heading text-xl font-bold text-[#1A120B]">
-                    {t("Select Date", "तारीख चुनें")}
+                    {t("screens.bookDarshan.selectDate")}
                   </h3>
                 </div>
                 {/* Month controls */}
@@ -237,7 +236,7 @@ export function BookDarshanScreen({
               </div>
 
               <div className="grid grid-cols-7 text-center mb-4 border-b border-[#E8D5B7] pb-2">
-                {WEEKDAYS.map((d, i) => (
+                {(WEEKDAYS as string[]).map((d: string, i: number) => (
                   <span key={i} className="text-[10px] font-bold text-[#6b5440] uppercase">
                     {d}
                   </span>
@@ -286,8 +285,8 @@ export function BookDarshanScreen({
         >
           <span className="absolute inset-0 bg-white/5 opacity-0 transition group-hover:opacity-100" />
           {bookingType === "group"
-            ? t("Proceed to Group Booking", "समूह बुकिंग पर जाएं")
-            : t("Confirm & Proceed", "पुष्टि करें और आगे बढ़ें")}
+            ? t("screens.bookDarshan.proceedToGroupBooking")
+            : t("screens.bookDarshan.confirmProceed")}
           <Icon name="ArrowRight" className="size-5" />
         </button>
       </div>

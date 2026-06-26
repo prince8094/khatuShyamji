@@ -79,11 +79,11 @@ export function TrafficScreen({ navigate }: { navigate: (s: any) => void }) {
             <div className="flex items-center gap-2 mb-2">
               <StatusDot tone="warning" />
               <span className="text-[10px] font-bold uppercase tracking-widest text-[#D4AF37]">
-                {t("LIVE TRAFFIC", "लाइव ट्रैफिक")}
+                {t("screens.traffic.liveTraffic")}
               </span>
             </div>
-            <h1 className="font-heading text-xl font-bold">{t("Traffic Updates", "ट्रैफिक अपडेट")}</h1>
-            <p className="text-xs text-white/70 mt-1">{t("Live highway & road conditions · Khatu Dham", "खाटू धाम · लाइव सड़क स्थिति")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.traffic.trafficUpdates")}</h1>
+            <p className="text-xs text-white/70 mt-1">{t("screens.traffic.liveHighwayRoadConditionsKhatuDham")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/15 border border-white/15">
             <Icon name="TrafficCone" className="size-6 text-[#D4AF37]" />
@@ -95,8 +95,8 @@ export function TrafficScreen({ navigate }: { navigate: (s: any) => void }) {
           <div className="flex items-center gap-3">
             <StatusDot tone="warning" />
             <div>
-              <p className="font-heading font-bold text-white">{t("Moderate Congestion on Ringas Route", "रिंगस मार्ग पर मध्यम भीड़")}</p>
-              <p className="text-[11px] text-white/70">{t("Updated 5 minutes ago · Use alternate route recommended", "5 मिनट पहले अपडेट · वैकल्पिक मार्ग की सिफारिश")}</p>
+              <p className="font-heading font-bold text-white">{t("screens.traffic.moderateCongestionOnRingasRoute")}</p>
+              <p className="text-[11px] text-white/70">{t("screens.traffic.updated5MinutesAgoUseAlternateRouteRecomme")}</p>
             </div>
           </div>
         </div>

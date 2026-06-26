@@ -69,10 +69,10 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
         <div className="relative flex items-center justify-between">
           <div>
             <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
-              <Icon name="ArrowLeft" className="size-4" /> {t("Back to Services", "सेवाओं पर वापस")}
+              <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.shyamBus.backToServices")}
             </button>
-            <h1 className="font-heading text-xl font-bold">{t("Shyam Bus Service", "श्याम बस सेवा")}</h1>
-            <p className="text-xs text-white/80 mt-1">{t("Official pilgrim bus schedules & seat reservations", "आधिकारिक भक्त बस समय सारिणी और सीट बुकिंग")}</p>
+            <h1 className="font-heading text-xl font-bold">{t("screens.services.shyamBus.shyamBusService")}</h1>
+            <p className="text-xs text-white/80 mt-1">{t("screens.services.shyamBus.officialPilgrimBusSchedulesSeatReservations")}</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/25 border border-white/20">
             <Icon name="BusFront" className="size-6 text-white" />
@@ -84,10 +84,10 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
         <div className="space-y-4">
           <div className="rounded-2xl border border-border bg-[#FFF8E7] dark:bg-[#1a1107] dark:border-border/30 p-4">
             <h3 className="font-heading text-xs font-bold text-[#8a4b12] dark:text-[#f3d9b2] uppercase tracking-wider flex items-center gap-1.5">
-              <Icon name="Bus" className="size-4 text-primary" /> {t("Trust Shuttle Notice", "ट्रस्ट शटल सूचना")}
+              <Icon name="Bus" className="size-4 text-primary" /> {t("screens.services.shyamBus.trustShuttleNotice")}
             </h3>
             <p className="text-[11px] text-muted-foreground mt-1.5 leading-relaxed">
-              {t("Buses from Ringas Junction run continuously and do not require pre-booking. Simply buy a token at the station counter on arrival.", "रींगस जंक्शन से बसें लगातार चलती हैं और प्री-बुकिंग की आवश्यकता नहीं होती है। आगमन पर बस स्टेशन काउंटर पर एक टोकन खरीदें।")}
+              {t("screens.services.shyamBus.busesFromRingasJunctionRunContinuouslyAndDo")}
             </p>
           </div>
 
@@ -103,13 +103,13 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                     </div>
                     <div className="flex gap-4 mt-2 text-[10px] text-muted-foreground font-semibold">
                       <span className="flex items-center gap-1"><Icon name="Clock" className="size-3 text-primary" /> {r.duration}</span>
-                      <span className="flex items-center gap-1"><Icon name="IndianRupee" className="size-3 text-primary" /> {r.fare} / {t("seat", "सीट")}</span>
+                      <span className="flex items-center gap-1"><Icon name="IndianRupee" className="size-3 text-primary" /> {r.fare} / {t("screens.services.shyamBus.seat")}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="border-t border-dashed border-border/50 dark:border-border/20 pt-3">
-                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">{t("Available Departures", "प्रस्थान समय")}</p>
+                  <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">{t("screens.services.shyamBus.availableDepartures")}</p>
                   <div className="flex flex-wrap gap-2">
                     {r.timings.map((time, idx) => (
                       <span key={idx} className="text-xs font-semibold text-foreground bg-secondary/25 border border-primary/10 rounded-lg px-2.5 py-1 dark:bg-muted dark:border-border/20">
@@ -127,7 +127,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                   className="w-full flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-secondary py-2.5 text-xs font-bold text-white shadow transition hover:shadow-md active:scale-[0.98]"
                 >
                   <Icon name="Ticket" className="size-4" />
-                  {t("Reserve Ticket", "टिकट बुक करें")}
+                  {t("screens.services.shyamBus.reserveTicket")}
                 </button>
               </div>
             ))}
@@ -138,13 +138,13 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
         <div className="rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30 space-y-5">
           <div className="flex justify-between items-center border-b border-border/50 pb-4 dark:border-border/20">
             <div>
-              <h2 className="font-heading text-lg font-bold text-foreground">{t("Book Bus Ticket", "बस टिकट बुकिंग")}</h2>
+              <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.shyamBus.bookBusTicket")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">
                 {t(selectedRoute.from, selectedRoute.fromHi)} → {t(selectedRoute.to, selectedRoute.toHi)}
               </p>
             </div>
             <button onClick={() => setSelectedRoute(null)} className="text-xs font-bold text-primary hover:underline">
-              {t("Cancel", "रद्द करें")}
+              {t("screens.services.shyamBus.cancel")}
             </button>
           </div>
 
@@ -159,17 +159,17 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                   <Icon name="CheckCircle" className="size-8" />
                 </span>
                 <h3 className="font-heading text-lg font-bold text-green-600 dark:text-green-400">
-                  {t("Bus Ticket Reserved!", "टिकट बुक हो गया!")}
+                  {t("screens.services.shyamBus.busTicketReserved")}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-                  {t("Your ticket details have been sent via SMS. Show this booking at the bus counter. Ref: BS-2026-928", "टिकट विवरण एसएमएस द्वारा भेजा गया है। बस काउंटर पर इसे दिखाएं। संदर्भ: BS-2026-928")}
+                  {t("screens.services.shyamBus.yourTicketDetailsHaveBeenSentViaSmsShowTh")}
                 </p>
               </motion.div>
             ) : (
               <form onSubmit={handleBooking} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Devotee Name *", "भक्त का नाम *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.shyamBus.devoteeName")}</label>
                     <input
                       type="text"
                       required
@@ -180,7 +180,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Contact Number *", "संपर्क नंबर *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.shyamBus.contactNumber")}</label>
                     <input
                       type="tel"
                       required
@@ -194,7 +194,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
 
                 <div className="grid grid-cols-3 gap-3">
                   <div className="col-span-2">
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Travel Date *", "यात्रा तिथि *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.shyamBus.travelDate")}</label>
                     <input
                       type="date"
                       required
@@ -204,7 +204,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("Seats *", "सीटें *")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.shyamBus.seats")}</label>
                     <select
                       value={bookingForm.seatCount}
                       onChange={e => setBookingForm({ ...bookingForm, seatCount: e.target.value })}
@@ -218,7 +218,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("Select Departure Time *", "प्रस्थान समय चुनें *")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.shyamBus.selectDepartureTime")}</label>
                   <select
                     value={bookingForm.timing}
                     onChange={e => setBookingForm({ ...bookingForm, timing: e.target.value })}
@@ -231,7 +231,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                 </div>
 
                 <div className="flex justify-between items-center rounded-2xl bg-secondary/20 p-4 border border-primary/10 dark:bg-muted/50 dark:border-border/20">
-                  <span className="text-xs font-bold text-foreground">{t("Total Price", "कुल किराया")}</span>
+                  <span className="text-xs font-bold text-foreground">{t("screens.services.shyamBus.totalPrice")}</span>
                   <span className="font-heading font-bold text-lg text-primary">
                     ₹{parseInt(selectedRoute.fare.replace(/\D/g, "") || "30") * parseInt(bookingForm.seatCount || "1")}
                   </span>
@@ -242,7 +242,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                   className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary py-3.5 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
                 >
                   <Icon name="Check" className="size-4" />
-                  {t("Book Bus Ticket", "टिकट बुक करें")}
+                  {t("screens.services.shyamBus.bookBusTicket")}
                 </button>
               </form>
             )}
