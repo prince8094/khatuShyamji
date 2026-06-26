@@ -2,6 +2,7 @@
 
 import * as Icons from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useLanguage } from "@/lib/contexts/LanguageContext"
 
 export function Icon({ name, className }: { name: string; className?: string }) {
   const Cmp = (Icons as Record<string, any>)[name] ?? Icons.Circle
@@ -76,11 +77,11 @@ export function Pill({ tone, children }: { tone: Tone; children: React.ReactNode
 }
 
 export function SectionTitle({ title, hindi, action }: { title: string; hindi?: string; action?: React.ReactNode }) {
+  const { t } = useLanguage()
   return (
     <div className="mb-3 flex items-end justify-between">
       <div>
-        <h2 className="font-heading text-lg font-bold leading-tight text-foreground">{title}</h2>
-        {hindi ? <p className="text-sm text-muted-foreground">{hindi}</p> : null}
+        <h2 className="font-heading text-lg font-bold leading-tight text-foreground">{t(title, hindi)}</h2>
       </div>
       {action}
     </div>

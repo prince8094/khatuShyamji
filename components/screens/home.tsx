@@ -18,7 +18,9 @@ const quickActions: { key: ScreenKey; label: string; icon: string }[] = [
   { key: "temple", label: "Temple Info", icon: "Landmark" },
 ]
 
-export function HomeScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey) => void; currentUser?: any }) {
+  const activeUser = currentUser || user
+
   return (
     <div className="space-y-6">
       {/* Hero */}
@@ -48,12 +50,20 @@ export function HomeScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
           </div>
         </div>
         <div className="flex items-center gap-3 p-4">
-          <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[#FFF3E0] font-heading text-lg font-bold text-[#FF8C00]">
-            {user.initials}
-          </span>
+          {activeUser.photo ? (
+            <img
+              src={activeUser.photo}
+              alt={activeUser.name}
+              className="size-11 shrink-0 rounded-full object-cover border border-[#FFB74D] shadow-sm"
+            />
+          ) : (
+            <span className="grid size-11 shrink-0 place-items-center rounded-full bg-[#FFF3E0] font-heading text-lg font-bold text-[#FF8C00]">
+              {activeUser.initials}
+            </span>
+          )}
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-muted-foreground">Welcome back,</p>
-            <p className="truncate font-heading font-semibold text-foreground">{user.name} ji</p>
+            <p className="text-sm text-muted-foreground font-medium">Welcome back,</p>
+            <p className="truncate font-heading font-semibold text-foreground">{activeUser.name} ji</p>
           </div>
           <button
             onClick={() => navigate("profile")}

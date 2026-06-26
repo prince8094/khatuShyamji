@@ -31,6 +31,7 @@ import { ProfileScreen } from "@/components/screens/profile"
 import { InfoScreens } from "@/components/screens/info-screens"
 import { ShyamSahayakScreen } from "@/components/screens/shyam-sahayak"
 import { OpeningAnimation } from "@/components/features/opening-animation"
+import { LanguageToggle } from "@/components/ui/language-toggle"
 import { BhatiMode } from "@/components/features/bhati-mode"
 import { VirtualDarshanScreen } from "@/components/screens/virtual-darshan"
 import { LiveDarshanScreen } from "@/components/screens/live-darshan"
@@ -232,9 +233,17 @@ export function AppShell() {
           className="relative mt-4 flex items-center gap-3 rounded-2xl bg-black/20 backdrop-blur-md p-3 border border-white/10 cursor-pointer hover:bg-black/30 transition"
           onClick={handleProfileClick}
         >
-          <span className="grid size-12 place-items-center rounded-full bg-white font-heading text-xl font-bold text-[#D97706] shadow-inner">
-            {activeUser.initials}
-          </span>
+          {activeUser.photo ? (
+            <img
+              src={activeUser.photo}
+              alt={activeUser.name}
+              className="size-12 rounded-full object-cover border border-white/20 shadow-inner shrink-0"
+            />
+          ) : (
+            <span className="grid size-12 place-items-center rounded-full bg-white font-heading text-xl font-bold text-[#D97706] shadow-inner shrink-0">
+              {activeUser.initials}
+            </span>
+          )}
           <div className="min-w-0 flex-1">
             <p className="truncate font-heading font-bold text-white">{activeUser.name}</p>
             <p className="truncate text-xs text-white/80">{activeUser.phone}</p>
@@ -418,37 +427,12 @@ export function AppShell() {
 
               <div className="flex items-center gap-1.5">
                 {/* Language Toggle — pill style */}
-                <div className="flex items-center rounded-xl bg-white/20 p-0.5 text-xs font-bold font-heading">
-                  <button
-                    onClick={() => setLang("en")}
-                    className={`px-2.5 py-1.5 rounded-[10px] transition-all duration-200 ${
-                      lang === "en"
-                        ? "bg-white text-[#D97706] shadow-sm"
-                        : "text-white/80 hover:text-white"
-                    }`}
-                    aria-label="Switch to English"
-                    title="English"
-                  >
-                    EN
-                  </button>
-                  <button
-                    onClick={() => setLang("hi")}
-                    className={`px-2.5 py-1.5 rounded-[10px] transition-all duration-200 ${
-                      lang === "hi"
-                        ? "bg-white text-[#D97706] shadow-sm"
-                        : "text-white/80 hover:text-white"
-                    }`}
-                    aria-label="Switch to Hindi"
-                    title="Hindi"
-                  >
-                    हिं
-                  </button>
-                </div>
+                <LanguageToggle />
 
                 {/* Dark/Light mode toggle */}
                 <button
                   onClick={toggleTheme}
-                  className="grid size-9 md:size-10 shrink-0 place-items-center rounded-xl bg-white/20 transition hover:bg-white/30 active:scale-95"
+                  className="hidden sm:grid size-9 md:size-10 shrink-0 place-items-center rounded-xl bg-white/20 transition hover:bg-white/30 active:scale-95"
                   aria-label={isDark ? "Switch to Light mode" : "Switch to Dark mode"}
                   title={isDark ? "Light Mode" : "Dark Mode"}
                 >
@@ -473,7 +457,7 @@ export function AppShell() {
                 {/* AI Assistant button — separate from notifications */}
                 <button
                   onClick={() => navigate("shyam-ai")}
-                  className="relative grid size-9 md:size-10 shrink-0 place-items-center rounded-xl bg-white/20 transition hover:bg-white/30 active:scale-95"
+                  className="relative hidden md:grid size-9 md:size-10 shrink-0 place-items-center rounded-xl bg-white/20 transition hover:bg-white/30 active:scale-95"
                   aria-label="Shyam Sahayak AI Assistant"
                   title="Shyam Sahayak AI"
                 >
@@ -519,7 +503,7 @@ export function AppShell() {
           {screen === "virtual-darshan" && <VirtualDarshanScreen navigate={navigate} />}
           {screen === "live-darshan" && <LiveDarshanScreen navigate={navigate} />}
           {screen === "help-support" && <HelpSupportScreen navigate={navigate} />}
-          {screen === "home" && <HomeScreen navigate={navigate} />}
+          {screen === "home" && <HomeScreen navigate={navigate} currentUser={currentUser} />}
           {screen === "book" && <BookDarshanScreen navigate={navigate} navigateWithDate={navigateWithDate} />}
           {screen === "passenger-details" && <PassengerDetailsScreen navigate={navigate} bookingDate={bookingDate} />}
           {screen === "group-booking" && <GroupBookingScreen navigate={navigate} />}
@@ -543,6 +527,10 @@ export function AppShell() {
               navigate={navigate}
               currentUser={currentUser}
               onLogout={handleLogout}
+              onUpdateUser={(updatedUser) => {
+                setCurrentUser(updatedUser)
+                localStorage.setItem("current_user", JSON.stringify(updatedUser))
+              }}
             />
           )}
           {screen === "shyam-ai" && <ShyamSahayakScreen navigate={navigate} />}

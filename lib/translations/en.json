@@ -1,0 +1,268 @@
+{
+  "common": {
+    "back": "Back",
+    "cancel": "Cancel",
+    "save": "Save Changes",
+    "submit": "Submit",
+    "confirm": "Confirm",
+    "logout": "Logout",
+    "close": "Close",
+    "share": "Share",
+    "active": "Active",
+    "loading": "Loading...",
+    "or": "OR"
+  },
+  "auth": {
+    "welcome": {
+      "heading": "Jai Shri Shyam",
+      "subtitle": "Khatu Shyam Digital Pilgrimage",
+      "enter": "Enter Darbar",
+      "guest": "Continue as Guest"
+    },
+    "login": {
+      "title": "Jai Shri Shyam!",
+      "description": "Enter your mobile number to sign in",
+      "phoneLabel": "Mobile Number",
+      "phonePlaceholder": "Enter 10-digit mobile number",
+      "button": "Get OTP",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign Up",
+      "backWelcome": "Go Back"
+    },
+    "otp": {
+      "title": "Verify OTP",
+      "sentTo": "OTP has been sent to {phone}",
+      "label": "Enter 6-Digit OTP",
+      "button": "Verify & Login",
+      "timer": "Resend OTP in {timer}s",
+      "resend": "Resend OTP",
+      "backLogin": "Back to Login"
+    },
+    "signup": {
+      "title": "Register Devotee",
+      "description": "Create your profile for Darshan booking",
+      "nameLabel": "Full Name",
+      "namePlaceholder": "Enter your full name",
+      "phoneLabel": "Phone Number",
+      "phonePlaceholder": "10-digit number",
+      "cityLabel": "City / Town (Optional)",
+      "cityPlaceholder": "e.g. Sikar, Jaipur",
+      "button": "Register & Verify",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Login",
+      "backWelcome": "Back to Welcome",
+      "nameError": "Name is required",
+      "phoneError": "Phone is required",
+      "invalidPhone": "Invalid 10-digit number"
+    }
+  },
+  "navigation": {
+    "home": "Home",
+    "darshan": "Book Darshan",
+    "services": "Services",
+    "ai": "Shyam AI",
+    "profile": "Profile",
+    "headings": {
+      "main": "Main",
+      "account": "My Account",
+      "services": "Services",
+      "info": "Temple & Info"
+    },
+    "items": {
+      "home": "Home",
+      "book": "Book Darshan",
+      "live": "Live Darshan",
+      "virtual": "Virtual Darshan",
+      "path": "Shyam Path",
+      "bookings": "My Bookings",
+      "qr": "QR Pass",
+      "services": "Services",
+      "crowd": "Live Crowd Status",
+      "traffic": "Traffic Updates",
+      "reach": "How to Reach",
+      "lostFound": "Lost & Found",
+      "offline": "Offline Centers",
+      "temple": "Temple Information",
+      "emergency": "Emergency Help",
+      "notifications": "Notifications",
+      "help": "Help & Support"
+    }
+  },
+  "app": {
+    "header": {
+      "title": "Shri Khatu Shyam Ji",
+      "subtitle": "Hare Ka Sahara - Khatu Dham",
+      "soundOn": "Mute Ambience",
+      "soundOff": "Enable Ambience",
+      "themeLight": "Light Mode",
+      "themeDark": "Dark Mode",
+      "bhaktiMode": "Bhakti Mode",
+      "announcements": "Announcements"
+    },
+    "footer": {
+      "safety": "Your data is secured",
+      "privacy": "We respect your privacy",
+      "support": "Need help? Contact us",
+      "version": "Digital Darshan · v2.0"
+    }
+  },
+  "home": {
+    "hero": {
+      "darshanOpen": "Darshan Open",
+      "darshanClosed": "Darshan Closed",
+      "tagline": "Hare Ka Sahara – Khatu Dham",
+      "title": "Shri Khatu Shyam Ji",
+      "welcomeBack": "Welcome back,",
+      "profileBtn": "Profile"
+    },
+    "primaryCta": {
+      "title": "Book Darshan",
+      "subtitle": "Book Darshan · Free"
+    },
+    "liveStatus": {
+      "title": "Live Status",
+      "liveNow": "Live now",
+      "crowd": "Crowd Level",
+      "traffic": "Traffic Status",
+      "parking": "Parking",
+      "darshan": "Darshan"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "bookings": "My Bookings",
+      "qr": "QR Pass",
+      "reach": "How to Reach",
+      "temple": "Temple Info"
+    },
+    "aarti": {
+      "title": "Aarti Timings",
+      "today": "Today"
+    },
+    "popular": {
+      "title": "Popular Services",
+      "viewAll": "View all"
+    },
+    "notice": {
+      "title": "Temple Notice",
+      "text": "Ekadashi rush expected this weekend. Devotees are advised to arrive before 7:00 AM for a smooth darshan."
+    }
+  },
+  "profile": {
+    "card": {
+      "title": "Personal Details",
+      "stats": {
+        "darshans": "Darshans",
+        "upcoming": "Upcoming",
+        "devotee": "Devotee"
+      },
+      "editBtn": "Edit Profile"
+    },
+    "edit": {
+      "title": "Edit Profile Details",
+      "photoLabel": "Profile Avatar / Photo",
+      "uploadBtn": "Upload Photo",
+      "presetsLabel": "Or choose a devotional avatar",
+      "presets": {
+        "morPankh": "Mor Pankh",
+        "diya": "Sacred Diya",
+        "om": "Om",
+        "flute": "Bansuri"
+      },
+      "nameLabel": "Full Name",
+      "phoneLabel": "Mobile Number",
+      "emailLabel": "Email",
+      "emailPlaceholder": "e.g. devotee@shyam.com",
+      "dobLabel": "Date of Birth",
+      "optional": "Optional",
+      "genderLabel": "Gender",
+      "gender": {
+        "male": "Male",
+        "female": "Female",
+        "other": "Other"
+      },
+      "addressLabel": "Address",
+      "addressPlaceholder": "Enter full address",
+      "saveBtn": "Save Changes",
+      "cancelBtn": "Cancel",
+      "toastSuccess": "Profile updated successfully!",
+      "errors": {
+        "name": "Name is required",
+        "phone": "Mobile number is required",
+        "invalidPhone": "Invalid 10-digit number",
+        "email": "Invalid email address",
+        "address": "Address is required"
+      }
+    }
+  },
+  "booking": {
+    "success": {
+      "title": "Booking Success",
+      "confirmed": "Darshan confirmed"
+    },
+    "history": {
+      "title": "My Bookings",
+      "visitors": "Visitors",
+      "upcoming": "Upcoming",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    }
+  },
+  "info": {
+    "crowd": {
+      "rushLevel": "Moderate Rush",
+      "devoteesCount": "~ 6,400 devotees · Updated just now",
+      "liveTracking": "Live tracking",
+      "byZone": "Crowd by Zone",
+      "zones": {
+        "sanctum": "Main Sanctum",
+        "queue": "Queue Complex",
+        "prasad": "Prasad Area",
+        "parking": "Parking"
+      },
+      "bestTime": "Best Time to Visit",
+      "times": {
+        "morning": "5 – 7 AM",
+        "noon": "10 – 1 PM",
+        "evening": "7 – 9 PM"
+      },
+      "levels": {
+        "low": "Low",
+        "high": "High",
+        "moderate": "Moderate"
+      }
+    },
+    "traffic": {
+      "smooth": "Traffic is Smooth",
+      "routesClear": "All routes to Khatu Dham are clear",
+      "routeStatus": "Route Status",
+      "parkingLot": "Parking Lot"
+    },
+    "offline": {
+      "infoText": "Visit any authorized center to book darshan offline. Carry a valid ID proof.",
+      "title": "Booking Centers"
+    },
+    "temple": {
+      "timingTitle": "Darshan Timings",
+      "description": "Khatu Shyam Ji, lovingly known as \"Hare ka Sahara\" (support of the defeated), is a revered form of Barbarika, blessed by Lord Krishna to be worshipped in Kali Yuga. The temple at Khatu in Sikar, Rajasthan draws millions of devotees every year.",
+      "festivalsTitle": "Major Festival",
+      "festivalsText": "The grand Phalguna Mela (Feb–Mar) and Ekadashi celebrations witness the highest footfall. Advance booking is strongly recommended."
+    },
+    "emergency": {
+      "helpline": "Emergency Help",
+      "tapToCall": "Tap any number to call instantly · 24×7",
+      "firstAidInfo": "First-aid and medical camps are available near Gate 2 and the main queue complex throughout darshan hours."
+    }
+  },
+  "shyamAi": {
+    "chatbot": {
+      "greeting": "Jai Shree Shyam! I am Shyam Sahayak. How can I help you in your pilgrimage today?",
+      "inputPlaceholder": "Ask about Darshan, hotels, or route...",
+      "suggestions": {
+        "darshan": "Darshan Timings",
+        "reach": "How to Reach",
+        "mela": "Phalguna Mela",
+        "hotel": "Hotel stays"
+      }
+    }
+  }
+}
