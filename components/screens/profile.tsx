@@ -30,7 +30,7 @@ export function ProfileScreen({
 }) {
   const { t } = useLanguage()
 
-  const displayUser = currentUser || { name: "Mohan Sharma", phone: "+91 98290 12345", initials: "MS" }
+  const displayUser = currentUser || { name: "Nand Kumar", phone: "+91 98290 12345", initials: "NK" }
 
   const stats = [
     { v: "12", l: { en: "Darshans", hi: "दर्शन" } },
@@ -78,9 +78,8 @@ export function ProfileScreen({
           <button
             key={m.label.en}
             onClick={() => m.key && navigate(m.key)}
-            className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-secondary/30 ${
-              i !== menu.length - 1 ? "border-b border-border" : ""
-            }`}
+            className={`flex w-full items-center gap-3 px-4 py-3.5 text-left transition active:bg-secondary/30 ${i !== menu.length - 1 ? "border-b border-border" : ""
+              }`}
           >
             <span className="grid size-10 place-items-center rounded-2xl bg-secondary text-primary">
               <Icon name={m.icon} className="size-5" />

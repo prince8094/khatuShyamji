@@ -37,9 +37,9 @@ export type ScreenKey =
   | "offerings"
 
 export const user = {
-  name: "Mohan Sharma",
+  name: "Nand Kumar",
   phone: "+91 98290 12345",
-  initials: "MS",
+  initials: "NK",
 }
 
 export type Booking = {
@@ -52,10 +52,10 @@ export type Booking = {
 }
 
 export const bookings: Booking[] = [
-  { id: "KSJ-2026-08841", date: "28 Jun 2026", day: "Sunday", visitors: 4, status: "upcoming", name: "Mohan Sharma" },
-  { id: "KSJ-2026-08120", date: "12 Jun 2026", day: "Friday", visitors: 2, status: "completed", name: "Mohan Sharma" },
-  { id: "KSJ-2026-07765", date: "02 Jun 2026", day: "Monday", visitors: 6, status: "completed", name: "Mohan Sharma" },
-  { id: "KSJ-2026-07001", date: "21 May 2026", day: "Thursday", visitors: 3, status: "cancelled", name: "Mohan Sharma" },
+  { id: "KSJ-2026-08841", date: "28 Jun 2026", day: "Sunday", visitors: 4, status: "upcoming", name: "Nand Kumar" },
+  { id: "KSJ-2026-08120", date: "12 Jun 2026", day: "Friday", visitors: 2, status: "completed", name: "Nand Kumar" },
+  { id: "KSJ-2026-07765", date: "02 Jun 2026", day: "Monday", visitors: 6, status: "completed", name: "Nand Kumar" },
+  { id: "KSJ-2026-07001", date: "21 May 2026", day: "Thursday", visitors: 3, status: "cancelled", name: "Nand Kumar" },
 ]
 
 export const liveStatus = {

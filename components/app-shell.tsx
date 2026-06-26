@@ -417,15 +417,33 @@ export function AppShell() {
               </div>
 
               <div className="flex items-center gap-1.5">
-                {/* Language Toggle */}
-                <button
-                  onClick={() => setLang(lang === "en" ? "hi" : "en")}
-                  className="grid h-9 place-items-center rounded-xl bg-white/20 px-3 text-xs font-bold transition hover:bg-white/30 active:scale-95 font-heading"
-                  aria-label="Toggle language"
-                  title={lang === "en" ? "Switch to Hindi" : "Switch to English"}
-                >
-                  {lang === "en" ? "हिं" : "EN"}
-                </button>
+                {/* Language Toggle — pill style */}
+                <div className="flex items-center rounded-xl bg-white/20 p-0.5 text-xs font-bold font-heading">
+                  <button
+                    onClick={() => setLang("en")}
+                    className={`px-2.5 py-1.5 rounded-[10px] transition-all duration-200 ${
+                      lang === "en"
+                        ? "bg-white text-[#D97706] shadow-sm"
+                        : "text-white/80 hover:text-white"
+                    }`}
+                    aria-label="Switch to English"
+                    title="English"
+                  >
+                    EN
+                  </button>
+                  <button
+                    onClick={() => setLang("hi")}
+                    className={`px-2.5 py-1.5 rounded-[10px] transition-all duration-200 ${
+                      lang === "hi"
+                        ? "bg-white text-[#D97706] shadow-sm"
+                        : "text-white/80 hover:text-white"
+                    }`}
+                    aria-label="Switch to Hindi"
+                    title="Hindi"
+                  >
+                    हिं
+                  </button>
+                </div>
 
                 {/* Dark/Light mode toggle */}
                 <button
