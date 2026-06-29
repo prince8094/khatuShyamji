@@ -227,7 +227,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                     onChange={e => setBookingForm({ ...bookingForm, timing: e.target.value })}
                     className="dark:bg-muted dark:border-border/30"
                   >
-                    {selectedRoute.timings.map((time, idx) => (
+                    {selectedRoute.timings.map((time: string, idx: number) => (
                       <option key={idx} value={time}>{time}</option>
                     ))}
                   </select>

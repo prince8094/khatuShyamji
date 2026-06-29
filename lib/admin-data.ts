@@ -180,10 +180,10 @@ export const adminUsers: AdminUser[] = [
   },
   {
     id: "ADM-003",
-    name: "Vijay Kumar Gupta",
+    name: "Ankita Singh Somwanshi",
     phone: "+91 98290 10003",
-    email: "vijay@khatushyamji.org",
-    initials: "VKG",
+    email: "ankita@khatushyamji.org",
+    initials: "AS",
     roles: ["parking"],
     isActive: true,
     lastLogin: "29 Jun 2026, 10:15 AM",

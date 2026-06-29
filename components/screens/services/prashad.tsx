@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 const prashadItems = [
   {
@@ -43,6 +44,7 @@ const prashadItems = [
 ]
 
 export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+  const { goBack } = useNavigation()
   const { t } = useLanguage()
   const [quantities, setQuantities] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0 })
   const [deliveryType, setDeliveryType] = useState<"pickup" | "home">("pickup")
