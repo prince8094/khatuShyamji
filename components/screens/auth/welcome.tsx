@@ -217,7 +217,7 @@ export function WelcomeScreen({
                   className="mt-8 space-y-4"
                 >
                   <button
-                    onClick={goBack}
+                    onClick={() => navigate("login")}
                     className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#800000] to-[#E25822] py-4 text-base font-bold text-white shadow-[0_4px_15px_rgba(128,0,0,0.25)] transition duration-300 hover:shadow-[0_6px_20px_rgba(128,0,0,0.35)] active:scale-[0.98]"
                   >
                     <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
@@ -226,7 +226,7 @@ export function WelcomeScreen({
                   </button>
 
                   <button
-                    onClick={goBack}
+                    onClick={() => navigate("home")}
                     className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-200 bg-amber-50/10 py-3.5 text-base font-bold text-[#6b5440] hover:bg-amber-50 transition active:scale-[0.98]"
                   >
                     {t("auth.welcome.guest")}
