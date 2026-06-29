@@ -7,7 +7,7 @@ import { Icon } from "@/components/shared"
 import { motion } from "framer-motion"
 import { drawerItems, user as staticUser, type ScreenKey, type AppUser } from "@/lib/data"
 import { type AdminUser } from "@/lib/admin-data"
-import { AdminWorkspace } from "@/components/admin/admin-workspace"
+import { AdminWorkspace } from "./admin/admin-workspace"
 
 // Screen components
 import { HomeScreen } from "@/components/screens/home"
