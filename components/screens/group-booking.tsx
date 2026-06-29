@@ -5,9 +5,11 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Icon } from "@/components/shared"
 import type { ScreenKey } from "@/lib/data"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 
 export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+  const { goBack } = useNavigation()
   const { t } = useLanguage()
   const [formData, setFormData] = useState({
     groupName: "",
@@ -70,7 +72,7 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
     <div className="space-y-6 pb-8">
       {/* Back */}
       <button
-        onClick={() => navigate("book")}
+        onClick={goBack}
         className="flex items-center gap-2 text-sm font-semibold text-[#6b5440] transition hover:text-[#D97706]"
       >
         <Icon name="ArrowLeft" className="size-4" />

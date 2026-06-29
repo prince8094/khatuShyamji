@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
+import { useHistoryState } from "@/lib/hooks/useHistoryState"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 const routes = [
   {
@@ -40,8 +42,9 @@ const routes = [
 ]
 
 export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+  const { goBack } = useNavigation();
   const { t } = useLanguage()
-  const [selectedRoute, setSelectedRoute] = useState<typeof routes[0] | null>(null)
+  const [selectedRoute, setSelectedRoute] = useHistoryState<any>("route", null)
   const [bookingForm, setBookingForm] = useState({
     name: "",
     phone: "",
@@ -56,7 +59,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
     setBooked(true)
     setTimeout(() => {
       setBooked(false)
-      setSelectedRoute(null)
+      goBack()
       setBookingForm({ name: "", phone: "", timing: "", seatCount: "1", date: "" })
     }, 4000)
   }
@@ -68,7 +71,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
         <div className="relative flex items-center justify-between">
           <div>
-            <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
+            <button onClick={goBack} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
               <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.shyamBus.backToServices")}
             </button>
             <h1 className="font-heading text-xl font-bold">{t("screens.services.shyamBus.shyamBusService")}</h1>
@@ -143,7 +146,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                 {t(selectedRoute.from, selectedRoute.fromHi)} → {t(selectedRoute.to, selectedRoute.toHi)}
               </p>
             </div>
-            <button onClick={() => setSelectedRoute(null)} className="text-xs font-bold text-primary hover:underline">
+            <button onClick={goBack} className="text-xs font-bold text-primary hover:underline">
               {t("screens.services.shyamBus.cancel")}
             </button>
           </div>

@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
+import { useHistoryState } from "@/lib/hooks/useHistoryState"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 const hotels = [
   {
@@ -58,9 +60,10 @@ const hotels = [
 ]
 
 export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+  const { goBack } = useNavigation();
   const { t } = useLanguage()
   const [category, setCategory] = useState<string>("all")
-  const [selectedHotel, setSelectedHotel] = useState<typeof hotels[0] | null>(null)
+  const [selectedHotel, setSelectedHotel] = useHistoryState<any>("hotel", null)
   const [bookingForm, setBookingForm] = useState({
     name: "",
     phone: "",
@@ -77,7 +80,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
     setBooked(true)
     setTimeout(() => {
       setBooked(false)
-      setSelectedHotel(null)
+      goBack()
       setBookingForm({ name: "", phone: "", checkIn: "", guests: "2", rooms: "1" })
     }, 4000)
   }
@@ -89,7 +92,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
         <div className="relative flex items-center justify-between">
           <div>
-            <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
+            <button onClick={goBack} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
               <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.hotelBooking.backToServices")}
             </button>
             <h1 className="font-heading text-xl font-bold">{t("screens.services.hotelBooking.hotelDharamshala")}</h1>
@@ -173,7 +176,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
               <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.hotelBooking.confirmStayDetails")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t(selectedHotel.name, selectedHotel.nameHi)}</p>
             </div>
-            <button onClick={() => setSelectedHotel(null)} className="text-xs font-bold text-primary hover:underline">
+            <button onClick={goBack} className="text-xs font-bold text-primary hover:underline">
               {t("screens.services.hotelBooking.changeHotel")}
             </button>
           </div>

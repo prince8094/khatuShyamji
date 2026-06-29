@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 const categories = [
   { id: "general", name: "General Fund", nameHi: "सामान्य कोष", desc: "Supports overall temple operations and maintenance.", descHi: "मंदिर के समग्र संचालन और रखरखाव में सहयोग।" },
@@ -14,6 +15,7 @@ const categories = [
 ]
 
 export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+  const { goBack } = useNavigation();
   const { t } = useLanguage()
   const [selectedCat, setSelectedCat] = useState<typeof categories[0]>(categories[0])
   const [amount, setAmount] = useState<string>("501")
@@ -42,7 +44,7 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
         <div className="relative flex items-center justify-between">
           <div>
-            <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
+            <button onClick={goBack} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
               <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.donation.backToServices")}
             </button>
             <h1 className="font-heading text-xl font-bold">{t("screens.services.donation.devotionalDonation")}</h1>

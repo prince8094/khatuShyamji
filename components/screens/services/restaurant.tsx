@@ -5,6 +5,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
+import { useHistoryState } from "@/lib/hooks/useHistoryState"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 const eateries = [
   {
@@ -58,8 +60,9 @@ const eateries = [
 ]
 
 export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+  const { goBack } = useNavigation();
   const { t } = useLanguage()
-  const [selectedRest, setSelectedRest] = useState<typeof eateries[0] | null>(null)
+  const [selectedRest, setSelectedRest] = useHistoryState<any>("rest", null)
   const [reserveForm, setReserveForm] = useState({
     name: "",
     phone: "",
@@ -74,7 +77,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
     setConfirmed(true)
     setTimeout(() => {
       setConfirmed(false)
-      setSelectedRest(null)
+      goBack()
       setReserveForm({ name: "", phone: "", people: "4", date: "", time: "" })
     }, 4000)
   }
@@ -86,7 +89,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
         <div className="relative flex items-center justify-between">
           <div>
-            <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
+            <button onClick={goBack} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
               <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.restaurant.backToServices")}
             </button>
             <h1 className="font-heading text-xl font-bold">{t("screens.services.restaurant.pureVegDining")}</h1>
@@ -158,7 +161,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
               <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.restaurant.tableReservation")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t(selectedRest.name, selectedRest.nameHi)}</p>
             </div>
-            <button onClick={() => setSelectedRest(null)} className="text-xs font-bold text-primary hover:underline">
+            <button onClick={goBack} className="text-xs font-bold text-primary hover:underline">
               {t("screens.services.restaurant.cancel")}
             </button>
           </div>

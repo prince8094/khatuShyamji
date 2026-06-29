@@ -47,7 +47,7 @@ import { BookingSuccessScreen } from "@/components/screens/booking-success"
 // Contexts
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useAudio } from "@/lib/contexts/AudioContext"
-import { useTheme } from "@/lib/contexts/ThemeContext"
+import { NavigationContext } from "@/lib/contexts/NavigationContext"
 
 const titles: Record<ScreenKey, { en: string; hi: string }> = {
   welcome: { en: "Welcome", hi: "स्वागत है" },
@@ -124,19 +124,18 @@ export function AppShell() {
   const [showOpening, setShowOpening] = useState(true)
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
   const [notifCount] = useState(3) // mock unread notifications count
+  const [internalHistoryCount, setInternalHistoryCount] = useState(0)
 
   const { lang, setLang, t } = useLanguage()
   const { bhatiMode, setBhatiMode, soundEnabled, setSoundEnabled, timeOfDay } = useAudio()
-  const { toggleTheme, isDark } = useTheme()
 
   useEffect(() => {
     // Check if user is logged in
     const sessionUser = localStorage.getItem("current_user") || localStorage.getItem("temp_signup_user")
+    let initialScreen: ScreenKey = sessionUser ? "home" : "welcome"
+    
     if (sessionUser) {
       setCurrentUser(JSON.parse(sessionUser))
-      setScreen("home")
-    } else {
-      setScreen("welcome")
     }
 
     const hasSeen = sessionStorage.getItem("seen_opening")
@@ -145,12 +144,62 @@ export function AppShell() {
     } else {
       sessionStorage.setItem("seen_opening", "true")
     }
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      const urlScreen = params.get("screen") as ScreenKey
+      if (urlScreen) initialScreen = urlScreen
+      
+      setScreen(initialScreen)
+      
+      if (!window.history.state?.screen) {
+        window.history.replaceState({ screen: initialScreen }, "", `?screen=${initialScreen}`)
+      }
+
+      const handlePopState = (e: PopStateEvent) => {
+        if (e.state && e.state.screen) {
+          setScreen(e.state.screen)
+          setInternalHistoryCount(c => Math.max(0, c - 1))
+        }
+      }
+
+      window.addEventListener("popstate", handlePopState)
+      return () => window.removeEventListener("popstate", handlePopState)
+    } else {
+      setScreen(initialScreen)
+    }
   }, [])
 
   const navigate = (s: ScreenKey) => {
+    if (s === screen) return
+    if (typeof window !== "undefined") {
+      window.history.pushState({ screen: s }, "", `?screen=${s}`)
+    }
     setScreen(s)
+    setInternalHistoryCount(c => c + 1)
     setDrawerOpen(false)
     if (typeof window !== "undefined") window.scrollTo({ top: 0 })
+  }
+
+  const goBack = () => {
+    if (internalHistoryCount > 0) {
+      if (typeof window !== "undefined") window.history.back()
+    } else {
+      navigate("home")
+    }
+  }
+
+  const pushState = (key: string, value: any) => {
+    if (typeof window !== "undefined") {
+      const currentState = window.history.state || {}
+      window.history.pushState(
+        { ...currentState, [key]: value },
+        "",
+        window.location.search
+      )
+      setInternalHistoryCount(c => c + 1)
+      window.dispatchEvent(new CustomEvent('local-history-change', { detail: { key, value } }))
+    }
   }
 
   const navigateWithDate = (s: ScreenKey, date: string) => {
@@ -207,15 +256,6 @@ export function AppShell() {
             />
           </span>
           <div className="flex items-center gap-2">
-            {/* Theme toggle in sidebar */}
-            <button
-              onClick={toggleTheme}
-              className="grid size-9 place-items-center rounded-full bg-black/20 backdrop-blur-sm transition hover:bg-black/30"
-              aria-label={isDark ? "Switch to Light mode" : "Switch to Dark mode"}
-              title={isDark ? "Light Mode" : "Dark Mode"}
-            >
-              <Icon name={isDark ? "Sun" : "Moon"} className="size-4 text-white" />
-            </button>
             <button
               onClick={() => setDrawerOpen(false)}
               className="md:hidden grid size-9 place-items-center rounded-full bg-black/20 backdrop-blur-sm transition-transform hover:scale-105"
@@ -315,13 +355,6 @@ export function AppShell() {
             <Icon name={soundEnabled ? "Volume2" : "VolumeX"} className="size-4" />
           </button>
           <button
-            onClick={toggleTheme}
-            className="grid size-10 place-items-center rounded-full bg-card border border-border text-[#D97706] shadow-sm hover:bg-[#D97706]/10 transition"
-            title={isDark ? "Light Mode" : "Dark Mode"}
-          >
-            <Icon name={isDark ? "Sun" : "Moon"} className="size-4" />
-          </button>
-          <button
             onClick={() => setBhatiMode(!bhatiMode)}
             className={cn(
               "grid size-10 place-items-center rounded-full border shadow-sm transition",
@@ -348,7 +381,8 @@ export function AppShell() {
   const showHeaderAndNav = !["welcome", "login", "signup", "otp"].includes(screen)
 
   return (
-    <div className={cn("flex min-h-screen w-full transition-colors duration-700", isNightMode ? "bg-[#0e0805] text-[#FFF8F0]" : "bg-background text-foreground")}>
+    <NavigationContext.Provider value={{ navigate, goBack, pushState }}>
+      <div className={cn("flex min-h-screen w-full transition-colors duration-700", isNightMode ? "bg-[#0e0805] text-[#FFF8F0]" : "bg-background text-foreground")}>
       {bhatiMode && <BhatiMode />}
 
       {/* Floating Animated Diyas for Night Darshan Mode */}
@@ -429,16 +463,6 @@ export function AppShell() {
               <div className="flex items-center gap-1.5">
                 {/* Language Toggle — pill style */}
                 <LanguageToggle />
-
-                {/* Dark/Light mode toggle */}
-                <button
-                  onClick={toggleTheme}
-                  className="hidden sm:grid size-9 md:size-10 shrink-0 place-items-center rounded-xl bg-white/20 transition hover:bg-white/30 active:scale-95"
-                  aria-label={isDark ? "Switch to Light mode" : "Switch to Dark mode"}
-                  title={isDark ? "Light Mode" : "Dark Mode"}
-                >
-                  <Icon name={isDark ? "Sun" : "Moon"} className="size-4 text-white" />
-                </button>
 
                 {/* Notifications Bell — notifications only */}
                 <button
@@ -599,6 +623,7 @@ export function AppShell() {
           </aside>
         </div>
       )}
-    </div>
+      </div>
+    </NavigationContext.Provider>
   )
 }

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Icon, Pill, QrMock } from "@/components/shared"
 import { bookings, type Booking, type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 const tabs: { key: Booking["status"]; label: string; labelHi: string }[] = [
   { key: "upcoming", label: "Upcoming", labelHi: "आगामी" },
@@ -16,6 +17,7 @@ const tone = (s: Booking["status"]) =>
   s === "upcoming" ? "success" : s === "completed" ? "orange" : "muted"
 
 export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+  const { goBack } = useNavigation()
   const { t } = useLanguage()
   const [tab, setTab] = useState<Booking["status"]>("upcoming")
   const [cancelId, setCancelId] = useState<string | null>(null)
@@ -23,6 +25,15 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
 
   return (
     <div className="space-y-5 pb-8">
+      {/* Back button */}
+      <button
+        onClick={goBack}
+        className="flex items-center gap-2 text-sm font-bold text-[#6b5440] hover:text-[#D97706]"
+      >
+        <Icon name="ArrowLeft" className="size-4" />
+        {t("components.shared.back", "Back")}
+      </button>
+
       {/* Tabs */}
       <div className="flex rounded-2xl bg-secondary/60 p-1.5 gap-1">
         {tabs.map((tabItem) => (

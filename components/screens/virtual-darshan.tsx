@@ -6,8 +6,10 @@ import Image from "next/image"
 import { Icon } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useAudio } from "@/lib/contexts/AudioContext"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void }) {
+  const { goBack } = useNavigation()
   const { t } = useLanguage()
   const { playTempleBell, soundEnabled } = useAudio()
   const [step, setStep] = useState(1) // 1: Desert, 2: Temple Entrance, 3: Inner Sanctum/Idol
@@ -57,7 +59,7 @@ export function VirtualDarshanScreen({ navigate }: { navigate: (s: any) => void 
       {/* ── Top Header ── */}
       <div className="relative z-20 flex justify-between items-center text-white">
         <button
-          onClick={() => navigate("home")}
+          onClick={goBack}
           className="grid size-10 place-items-center rounded-full bg-black/40 border border-white/10 backdrop-blur-md hover:bg-white/20 active:scale-90 transition"
         >
           <Icon name="X" className="size-5 text-white" />

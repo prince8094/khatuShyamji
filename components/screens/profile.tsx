@@ -20,7 +20,7 @@ type ProfileUser = {
 const menu: { labelKey: string; icon: string; key?: ScreenKey }[] = [
   { labelKey: "navigation.items.bookings", icon: "Ticket", key: "bookings" },
   { labelKey: "navigation.items.notifications", icon: "Bell", key: "notifications" },
-  { labelKey: "navigation.items.help", icon: "CircleHelp", key: "help-support" },
+  { labelKey: "navigation.items.help-support", icon: "CircleHelp", key: "help-support" },
   { labelKey: "navigation.items.temple", icon: "Landmark", key: "temple" },
 ]
 

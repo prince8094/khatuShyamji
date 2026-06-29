@@ -5,8 +5,10 @@ import { motion } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useAudio } from "@/lib/contexts/AudioContext"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 export function BookingSuccessScreen({ navigate }: { navigate: (s: any) => void }) {
+  const { goBack } = useNavigation();
   const { t } = useLanguage()
   const { playTempleBell } = useAudio()
   const [booking, setBooking] = useState<{ id: string; date: string; visitors: number; name: string } | null>(null)
@@ -86,7 +88,7 @@ export function BookingSuccessScreen({ navigate }: { navigate: (s: any) => void 
         </button>
 
         <button
-          onClick={() => navigate("home")}
+          onClick={goBack}
           className="flex w-full items-center justify-center gap-2 rounded-full border border-[#D4AF37]/30 bg-white py-3.5 text-base font-semibold text-[#6b5440] transition hover:bg-[#FFF8F0] active:scale-[0.98]"
         >
           {t("screens.bookingSuccess.goToHome")}

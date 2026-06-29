@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from 'next'
 import { Cinzel, Inter, Noto_Serif_Devanagari } from 'next/font/google'
 import { LanguageProvider } from '@/lib/contexts/LanguageContext'
 import { AudioProvider } from '@/lib/contexts/AudioContext'
-import { ThemeProvider } from '@/lib/contexts/ThemeContext'
 import './globals.css'
 
 const devanagari = Noto_Serif_Devanagari({
@@ -49,14 +48,12 @@ export default function RootLayout({
       className={`${cinzel.variable} ${inter.variable} ${devanagari.variable}`}
     >
       <body suppressHydrationWarning className="bg-background font-sans antialiased text-foreground selection:bg-[#D4AF37] selection:text-[#1A120B]">
-        <ThemeProvider>
-          <LanguageProvider>
-            <AudioProvider>
-              {children}
-              {process.env.NODE_ENV === 'production' && <Analytics />}
-            </AudioProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+        <LanguageProvider>
+          <AudioProvider>
+            {children}
+            {process.env.NODE_ENV === 'production' && <Analytics />}
+          </AudioProvider>
+        </LanguageProvider>
       </body>
     </html>
   )

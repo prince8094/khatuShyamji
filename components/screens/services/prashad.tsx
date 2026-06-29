@@ -46,7 +46,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
   const { t } = useLanguage()
   const [quantities, setQuantities] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0 })
   const [deliveryType, setDeliveryType] = useState<"pickup" | "home">("pickup")
-  const [checkout, setCheckout] = useState(false)
+  const [checkout, setCheckout] = useHistoryState<boolean>("checkout", false)
   const [shippingForm, setShippingForm] = useState({
     name: "",
     phone: "",
@@ -71,7 +71,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
     setOrdered(true)
     setTimeout(() => {
       setOrdered(false)
-      setCheckout(false)
+      goBack()
       setQuantities({ 1: 0, 2: 0, 3: 0 })
       setShippingForm({ name: "", phone: "", address: "", postalCode: "" })
     }, 4000)
@@ -162,7 +162,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
               <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.prashad.bhogOrderCheckout")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t("screens.services.prashad.totalItemsLabel", { totalPrice, totalItemsCount })}</p>
             </div>
-            <button onClick={() => setCheckout(false)} className="text-xs font-bold text-primary hover:underline">
+            <button onClick={goBack} className="text-xs font-bold text-primary hover:underline">
               {t("screens.services.prashad.editCart")}
             </button>
           </div>
@@ -285,4 +285,5 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
       )}
     </div>
   )
-}
+}import { useHistoryState } from "@/lib/hooks/useHistoryState"
+

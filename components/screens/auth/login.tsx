@@ -7,8 +7,10 @@ import { Icon, Om } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useAudio } from "@/lib/contexts/AudioContext"
 import { LanguageToggle } from "@/components/ui/language-toggle"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 export function LoginScreen({ navigate }: { navigate: (s: any) => void }) {
+  const { goBack } = useNavigation();
   const { t } = useLanguage()
   const { playTempleBell } = useAudio()
   const [phone, setPhone] = useState("")
@@ -196,7 +198,7 @@ export function LoginScreen({ navigate }: { navigate: (s: any) => void }) {
           
           {/* Back Button */}
           <button
-            onClick={() => navigate("welcome")}
+            onClick={goBack}
             className="mt-6 flex items-center justify-center gap-2 w-full text-sm font-bold text-[#6b5440] hover:text-[#800000] transition-colors duration-300"
           >
             <Icon name="ArrowLeft" className="size-4" />

@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils"
 import { Icon } from "@/components/shared"
 import type { ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 type Passenger = {
   id: number
@@ -32,6 +33,7 @@ export function PassengerDetailsScreen({
   bookingDate: string | null
 }) {
   const { lang, t, tObject } = useLanguage()
+  const { goBack } = useNavigation()
   const [passengers, setPassengers] = useState<Passenger[]>([emptyPassenger(1)])
   const [mobile, setMobile] = useState("")
   const [email, setEmail] = useState("")
@@ -105,6 +107,15 @@ export function PassengerDetailsScreen({
 
   return (
     <div className="space-y-5 pb-8">
+      {/* Back button */}
+      <button
+        onClick={goBack}
+        className="mb-2 flex items-center gap-1 text-sm font-bold text-[#6b5440] hover:text-[#D97706]"
+      >
+        <Icon name="ArrowLeft" className="size-4" />
+        Back
+      </button>
+
       {/* Booking date banner */}
       {bookingDate && (
         <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-secondary px-4 py-3 text-white shadow-sm">

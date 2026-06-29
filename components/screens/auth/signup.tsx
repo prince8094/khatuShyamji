@@ -7,6 +7,7 @@ import { Icon, Om } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useAudio } from "@/lib/contexts/AudioContext"
 import { LanguageToggle } from "@/components/ui/language-toggle"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 export function SignupScreen({ 
   navigate,
@@ -15,6 +16,7 @@ export function SignupScreen({
   navigate: (s: any) => void
   onSignupSuccess: (user: { name: string; phone: string; initials: string }) => void
 }) {
+  const { goBack } = useNavigation();
   const { t } = useLanguage()
   const { playTempleBell } = useAudio()
   const [name, setName] = useState("")
@@ -252,7 +254,7 @@ export function SignupScreen({
             {/* Link to Login */}
             <button
               type="button"
-              onClick={() => navigate("login")}
+              onClick={goBack}
               className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-100 bg-amber-50/20 py-3.5 text-sm font-bold text-[#6b5440] hover:bg-amber-50 transition active:scale-[0.99]"
             >
               <Icon name="UserCircle2" className="size-5 text-[#800000]" />
@@ -263,7 +265,7 @@ export function SignupScreen({
           
           {/* Back Button */}
           <button
-            onClick={() => navigate("welcome")}
+            onClick={goBack}
             className="mt-6 flex items-center justify-center gap-2 w-full text-sm font-bold text-[#6b5440] hover:text-[#800000] transition-colors duration-300"
           >
             <Icon name="ArrowLeft" className="size-4" />

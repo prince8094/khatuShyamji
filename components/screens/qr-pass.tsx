@@ -7,6 +7,7 @@ import { Icon, QrMock } from "@/components/shared"
 import { cn } from "@/lib/utils"
 import { user, type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 const instructionsEn = [
   "Show this unified E-Pass at the main entry gate.",
@@ -23,6 +24,7 @@ const instructionsHi = [
 ]
 
 export function QrPassScreen({ navigate }: { navigate?: (s: ScreenKey) => void }) {
+  const { goBack } = useNavigation()
   const { lang, t } = useLanguage()
   const [downloadFeedback, setDownloadFeedback] = useState(false)
   const [shareFeedback, setShareFeedback] = useState(false)
@@ -110,15 +112,13 @@ Shri Khatu Shyam Ji Mandir`
   return (
     <div className="space-y-6 pb-8">
       {/* Back to bookings */}
-      {navigate && (
-        <button
-          onClick={() => navigate("bookings")}
-          className="flex items-center gap-2 text-sm font-semibold text-[#6b5440] transition hover:text-[#D97706]"
-        >
+      <button
+        onClick={goBack}
+        className="flex items-center gap-2 text-sm font-semibold text-[#6b5440] transition hover:text-[#D97706]"
+      >
           <Icon name="ArrowLeft" className="size-4" />
           {t("screens.qrPass.backToMyBookings")}
         </button>
-      )}
 
       {/* Premium Official Ticket Card */}
       <motion.section 
