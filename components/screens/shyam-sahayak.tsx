@@ -119,9 +119,25 @@ export function ShyamSahayakScreen({ navigate }: { navigate: (s: ScreenKey) => v
         }
 
         rec.onerror = (e: any) => {
-          // e.error is a string like "aborted", "no-speech", "not-allowed" etc.
+          // e.error is a string like "aborted", "no-speech", "not-allowed", "network" etc.
           const code = e?.error ?? "unknown"
-          if (code !== "aborted") {
+          if (code === "aborted") {
+            // normal stop — ignore silently
+          } else if (code === "network") {
+            // Chrome's SpeechRecognition requires Google's cloud servers (speech.googleapis.com).
+            // This error fires when that service is unreachable (offline, HTTPS required, or blocked).
+            const msg =
+              lang === "hi"
+                ? "वॉयस पहचान उपलब्ध नहीं है। कृपया टेक्स्ट में टाइप करें।"
+                : "Voice recognition unavailable. Please type your question instead."
+            setResponse(msg)
+          } else if (code === "not-allowed") {
+            const msg =
+              lang === "hi"
+                ? "माइक की अनुमति नहीं मिली। ब्राउज़र सेटिंग में माइक चालू करें।"
+                : "Microphone permission denied. Please allow mic access in browser settings."
+            setResponse(msg)
+          } else {
             console.warn("Speech recognition error:", code)
           }
           isRunningRef.current = false
