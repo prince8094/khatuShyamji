@@ -6,6 +6,8 @@ import { cn } from "@/lib/utils"
 import { Icon } from "@/components/shared"
 import { motion } from "framer-motion"
 import { drawerItems, user as staticUser, type ScreenKey, type AppUser } from "@/lib/data"
+import { type AdminUser } from "@/lib/admin-data"
+import { AdminWorkspace } from "@/components/admin/admin-workspace"
 
 // Screen components
 import { HomeScreen } from "@/components/screens/home"
@@ -123,6 +125,7 @@ export function AppShell() {
   const [bookingDate, setBookingDate] = useState<string | null>(null)
   const [showOpening, setShowOpening] = useState(true)
   const [currentUser, setCurrentUser] = useState<AppUser | null>(null)
+  const [adminUser, setAdminUser] = useState<AdminUser | null>(null)
   const [notifCount] = useState(3) // mock unread notifications count
   const [internalHistoryCount, setInternalHistoryCount] = useState(0)
 
@@ -230,6 +233,19 @@ export function AppShell() {
 
   if (showOpening) {
     return <OpeningAnimation onComplete={() => setShowOpening(false)} />
+  }
+
+  // ── Admin Mode: Render the admin workspace instead of user app ──
+  if (adminUser) {
+    return (
+      <AdminWorkspace
+        initialUser={adminUser}
+        onExitAdmin={() => {
+          setAdminUser(null)
+          navigate("welcome")
+        }}
+      />
+    )
   }
 
   const SidebarContent = () => (
@@ -504,7 +520,12 @@ export function AppShell() {
 
         {/* Page Content */}
         <main className={cn("flex-1 w-full max-w-5xl mx-auto px-4 md:px-8", showHeaderAndNav ? "pt-5 pb-24 lg:pb-10" : "")}>
-          {screen === "welcome" && <WelcomeScreen navigate={navigate} />}
+          {screen === "welcome" && (
+            <WelcomeScreen
+              navigate={navigate}
+              onAdminLogin={(user) => setAdminUser(user)}
+            />
+          )}
           {screen === "login" && <LoginScreen navigate={navigate} />}
           {screen === "signup" && (
             <SignupScreen
