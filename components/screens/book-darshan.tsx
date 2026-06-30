@@ -277,7 +277,7 @@ export function BookDarshanScreen({
       </AnimatePresence>
 
       {/* Floating Action Bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 bg-white border-t border-[#E8D5B7] p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe md:static md:bg-transparent md:border-0 md:p-0 md:shadow-none">
+      <div className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-40 bg-white border-t border-[#E8D5B7] p-4 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] md:static md:bg-transparent md:border-0 md:p-0 md:shadow-none md:bottom-auto">
         <button
           disabled={isContinueDisabled}
           onClick={handleContinue}

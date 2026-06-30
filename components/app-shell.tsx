@@ -591,8 +591,8 @@ export function AppShell() {
 
       {/* Mobile Bottom nav */}
       {showHeaderAndNav && (
-        <nav className="lg:hidden fixed inset-x-0 bottom-0 z-30 w-full border-t border-border bg-card/95 backdrop-blur-md pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-          <div className="grid grid-cols-5 h-16">
+        <nav className="lg:hidden fixed inset-x-0 bottom-0 z-50 w-full border-t border-border bg-card/95 backdrop-blur-md pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+          <div className="grid grid-cols-5 h-16 w-full">
             {bottomNav.map((item) => {
               const active = screen === item.key
               return (
@@ -605,7 +605,7 @@ export function AppShell() {
                       navigate(item.key)
                     }
                   }}
-                  className="relative flex flex-col items-center justify-center gap-1 h-full transition-transform active:scale-95"
+                  className="relative flex flex-col items-center justify-center gap-1 h-full w-full min-w-0 px-1 transition-transform active:scale-95"
                   aria-current={active ? "page" : undefined}
                 >
                   {active && (
@@ -613,15 +613,15 @@ export function AppShell() {
                   )}
                   <span
                     className={cn(
-                      "grid size-8 place-items-center rounded-full transition-all duration-300",
+                      "grid size-7 sm:size-8 shrink-0 place-items-center rounded-full transition-all duration-300",
                       active ? "bg-gradient-to-r from-[#D97706] to-[#D4AF37] text-white shadow-lg -translate-y-1" : "text-muted-foreground",
                     )}
                   >
-                    <Icon name={item.icon} className="size-[18px]" />
+                    <Icon name={item.icon} className="size-4 sm:size-[18px]" />
                   </span>
                   <span
                     className={cn(
-                      "text-[10px] font-semibold transition-colors duration-300",
+                      "text-[9px] sm:text-[10px] w-full text-center truncate font-semibold transition-colors duration-300",
                       active ? "text-[#D97706]" : "text-muted-foreground",
                     )}
                   >

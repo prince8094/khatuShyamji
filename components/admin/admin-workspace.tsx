@@ -356,8 +356,8 @@ export function AdminWorkspace({
 
       {/* Mobile Bottom Nav */}
       {showHeaderAndNav && (
-        <nav className="lg:hidden fixed inset-x-0 bottom-0 z-30 w-full border-t border-border bg-card/95 backdrop-blur-md pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-          <div className="grid grid-cols-5 h-14">
+        <nav className="lg:hidden fixed inset-x-0 bottom-0 z-50 w-full border-t border-border bg-card/95 backdrop-blur-md pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+          <div className="grid grid-cols-5 h-14 w-full">
             {[
               { key: "command-center" as AdminScreenKey, icon: "Shield", label: "TOCC" },
               { key: "accommodation" as AdminScreenKey, icon: "BedDouble", label: "Hotels" },
@@ -370,7 +370,7 @@ export function AdminWorkspace({
                 <button
                   key={item.key}
                   onClick={() => navigate(item.key)}
-                  className="relative flex flex-col items-center justify-center gap-0.5 h-full transition-transform active:scale-95"
+                  className="relative flex flex-col items-center justify-center gap-0.5 h-full w-full min-w-0 px-1 transition-transform active:scale-95"
                 >
                   {active && <span className="absolute -top-0.5 w-8 h-1 bg-[#D97706] rounded-b-full" />}
                   <span
@@ -383,7 +383,7 @@ export function AdminWorkspace({
                   </span>
                   <span
                     className={cn(
-                      "text-[9px] font-semibold transition-colors",
+                      "text-[9px] w-full text-center truncate font-semibold transition-colors",
                       active ? "text-[#D97706]" : "text-muted-foreground",
                     )}
                   >
