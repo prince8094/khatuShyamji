@@ -83,7 +83,7 @@ export const services = [
   { key: "shyam-bus", label: "Shyam Bus", hindi: "श्याम बस", icon: "BusFront", desc: "Dedicated pilgrim buses", meta: "Daily", screenKey: "shyam-bus" as const },
   { key: "prashad", label: "Prashad", hindi: "प्रसाद", icon: "ShoppingBag", desc: "Order sacred prasad", meta: "Fresh daily", screenKey: "prashad" as const },
   { key: "donation", label: "Donation", hindi: "दान", icon: "HandCoins", desc: "Support the temple", meta: "Tax receipt", screenKey: "donation" as const },
-  { key: "seva", label: "Seva Booking", hindi: "सेवा बुकिंग", icon: "Heart", desc: "Book special seva & puja", meta: "Book", screenKey: "seva-booking" as const },
+  { key: "seva", label: "Volunteering Services", hindi: "स्वयंसेवक सेवा", icon: "HeartHandshake", desc: "Serve at the temple", meta: "Volunteer", screenKey: "seva-booking" as const },
   { key: "offerings", label: "Offerings", hindi: "भेंट", icon: "Gift", desc: "Flowers, coconut & more", meta: "Counter 2", screenKey: "offerings" as const },
   { key: "emergency", label: "Emergency Helpline", hindi: "आपातकालीन हेल्पलाइन", icon: "Siren", desc: "24/7 medical & police help", meta: "Dial 112", screenKey: "emergency" as const },
   { key: "parking", label: "Parking Info", hindi: "पार्किंग जानकारी", icon: "SquareParking", desc: "Find spot availability", meta: "Live", screenKey: "parking" as const },

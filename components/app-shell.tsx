@@ -87,7 +87,7 @@ const titles: Record<ScreenKey, { en: string; hi: string }> = {
   "shyam-bus": { en: "Shyam Bus", hi: "श्याम बस" },
   prashad: { en: "Prashad", hi: "प्रसाद" },
   donation: { en: "Donation", hi: "दान" },
-  "seva-booking": { en: "Seva Booking", hi: "सेवा बुकिंग" },
+  "seva-booking": { en: "Volunteering Services", hi: "स्वयंसेवक सेवा" },
   offerings: { en: "Offerings", hi: "भेंट" },
   "aarti-timings": { en: "Aarti Timings", hi: "आरती का समय" },
 }
