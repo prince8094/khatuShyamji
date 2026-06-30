@@ -4,6 +4,7 @@ import Image from "next/image"
 import { Icon, Ornament, SectionTitle, StatusDot } from "@/components/shared"
 import { aartiTimings, liveStatus, services, user, type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { AnnouncementBanner } from "@/components/features/announcement-banner"
 
 const quickActions: { key: ScreenKey; icon: string }[] = [
   { key: "bookings", icon: "Ticket" },
@@ -75,6 +76,9 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
           </button>
         </div>
       </section>
+
+      {/* Announcements */}
+      <AnnouncementBanner />
 
       {/* Primary CTA */}
       <button
@@ -203,18 +207,6 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
         </div>
       </section>
 
-      {/* Notice */}
-      <section className="flex items-start gap-3 rounded-2xl border border-[#FFE0B2] bg-[#FFF8E7] p-4">
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-[#FF8C00] text-white">
-          <Icon name="Megaphone" className="size-5" />
-        </span>
-        <div>
-          <p className="font-heading text-sm font-bold text-[#8a4b12]">{t("home.notice.title")}</p>
-          <p className="mt-0.5 text-sm leading-relaxed text-[#8a5a22]">
-            {t("home.notice.text")}
-          </p>
-        </div>
-      </section>
     </div>
   )
 }
