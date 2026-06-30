@@ -8,7 +8,7 @@ import { useNavigation } from "@/lib/contexts/NavigationContext"
 import type { ScreenKey } from "@/lib/data"
 import { useHistoryState } from "@/lib/hooks/useHistoryState"
 
-
+ 
 
 const prashadItems = [
   {
@@ -47,6 +47,7 @@ const prashadItems = [
 ]
 
 export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+ 
   const { t } = useLanguage()
   const { goBack } = useNavigation()
   const [quantities, setQuantities] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0 })

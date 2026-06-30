@@ -6,8 +6,6 @@ import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 
-
-
 export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
   const { t, tObject } = useLanguage()
   const foundItems: any[] = tObject("screens.lostFound.foundItemsList") || []
@@ -19,13 +17,24 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
     date: "",
     location: "",
     phone: "",
-    color: "",
+    imageName: "",
   })
+
+  const [imagePreview, setImagePreview] = useState<string | null>(null)
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0]
+      setForm(prev => ({ ...prev, imageName: file.name }))
+      setImagePreview(URL.createObjectURL(file))
+    }
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setSubmitted(true)
-    setForm({ itemName: "", description: "", date: "", location: "", phone: "", color: "" })
+    setForm({ itemName: "", description: "", date: "", location: "", phone: "", imageName: "" })
+    setImagePreview(null)
     setTimeout(() => setSubmitted(false), 5000)
   }
 
@@ -54,7 +63,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
       </section>
 
       {/* Tabs */}
-      <div className="flex rounded-2xl bg-secondary/60 p-1.5 gap-1">
+      <div className="flex rounded-2xl bg-secondary/60 p-1.5 gap-1 shadow-inner">
         <button
           onClick={() => setActiveTab("found")}
           className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all duration-200 ${
@@ -127,7 +136,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
       {/* Report Lost Item Form */}
       {activeTab === "report" && (
         <div className="space-y-4">
-          <AnimatePresence>
+          <AnimatePresence mode="wait">
             {submitted ? (
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -145,39 +154,59 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
                 </p>
               </motion.div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-3">
+              <form onSubmit={handleSubmit} className="space-y-3.5">
                 <div className="rounded-2xl bg-primary/5 border border-primary/20 px-4 py-3">
-                  <p className="text-xs text-foreground font-medium">
-                    {t("screens.lostFound.fillInAsManyDetailsAsPossibleOurSecurityT")}
+                  <p className="text-xs text-[#6b5440] font-semibold leading-relaxed">
+                    Provide clear item identification markers below. Submissions sync directly to security desks.
                   </p>
                 </div>
 
+                {/* Item Name */}
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.itemName")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.itemName")} *</label>
                   <input
                     type="text"
                     required
                     placeholder={t("screens.lostFound.egBlueWalletGoldRing")}
                     value={form.itemName}
                     onChange={e => setForm({ ...form, itemName: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-card p-3 text-sm font-semibold focus:border-primary focus:outline-none"
                   />
                 </div>
+
+                {/* Description of item */}
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.colorDescription")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">Description *</label>
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="Enter color, brand, markings, contents or unique features..."
+                    value={form.description}
+                    onChange={e => setForm({ ...form, description: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-card p-3 text-sm font-semibold focus:border-primary focus:outline-none resize-none"
+                  />
+                </div>
+
+                {/* Phone Number */}
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.yourPhoneNumber")} *</label>
                   <input
-                    type="text"
+                    type="tel"
                     required
-                    placeholder={t("screens.lostFound.colorBrandSizeMarkings")}
-                    value={form.color}
-                    onChange={e => setForm({ ...form, color: e.target.value })}
+                    placeholder="+91 XXXXX XXXXX"
+                    value={form.phone}
+                    onChange={e => setForm({ ...form, phone: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-card p-3 text-sm font-semibold focus:border-primary focus:outline-none"
                   />
                 </div>
+
+                {/* Location - Optional */}
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.whereWasItLost")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.whereWasItLost")} (Optional)</label>
                   <select
-                    required
                     value={form.location}
                     onChange={e => setForm({ ...form, location: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-card p-3 text-sm font-semibold focus:border-primary focus:outline-none"
                   >
                     <option value="">{t("screens.lostFound.selectLocation")}</option>
                     {["Main Sanctum", "Queue Complex", "Prasad Counter", "Parking Lot A", "Parking Lot B", "Gate 1", "Gate 2", "Gate 3", "Shyam Kund", "Other"].map(l => (
@@ -185,34 +214,51 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
                     ))}
                   </select>
                 </div>
+
+                {/* Date - Optional */}
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.dateOfLoss")}</label>
+                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.dateOfLoss")} (Optional)</label>
                   <input
                     type="date"
-                    required
                     value={form.date}
                     onChange={e => setForm({ ...form, date: e.target.value })}
+                    className="w-full rounded-xl border border-border bg-card p-3 text-sm font-semibold focus:border-primary focus:outline-none"
                   />
                 </div>
+
+                {/* Item Image - Optional */}
                 <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.yourPhoneNumber")}</label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="+91 XXXXX XXXXX"
-                    value={form.phone}
-                    onChange={e => setForm({ ...form, phone: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.lostFound.additionalDetails")}</label>
-                  <textarea
-                    rows={2}
-                    placeholder={t("screens.lostFound.anyOtherHelpfulDetails")}
-                    value={form.description}
-                    onChange={e => setForm({ ...form, description: e.target.value })}
-                    className="resize-none"
-                  />
+                  <label className="block text-xs font-bold text-foreground mb-1.5">Item Image (Optional)</label>
+                  <div className="relative border-2 border-dashed border-border rounded-2xl p-4 text-center bg-muted/20 hover:bg-muted/40 transition">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                    />
+                    <div className="space-y-1">
+                      <Icon name="Camera" className="size-6 text-muted-foreground mx-auto" />
+                      <p className="text-xs text-muted-foreground font-semibold">
+                        {form.imageName ? `Selected: ${form.imageName}` : "Click to select or capture item photo"}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground">Supported: JPG, PNG (Max 5MB)</p>
+                    </div>
+                  </div>
+                  {imagePreview && (
+                    <div className="mt-3.5 relative size-24 rounded-xl border overflow-hidden">
+                      <img src={imagePreview} alt="Preview" className="size-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setForm(prev => ({ ...prev, imageName: "" }))
+                          setImagePreview(null)
+                        }}
+                        className="absolute top-1 right-1 grid size-5 place-items-center rounded-full bg-black/60 text-white"
+                      >
+                        <Icon name="X" className="size-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <button

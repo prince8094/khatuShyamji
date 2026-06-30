@@ -8,27 +8,83 @@ import type { ScreenKey } from "@/lib/data"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 
+type GroupMember = {
+  id: number
+  name: string
+  age: string
+  gender: string
+}
+
+const emptyMember = (id: number): GroupMember => ({
+  id,
+  name: "",
+  age: "",
+  gender: "",
+})
+
 export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
   const { goBack } = useNavigation()
   const { t } = useLanguage()
+  
+  // Default to 7 members as the minimum constraint
+  const [members, setMembers] = useState<GroupMember[]>(() =>
+    Array.from({ length: 7 }, (_, i) => emptyMember(i + 1))
+  )
+  
   const [formData, setFormData] = useState({
     groupName: "",
     leaderName: "",
     leaderPhone: "",
-    totalPassengers: 7,
     specialRequirements: "",
   })
+  
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
+  const updateMember = (id: number, field: keyof GroupMember, value: string) => {
+    setMembers((prev) =>
+      prev.map((m) => (m.id === id ? { ...m, [field]: value } : m))
+    )
+    setErrors((prev) => {
+      const next = { ...prev }
+      delete next[`member-${id}-${field}`]
+      return next
+    })
+  }
+
+  const addMember = () => {
+    const newId = members.length > 0 ? Math.max(...members.map((m) => m.id)) + 1 : 1
+    setMembers((prev) => [...prev, emptyMember(newId)])
+  }
+
+  const removeMember = (id: number) => {
+    if (members.length <= 7) {
+      alert("A minimum of 7 group members is required for a Group Pass.")
+      return
+    }
+    setMembers((prev) => prev.filter((m) => m.id !== id))
+  }
+
   const validate = () => {
     const newErrors: Record<string, string> = {}
-    if (!formData.groupName) newErrors.groupName = t("screens.groupBooking.groupNameIsRequired")
-    if (!formData.leaderName) newErrors.leaderName = t("screens.groupBooking.leaderNameIsRequired")
-    if (!formData.leaderPhone) newErrors.leaderPhone = t("screens.groupBooking.phoneNumberIsRequired")
+    if (!formData.groupName.trim()) newErrors.groupName = t("screens.groupBooking.groupNameIsRequired")
+    if (!formData.leaderName.trim()) newErrors.leaderName = t("screens.groupBooking.leaderNameIsRequired")
+    if (!formData.leaderPhone.trim()) newErrors.leaderPhone = t("screens.groupBooking.phoneNumberIsRequired")
     else if (!/^\d{10}$/.test(formData.leaderPhone)) newErrors.leaderPhone = t("screens.groupBooking.invalidPhoneNumber")
-    if (formData.totalPassengers < 7) newErrors.totalPassengers = t("screens.groupBooking.minimum7PassengersRequired")
     
+    // Validate all members details
+    members.forEach((m, idx) => {
+      if (!m.name.trim()) {
+        newErrors[`member-${m.id}-name`] = `Devotee ${idx + 1} Name is required`
+      }
+      if (!m.age.trim()) {
+        newErrors[`member-${m.id}-age`] = `Devotee ${idx + 1} Age is required`
+      }
+      if (!m.gender.trim()) {
+        newErrors[`member-${m.id}-gender`] = `Devotee ${idx + 1} Gender is required`
+      }
+    })
+
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
   }
@@ -44,15 +100,17 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
         id: newBookingId,
         date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
         day: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
-        visitors: formData.totalPassengers,
+        visitors: members.length,
         name: formData.groupName,
         leaderName: formData.leaderName,
         phone: formData.leaderPhone,
+        members: members,
         status: "upcoming" as const
       }
       
       // Save latest booking for immediate view
       localStorage.setItem("latest_booking", JSON.stringify(newBooking))
+      localStorage.setItem("booking_devotees_count", String(members.length))
       
       // Append to the list of bookings
       try {
@@ -110,34 +168,12 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
               onChange={(e) => setFormData(f => ({ ...f, groupName: e.target.value }))}
               className={cn(
                 "w-full rounded-xl border border-[#E8D5B7] bg-white py-3.5 px-4 text-sm font-semibold text-[#1A120B] shadow-sm outline-none transition focus:border-[#D97706] focus:ring-4 focus:ring-[#D97706]/10",
-                errors.groupName && "border-red-400 focus:border-red-500 focus:ring-red-500/10"
+                errors.groupName && "border-red-400 focus:border-red-500"
               )}
             />
             <AnimatePresence>
               {errors.groupName && (
                 <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-1 text-xs text-red-500">{errors.groupName}</motion.p>
-              )}
-            </AnimatePresence>
-          </div>
-
-          {/* Total Passengers */}
-          <div>
-            <label className="mb-1.5 block text-xs font-bold text-[#6b5440] uppercase tracking-wider">
-              {t("screens.groupBooking.totalPassengers")}
-            </label>
-            <input
-              type="number"
-              min={7}
-              value={formData.totalPassengers}
-              onChange={(e) => setFormData(f => ({ ...f, totalPassengers: Number(e.target.value) }))}
-              className={cn(
-                "w-full rounded-xl border border-[#E8D5B7] bg-white py-3.5 px-4 text-sm font-semibold text-[#1A120B] shadow-sm outline-none transition focus:border-[#D97706] focus:ring-4 focus:ring-[#D97706]/10",
-                errors.totalPassengers && "border-red-400 focus:border-red-500 focus:ring-red-500/10"
-              )}
-            />
-            <AnimatePresence>
-              {errors.totalPassengers && (
-                <motion.p initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="mt-1 text-xs text-red-500">{errors.totalPassengers}</motion.p>
               )}
             </AnimatePresence>
           </div>
@@ -163,7 +199,7 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
               onChange={(e) => setFormData(f => ({ ...f, leaderName: e.target.value }))}
               className={cn(
                 "w-full rounded-xl border border-[#E8D5B7] bg-white py-3.5 px-4 text-sm font-semibold text-[#1A120B] shadow-sm outline-none transition focus:border-[#D97706] focus:ring-4 focus:ring-[#D97706]/10",
-                errors.leaderName && "border-red-400 focus:border-red-500 focus:ring-red-500/10"
+                errors.leaderName && "border-red-400 focus:border-red-500"
               )}
             />
             <AnimatePresence>
@@ -190,7 +226,7 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                 maxLength={10}
                 className={cn(
                   "w-full rounded-xl border border-[#E8D5B7] bg-white py-3.5 pl-16 pr-4 text-sm font-semibold text-[#1A120B] shadow-sm outline-none transition focus:border-[#D97706] focus:ring-4 focus:ring-[#D97706]/10",
-                  errors.leaderPhone && "border-red-400 focus:border-red-500 focus:ring-red-500/10"
+                  errors.leaderPhone && "border-red-400 focus:border-red-500"
                 )}
               />
             </div>
@@ -200,6 +236,95 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
               )}
             </AnimatePresence>
           </div>
+
+          <div className="my-6 border-t border-dashed border-[#E8D5B7]" />
+
+          <h3 className="font-heading text-lg font-bold text-[#1A120B] flex items-center gap-2">
+            <span className="grid size-8 place-items-center rounded-full bg-[#D97706]/10 text-[#D97706]">
+              <Icon name="Users" className="size-4" />
+            </span>
+            Devotees Roster Details (Min 7 Required)
+          </h3>
+
+          {/* Devotees List Cards */}
+          <div className="space-y-4">
+            {members.map((m, idx) => (
+              <div key={m.id} className="rounded-2xl border border-[#E8D5B7] bg-[#FFF8F0]/30 p-4 space-y-3 relative">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-extrabold text-[#D97706] uppercase tracking-wider">Devotee #{idx + 1}</span>
+                  {members.length > 7 && (
+                    <button
+                      type="button"
+                      onClick={() => removeMember(m.id)}
+                      className="text-xs text-red-500 hover:text-red-700 font-bold flex items-center gap-1"
+                    >
+                      <Icon name="Trash2" className="size-3.5" /> Remove
+                    </button>
+                  )}
+                </div>
+
+                {/* Name */}
+                <div>
+                  <label className="block text-[10px] font-bold text-[#6b5440] uppercase mb-1">Full Name</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Full name as in Govt ID"
+                    value={m.name}
+                    onChange={(e) => updateMember(m.id, "name", e.target.value)}
+                    className={cn(
+                      "w-full rounded-lg border border-[#E8D5B7] bg-white py-2 px-3 text-xs font-semibold text-[#1A120B] outline-none",
+                      errors[`member-${m.id}-name`] && "border-red-400"
+                    )}
+                  />
+                </div>
+
+                {/* Age & Gender */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#6b5440] uppercase mb-1">Age</label>
+                    <input
+                      type="number"
+                      required
+                      placeholder="Age"
+                      min={0}
+                      max={120}
+                      value={m.age}
+                      onChange={(e) => updateMember(m.id, "age", e.target.value)}
+                      className={cn(
+                        "w-full rounded-lg border border-[#E8D5B7] bg-white py-2 px-3 text-xs font-semibold text-[#1A120B] outline-none",
+                        errors[`member-${m.id}-age`] && "border-red-400"
+                      )}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#6b5440] uppercase mb-1">Gender</label>
+                    <select
+                      value={m.gender}
+                      onChange={(e) => updateMember(m.id, "gender", e.target.value)}
+                      className={cn(
+                        "w-full rounded-lg border border-[#E8D5B7] bg-white py-2 px-3 text-xs font-semibold text-[#1A120B] outline-none",
+                        errors[`member-${m.id}-gender`] && "border-red-400"
+                      )}
+                    >
+                      <option value="">Select</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            onClick={addMember}
+            className="flex items-center gap-1.5 rounded-xl border border-dashed border-[#D97706] text-[#D97706] hover:bg-[#FFF3E0]/30 w-full justify-center py-3.5 font-bold text-xs transition"
+          >
+            <Icon name="UserPlus" className="size-4" /> Add Devotee Member
+          </button>
 
           <div className="my-6 border-t border-dashed border-[#E8D5B7]" />
 
@@ -232,7 +357,7 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
           </>
         ) : (
           <>
-            {t("screens.groupBooking.confirmGroupBooking")}
+            Register Group Booking ({members.length} Devotees)
             <Icon name="ArrowRight" className="size-5" />
           </>
         )}

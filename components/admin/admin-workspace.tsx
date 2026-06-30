@@ -47,15 +47,15 @@ const screenTitles: Record<Exclude<AdminScreenKey, "admin-login">, string> = {
 // Sidebar menu items
 const sidebarItems: { key: AdminScreenKey; icon: string; label: string; group: string }[] = [
   { key: "command-center", icon: "Shield", label: "Command Center", group: "Operations" },
-  { key: "accommodation", icon: "BedDouble", label: "Accommodation", group: "Management" },
-  { key: "parking-management", icon: "SquareParking", label: "Parking", group: "Management" },
-  { key: "traffic-ops", icon: "TrafficCone", label: "Traffic", group: "Management" },
-  { key: "lost-found-admin", icon: "PackageSearch", label: "Lost & Found", group: "Management" },
-  { key: "seva-management", icon: "Heart", label: "Seva", group: "Management" },
-  { key: "temple-info-admin", icon: "Landmark", label: "Temple Info", group: "Management" },
-  { key: "donation-management", icon: "HandCoins", label: "Donations", group: "Management" },
-  { key: "emergency-ops", icon: "Siren", label: "Emergency", group: "Management" },
-  { key: "notifications-admin", icon: "Bell", label: "Notifications", group: "System" },
+  { key: "parking-management", icon: "SquareParking", label: "Parking", group: "Operations" },
+  { key: "traffic-ops", icon: "TrafficCone", label: "Traffic", group: "Operations" },
+  { key: "emergency-ops", icon: "Siren", label: "Emergency", group: "Operations" },
+  { key: "accommodation", icon: "BedDouble", label: "Accommodation", group: "Services" },
+  { key: "seva-management", icon: "Heart", label: "Seva", group: "Services" },
+  { key: "temple-info-admin", icon: "Landmark", label: "Temple Info", group: "Services" },
+  { key: "donation-management", icon: "HandCoins", label: "Donations", group: "Services" },
+  { key: "notifications-admin", icon: "Bell", label: "Notifications", group: "Communication" },
+  { key: "lost-found-admin", icon: "PackageSearch", label: "Lost & Found", group: "Communication" },
   { key: "admin-management", icon: "Users", label: "Admin Users", group: "System" },
   { key: "approval-queue", icon: "ClipboardCheck", label: "Approvals", group: "System" },
 ]
@@ -100,7 +100,6 @@ export function AdminWorkspace({
       parking: ["parking-management"],
       traffic: ["traffic-ops"],
       "lost-found": ["lost-found-admin"],
-      seva: ["seva-management"],
       "temple-info": ["temple-info-admin"],
       donation: ["donation-management"],
       emergency: ["emergency-ops"],
@@ -119,7 +118,7 @@ export function AdminWorkspace({
   const showHeaderAndNav = screen !== "role-hub"
 
   // Group menu items
-  const groups = ["Operations", "Management", "System"]
+  const groups = ["Operations", "Services", "Communication", "System"]
   const groupedItems = groups
     .map((g) => ({ group: g, items: menuItems.filter((i) => i.group === g) }))
     .filter((g) => g.items.length > 0)
@@ -341,11 +340,11 @@ export function AdminWorkspace({
         <main className={cn("flex-1 w-full max-w-5xl mx-auto px-4 md:px-8", showHeaderAndNav ? "pt-5 pb-24 lg:pb-8" : "")}>
           {screen === "command-center" && <CommandCenterScreen navigate={navigate} />}
           {screen === "accommodation" && <AccommodationScreen navigate={navigate} />}
-          {screen === "parking-management" && <ParkingManagementScreen navigate={navigate} />}
+          {screen === "parking-management" && <ParkingManagementScreen navigate={navigate} currentAdmin={currentAdmin} />}
           {screen === "traffic-ops" && <TrafficOpsScreen navigate={navigate} />}
           {screen === "lost-found-admin" && <LostFoundAdminScreen navigate={navigate} />}
           {screen === "seva-management" && <SevaManagementScreen navigate={navigate} />}
-          {screen === "temple-info-admin" && <TempleInfoAdminScreen navigate={navigate} />}
+          {screen === "temple-info-admin" && <TempleInfoAdminScreen navigate={navigate} currentAdmin={currentAdmin} />}
           {screen === "donation-management" && <DonationManagementScreen navigate={navigate} />}
           {screen === "emergency-ops" && <EmergencyOpsScreen navigate={navigate} />}
           {screen === "notifications-admin" && <NotificationsAdminScreen navigate={navigate} />}
