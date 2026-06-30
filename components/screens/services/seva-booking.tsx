@@ -1,7 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Icon } from "@/components/shared"
+import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 import { motion, AnimatePresence } from "framer-motion"
@@ -121,6 +122,40 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  // Calendar States & Constants
+  const [showCalendar, setShowCalendar] = useState(false)
+  const [calendarMonth, setCalendarMonth] = useState(5) // Start in June
+  const calendarYear = 2026
+
+  const todayDay = 30
+  const todayMonth = 5 // June (0-indexed)
+  const todayYear = 2026
+
+  const MONTHS = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December",
+  ]
+  const WEEKDAYS = ["S", "M", "T", "W", "T", "F", "S"]
+
+  const days = useMemo(() => {
+    const first = new Date(calendarYear, calendarMonth, 1).getDay()
+    const total = new Date(calendarYear, calendarMonth + 1, 0).getDate()
+    const cells: (number | null)[] = Array.from({ length: first }, () => null)
+    for (let d = 1; d <= total; d++) cells.push(d)
+    return cells
+  }, [calendarMonth])
+
+  const handleSelectDate = (day: number) => {
+    const formattedDate = `${day.toString().padStart(2, "0")}/${(calendarMonth + 1).toString().padStart(2, "0")}/${calendarYear}`
+    setPreferredDate(formattedDate)
+    setShowCalendar(false)
+    setErrors((prev) => {
+      const next = { ...prev }
+      delete next.preferredDate
+      return next
+    })
+  }
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -538,20 +573,115 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
 
                   {/* Preferred Date & Time Slot */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
+                    <div className="relative">
                       <label className="mb-1 block text-xs font-bold text-[#8a5a22] uppercase tracking-wider">
                         {lang === "hi" ? "पसंदीदा तारीख" : "Preferred Date"} *
                       </label>
-                      <input
+                      <button
                         id="preferredDate"
-                        name="preferredDate"
+                        type="button"
                         disabled={isSubmitting}
-                        type="date"
-                        value={preferredDate}
-                        onChange={(e) => setPreferredDate(e.target.value)}
-                        className={errors.preferredDate ? "!border-red-400" : ""}
-                      />
+                        onClick={() => setShowCalendar(!showCalendar)}
+                        className={cn(
+                          "w-full rounded-2xl border bg-card px-4 py-2.5 text-left text-sm font-semibold transition flex items-center justify-between",
+                          errors.preferredDate ? "border-red-400" : "border-muted",
+                          preferredDate ? "text-foreground" : "text-muted-foreground"
+                        )}
+                      >
+                        <span>
+                          {preferredDate 
+                            ? preferredDate 
+                            : (lang === "hi" ? "तारीख चुनें" : "Select Date")}
+                        </span>
+                        <Icon name="Calendar" className="size-4 text-primary" />
+                      </button>
                       {errors.preferredDate && <p className="mt-1 text-xs text-red-500">{errors.preferredDate}</p>}
+
+                      <AnimatePresence>
+                        {showCalendar && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden mt-2 rounded-2xl border border-[#D4AF37]/30 bg-white p-3 shadow-inner space-y-3"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[11px] font-bold text-[#8a5a22]">
+                                {lang === "hi" ? "कैलेंडर" : "Calendar"}
+                              </span>
+                              <div className="flex items-center gap-1.5 rounded-full border border-[#E8D5B7] bg-[#FFF8F0] px-2 py-0.5 shadow-sm">
+                                <button
+                                  type="button"
+                                  onClick={() => setCalendarMonth((m) => Math.max(5, m - 1))}
+                                  className="grid size-6 place-items-center rounded-full text-[#D97706] hover:bg-white disabled:opacity-30"
+                                  disabled={calendarMonth <= 5}
+                                >
+                                  <Icon name="ChevronLeft" className="size-3.5" />
+                                </button>
+                                <span className="font-heading text-[11px] font-bold text-[#1A120B] w-20 text-center select-none">
+                                  {MONTHS[calendarMonth]} {calendarYear}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => setCalendarMonth((m) => Math.min(7, m + 1))}
+                                  className="grid size-6 place-items-center rounded-full text-[#D97706] hover:bg-white disabled:opacity-30"
+                                  disabled={calendarMonth >= 7}
+                                >
+                                  <Icon name="ChevronRight" className="size-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="grid grid-cols-7 text-center mb-1 border-b border-[#E8D5B7] pb-1">
+                              {WEEKDAYS.map((d, i) => (
+                                <span key={i} className="text-[9px] font-bold text-[#6b5440] uppercase">
+                                  {d}
+                                </span>
+                              ))}
+                            </div>
+
+                            <div className="grid grid-cols-7 gap-1">
+                              {days.map((d, i) => {
+                                if (d === null) return <span key={i} />
+                                
+                                let isPast = false
+                                if (calendarYear < todayYear) {
+                                  isPast = true
+                                } else if (calendarYear === todayYear) {
+                                  if (calendarMonth < todayMonth) {
+                                    isPast = true
+                                  } else if (calendarMonth === todayMonth) {
+                                    isPast = d < todayDay
+                                  }
+                                }
+
+                                const formattedCheck = `${d.toString().padStart(2, "0")}/${(calendarMonth + 1).toString().padStart(2, "0")}/${calendarYear}`
+                                const isSel = preferredDate === formattedCheck
+
+                                return (
+                                  <button
+                                    key={i}
+                                    type="button"
+                                    disabled={isPast}
+                                    onClick={() => handleSelectDate(d)}
+                                    className={cn(
+                                      "relative grid aspect-square place-items-center rounded-xl font-heading text-xs font-bold transition-all duration-200",
+                                      isSel && "bg-gradient-to-br from-[#D97706] to-[#D4AF37] text-white shadow-sm scale-105 z-10",
+                                      !isSel && !isPast && "bg-transparent text-[#1A120B] border border-transparent hover:border-[#D4AF37]/40 hover:bg-[#FFF8F0]",
+                                      isPast && "text-[#6b5440]/30 cursor-not-allowed"
+                                    )}
+                                  >
+                                    {d}
+                                    {d === todayDay && calendarMonth === todayMonth && !isSel && (
+                                      <span className="absolute bottom-1.5 size-1 rounded-full bg-[#D4AF37]" />
+                                    )}
+                                  </button>
+                                )
+                              })}
+                            </div>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
                     </div>
 
                     <div>
