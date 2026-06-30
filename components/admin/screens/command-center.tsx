@@ -1,33 +1,34 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import {
   StatusWidget,
   AdminSectionTitle,
-  QuickAction,
-  ActivityItem,
   LiveDot,
   AlertBanner,
   MetricCard,
   ProgressBar,
+  ActivityItem,
 } from "@/components/admin/admin-shared"
 import { commandCenterData, activityFeed, type AdminScreenKey } from "@/lib/admin-data"
 
-export function CommandCenterScreen({
-  navigate,
-}: {
-  navigate: (s: AdminScreenKey) => void
-}) {
-  const [showAlert, setShowAlert] = useState(true)
+export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
   const [liveTime, setLiveTime] = useState("")
+  
+  // High-Level Command Overrides States
+  const [isEmergencyMode, setIsEmergencyMode] = useState(false)
+  const [isDarshanClosed, setIsDarshanClosed] = useState(false)
+  const [isGlobalAlarm, setIsGlobalAlarm] = useState(false)
+  
+  const [activityLogs, setActivityLogs] = useState<any[]>(activityFeed)
 
   useEffect(() => {
     const update = () => {
       const now = new Date()
       setLiveTime(
-        now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true }),
+        now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })
       )
     }
     update()
@@ -37,65 +38,160 @@ export function CommandCenterScreen({
 
   const d = commandCenterData
   const parkingPct = Math.round((d.parking.occupied / d.parking.totalCapacity) * 100)
+  const hotelsPct = Math.round((d.hotels.occupied / d.hotels.totalRooms) * 100)
+
+  const toggleEmergencyMode = () => {
+    const nextState = !isEmergencyMode
+    setIsEmergencyMode(nextState)
+    
+    // Log command override
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
+    setActivityLogs(prev => [
+      {
+        id: `ACT-${Date.now()}`,
+        time: timeStr,
+        action: `[CRITICAL CONTROL] Emergency Mode toggled to ${nextState ? "ACTIVE" : "INACTIVE"}`,
+        department: "emergency",
+        actor: "Nand Kumar",
+        icon: "Siren",
+      },
+      ...prev,
+    ])
+  }
+
+  const toggleCloseDarshan = () => {
+    const nextState = !isDarshanClosed
+    setIsDarshanClosed(nextState)
+
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
+    setActivityLogs(prev => [
+      {
+        id: `ACT-${Date.now()}`,
+        time: timeStr,
+        action: `[SYSTEM ACTION] Main Shrine Darshan gates toggled to ${nextState ? "CLOSED" : "OPEN"}`,
+        department: "super-admin",
+        actor: "Nand Kumar",
+        icon: "DoorClosed",
+      },
+      ...prev,
+    ])
+  }
+
+  const toggleGlobalAlarm = () => {
+    const nextState = !isGlobalAlarm
+    setIsGlobalAlarm(nextState)
+
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
+    setActivityLogs(prev => [
+      {
+        id: `ACT-${Date.now()}`,
+        time: timeStr,
+        action: `[CRITICAL ALERT] Global Alarm broadcast toggled to ${nextState ? "ACTIVE" : "OFF"}`,
+        department: "super-admin",
+        actor: "Nand Kumar",
+        icon: "Megaphone",
+      },
+      ...prev,
+    ])
+  }
 
   return (
     <div className="space-y-5 pb-6">
-      {/* Emergency Alert Banner */}
-      {showAlert && d.emergencyAlerts === 0 && (
-        <AlertBanner
-          type="info"
-          message="All systems operational. No active emergencies."
-          onDismiss={() => setShowAlert(false)}
-        />
-      )}
+      {/* Alert Overrides Banner display */}
+      <AnimatePresence>
+        {isEmergencyMode && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-3 rounded-2xl bg-red-600 text-white px-4 py-3 shadow-md animate-pulse border border-red-700"
+          >
+            <Icon name="Siren" className="size-5 shrink-0 text-white" />
+            <p className="flex-1 text-xs font-extrabold tracking-wide">
+              🚨 SYSTEM OVERRIDE: Emergency Mode Active. Dispatch coordination channels locked. Devotee apps showing SOS guidelines.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      {/* Festival Mode Banner */}
-      {d.festivalMode && (
-        <AlertBanner
-          type="warning"
-          message="🎊 Festival Mode Active — Extended darshan hours & extra security deployed"
-        />
-      )}
+      <AnimatePresence>
+        {isDarshanClosed && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-3 rounded-2xl bg-amber-500 text-white px-4 py-3 shadow-md border border-amber-600"
+          >
+            <Icon name="DoorClosed" className="size-5 shrink-0 text-white" />
+            <p className="flex-1 text-xs font-extrabold tracking-wide">
+              ⚠️ DARSHAN TEMPORARILY CLOSED: Gates 1, 2, and 3 are offline. Booking passes frozen. Live feeds update dispatched to Pilgrim app.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isGlobalAlarm && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-3 rounded-2xl bg-orange-600 text-white px-4 py-3 shadow-md border border-orange-700"
+          >
+            <Icon name="Megaphone" className="size-5 shrink-0 text-white" />
+            <p className="flex-1 text-xs font-extrabold tracking-wide">
+              📢 GLOBAL ALARM BROADCAST ACTIVE: Critical safety notification pushed to all device tokens.
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Live Clock Bar */}
       <div className="flex items-center justify-between rounded-2xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] px-4 py-3 text-white shadow-md">
         <div className="flex items-center gap-2">
           <LiveDot color="bg-white" />
-          <span className="text-sm font-bold">LIVE</span>
-          <span className="text-xs text-white/80 ml-1">Temple Operations Command Center</span>
+          <span className="text-sm font-bold">TOCC COMMAND CONSOLE</span>
+          <span className="text-xs text-white/85 ml-1 hidden sm:inline">Khatu Dham Operations</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 bg-black/10 px-3 py-1 rounded-lg border border-white/10">
           <Icon name="Clock" className="size-4 text-white/80" />
           <span className="font-mono text-sm font-bold tabular-nums">{liveTime}</span>
         </div>
       </div>
 
-      {/* Live Status Grid */}
+      {/* Live Overview Cards */}
       <section>
-        <AdminSectionTitle title="Live Overview" icon="Activity" action={
-          <span className="text-[11px] font-semibold text-green-600 flex items-center gap-1.5">
-            <LiveDot color="bg-green-500" size="sm" /> Real-time
-          </span>
-        } />
+        <AdminSectionTitle
+          title="Command Operations Feed (Read-Only)"
+          icon="Activity"
+          action={
+            <span className="text-[11px] font-semibold text-green-600 flex items-center gap-1.5 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">
+              <LiveDot color="bg-green-500" size="sm" /> Telemetry Online
+            </span>
+          }
+        />
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
           <StatusWidget
             icon="Users"
-            label="Live Crowd"
+            label="Live Crowd Flow"
             value={d.liveCrowd.value.toLocaleString()}
-            sub={d.liveCrowd.trend + " vs yesterday"}
+            sub={`${d.liveCrowd.trend} vs yesterday`}
             status={d.liveCrowd.status}
             onClick={() => navigate("command-center")}
           />
           <StatusWidget
             icon="Clock"
-            label="Wait Time"
+            label="Queue Wait Time"
             value={`${d.waitTime.value} ${d.waitTime.unit}`}
-            sub={d.waitTime.trend + " from last hour"}
+            sub={`${d.waitTime.trend} last hour`}
             status={d.waitTime.status}
           />
           <StatusWidget
             icon="TrafficCone"
-            label="Traffic"
+            label="Highway traffic"
             value={d.traffic.value}
             sub={d.traffic.route}
             status={d.traffic.status}
@@ -103,47 +199,88 @@ export function CommandCenterScreen({
           />
           <StatusWidget
             icon="SquareParking"
-            label="Parking"
-            value={`${d.parking.available} free`}
-            sub={`${parkingPct}% occupied · ${d.parking.totalCapacity} total`}
+            label="Parking Available"
+            value={`${d.parking.available} lots free`}
+            sub={`${parkingPct}% occupied of ${d.parking.totalCapacity}`}
             status={parkingPct > 85 ? "warning" : "normal"}
             onClick={() => navigate("parking-management")}
           />
           <StatusWidget
             icon="BedDouble"
-            label="Hotels"
-            value={`${d.hotels.available} rooms`}
-            sub={`${d.hotels.occupied} occupied / ${d.hotels.totalRooms} total`}
-            status="normal"
+            label="Stays Occupancy"
+            value={`${d.hotels.available} stays free`}
+            sub={`${hotelsPct}% occupied of ${d.hotels.totalRooms}`}
+            status={hotelsPct > 85 ? "warning" : "normal"}
             onClick={() => navigate("accommodation")}
           />
           <StatusWidget
             icon="DoorOpen"
-            label="Darshan"
-            value={d.darshan.status}
-            sub={`Queue: ${d.darshan.queueLength} · Next aarti: ${d.darshan.nextAarti}`}
-            status="normal"
+            label="Shrine Gates Status"
+            value={isDarshanClosed ? "CLOSED" : d.darshan.status}
+            sub={isDarshanClosed ? "Gates Offline" : `Queue: ${d.darshan.queueLength} devotees`}
+            status={isDarshanClosed ? "critical" : "normal"}
           />
         </div>
       </section>
 
-      {/* Quick Actions */}
+      {/* Critical System Control Quick Actions */}
       <section>
-        <AdminSectionTitle title="Quick Actions" icon="Zap" />
-        <div className="grid grid-cols-4 gap-2">
-          <QuickAction icon="Megaphone" label="Global Alert" onClick={() => navigate("notifications-admin")} />
-          <QuickAction icon="DoorClosed" label="Close Darshan" variant="danger" />
-          <QuickAction icon="Siren" label="Emergency Mode" variant="danger" onClick={() => navigate("emergency-ops")} />
-          <QuickAction icon="Bell" label="Broadcast" onClick={() => navigate("notifications-admin")} />
+        <AdminSectionTitle title="Operational Overrides Controls" icon="Zap" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <button
+            onClick={toggleGlobalAlarm}
+            className={`flex flex-col items-center gap-2 rounded-2xl border p-4 text-center shadow-sm transition-all ${
+              isGlobalAlarm ? "bg-orange-600 text-white border-orange-700" : "bg-[#FFF3E0] text-[#D97706] hover:bg-[#FFE0B2]"
+            }`}
+          >
+            <span className="grid size-11 place-items-center rounded-xl bg-white/40 shadow-sm text-inherit">
+              <Icon name="Megaphone" className="size-5" />
+            </span>
+            <span className="text-[11px] font-bold leading-tight">{isGlobalAlarm ? "Deactivate Alarm" : "Global Alarm Toggle"}</span>
+          </button>
+          
+          <button
+            onClick={toggleCloseDarshan}
+            className={`flex flex-col items-center gap-2 rounded-2xl border p-4 text-center shadow-sm transition-all ${
+              isDarshanClosed ? "bg-amber-600 text-white border-amber-700 animate-pulse" : "bg-red-50 text-red-600 hover:bg-red-100"
+            }`}
+          >
+            <span className="grid size-11 place-items-center rounded-xl bg-white/40 shadow-sm text-inherit">
+              <Icon name="DoorClosed" className="size-5" />
+            </span>
+            <span className="text-[11px] font-bold leading-tight">{isDarshanClosed ? "Open Darshan" : "Close Darshan Override"}</span>
+          </button>
+
+          <button
+            onClick={toggleEmergencyMode}
+            className={`flex flex-col items-center gap-2 rounded-2xl border p-4 text-center shadow-sm transition-all ${
+              isEmergencyMode ? "bg-red-700 text-white border-red-800 animate-pulse" : "bg-red-50 text-red-600 hover:bg-red-100"
+            }`}
+          >
+            <span className="grid size-11 place-items-center rounded-xl bg-white/40 shadow-sm text-inherit">
+              <Icon name="Siren" className="size-5" />
+            </span>
+            <span className="text-[11px] font-bold leading-tight">{isEmergencyMode ? "Deactivate Emergency" : "Emergency Mode Toggle"}</span>
+          </button>
+
+          <button
+            onClick={() => navigate("notifications-admin")}
+            className="flex flex-col items-center gap-2 rounded-2xl border p-4 text-center shadow-sm bg-[#FFF3E0] text-[#D97706] hover:bg-[#FFE0B2] border-[#FFB74D]/30"
+          >
+            <span className="grid size-11 place-items-center rounded-xl bg-white/60 shadow-sm">
+              <Icon name="Bell" className="size-5" />
+            </span>
+            <span className="text-[11px] font-bold leading-tight">Broadcast Alerts</span>
+          </button>
         </div>
       </section>
 
-      {/* AI Insights */}
+      {/* AI Smart Insights */}
       <section>
         <AdminSectionTitle
-          title="AI Insights"
+          title="Predictive AI Insights"
           icon="Sparkles"
-          action={<span className="text-[10px] font-bold text-[#D97706] bg-[#FFF3E0] px-2 py-0.5 rounded-full">SMART</span>}
+          action={<span className="text-[10px] font-bold text-[#D97706] bg-[#FFF3E0] px-2.5 py-0.5 rounded-full">SMART MONITOR</span>}
         />
         <div className="space-y-2">
           {d.aiInsights.map((insight) => {
@@ -169,7 +306,7 @@ export function CommandCenterScreen({
                 </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground leading-snug">{insight.message}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">AI Analysis · Just now</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">AI Prediction model · Just now</p>
                 </div>
               </motion.div>
             )
@@ -177,28 +314,9 @@ export function CommandCenterScreen({
         </div>
       </section>
 
-      {/* Weather */}
-      <section className="rounded-2xl border border-border bg-gradient-to-br from-blue-50 to-sky-50 p-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="grid size-11 place-items-center rounded-xl bg-blue-100 text-blue-600 shadow-sm">
-              <Icon name="CloudSun" className="size-6" />
-            </span>
-            <div>
-              <p className="font-heading text-2xl font-bold text-foreground">{d.weather.temp}°C</p>
-              <p className="text-xs text-muted-foreground">{d.weather.condition}</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-xs text-muted-foreground">Humidity: {d.weather.humidity}%</p>
-            <p className="text-xs font-medium text-blue-600 mt-0.5">{d.weather.forecast}</p>
-          </div>
-        </div>
-      </section>
-
       {/* System Health */}
       <section>
-        <AdminSectionTitle title="System Health" icon="Shield" />
+        <AdminSectionTitle title="Network Services Status" icon="Shield" />
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
           {Object.entries(d.systemHealth).map(([key, status]) => (
             <div key={key} className="flex items-center gap-2 rounded-xl border border-border bg-card px-3 py-2.5 shadow-sm">
@@ -217,16 +335,16 @@ export function CommandCenterScreen({
       {/* Live Activity Feed */}
       <section>
         <AdminSectionTitle
-          title="Live Activity Feed"
+          title="Operations Activity Log Feed"
           icon="Activity"
           action={
             <span className="text-[11px] font-semibold text-muted-foreground">
-              Today · {activityFeed.length} events
+              Today · {activityLogs.length} events logged
             </span>
           }
         />
-        <div className="rounded-2xl border border-border bg-card px-4 shadow-sm">
-          {activityFeed.map((entry) => (
+        <div className="rounded-2xl border border-border bg-card px-4 shadow-sm max-h-[350px] overflow-y-auto divide-y divide-border/60">
+          {activityLogs.map((entry) => (
             <ActivityItem
               key={entry.id}
               time={entry.time}
