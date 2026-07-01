@@ -393,7 +393,7 @@ export function AppShell() {
 
   return (
     <NavigationContext.Provider value={{ navigate, goBack, pushState }}>
-      <div className={cn("flex min-h-screen w-full transition-colors duration-700", isNightMode ? "bg-[#0e0805] text-[#FFF8F0]" : "bg-background text-foreground")}>
+      <div className="flex min-h-screen w-full transition-colors duration-700 bg-background text-foreground">
 
 
       {/* Floating Animated Diyas for Night Darshan Mode */}
