@@ -514,7 +514,7 @@ export function AppShell() {
         )}
 
         {/* Page Content */}
-        <main className={cn("flex-1 w-full max-w-5xl mx-auto px-4 md:px-8", showHeaderAndNav ? "pt-5 pb-24 lg:pb-10" : "")}>
+        <main className={cn("flex-1 w-full mx-auto px-4 md:px-8", showHeaderAndNav ? "pt-5 pb-24 lg:pb-10" : "")}>
           {screen === "welcome" && (
             <WelcomeScreen
               navigate={navigate}

@@ -96,7 +96,7 @@ export function WelcomeScreen({
 
         {/* Middle Deity Arch Portrait */}
         <div className="relative my-6 text-center z-10">
-          <div className="relative w-60 h-72 mx-auto rounded-t-full overflow-hidden border-4 border-amber-600/20 shadow-2xl bg-white p-2">
+          <div className="relative w-80 h-110 mx-auto rounded-t-full overflow-hidden border-4 border-amber-600/20 shadow-2xl bg-white p-2">
             <div className="relative w-full h-full rounded-t-full overflow-hidden">
               <Image
                 src="/images/khatu-shyam-deity.png"
