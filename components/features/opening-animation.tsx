@@ -1,4 +1,4 @@
-﻿"use client"
+"use client"
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
@@ -112,16 +112,6 @@ export function OpeningAnimation({ onComplete }: { onComplete: () => void }) {
             exit={{ opacity: 0 }}
             className="absolute inset-0 flex items-center justify-center"
           >
-            {/* Stars */}
-            {isMounted && Array.from({ length: 30 }).map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute size-1 rounded-full bg-white blur-[1px]"
-                style={{ left: `${Math.random() * 100}%`, top: `${Math.random() * 100}%` }}
-                animate={{ opacity: [0.2, 0.8, 0.2] }}
-                transition={{ duration: 1.5 + Math.random() * 2, repeat: Infinity }}
-              />
-            ))}
           </motion.div>
         )}
         
@@ -182,19 +172,6 @@ export function OpeningAnimation({ onComplete }: { onComplete: () => void }) {
           >
             {/* Golden particles & Incense */}
             <div className="absolute bottom-0 w-full h-[50vh] bg-gradient-to-t from-[#D4AF37]/30 to-transparent blur-2xl" />
-            {isMounted && Array.from({ length: 20 }).map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute bottom-0 size-2 rounded-full bg-[#D4AF37] blur-[1px] opacity-60"
-                style={{ left: `${40 + Math.random() * 20}%` }}
-                animate={{
-                  y: -500,
-                  opacity: [0, 0.8, 0],
-                  x: Math.random() > 0.5 ? 50 : -50,
-                }}
-                transition={{ duration: 3 + Math.random() * 4, repeat: Infinity }}
-              />
-            ))}
           </motion.div>
         )}
 
