@@ -35,7 +35,6 @@ import { InfoScreens } from "@/components/screens/info-screens"
 import { ShyamSahayakScreen } from "@/components/screens/shyam-sahayak"
 import { OpeningAnimation } from "@/components/features/opening-animation"
 import { LanguageToggle } from "@/components/ui/language-toggle"
-import { BhatiMode } from "@/components/features/bhati-mode"
 import { VirtualDarshanScreen } from "@/components/screens/virtual-darshan"
 import { LiveDarshanScreen } from "@/components/screens/live-darshan"
 import { HelpSupportScreen } from "@/components/screens/help-support"
@@ -376,16 +375,6 @@ export function AppShell() {
           >
             <Icon name={soundEnabled ? "Volume2" : "VolumeX"} className="size-4" />
           </button>
-          <button
-            onClick={() => setBhatiMode(!bhatiMode)}
-            className={cn(
-              "grid size-10 place-items-center rounded-full border shadow-sm transition",
-              bhatiMode ? "bg-[#D97706] border-[#D97706] text-white" : "bg-card border-border text-[#D97706] hover:bg-[#D97706]/10",
-            )}
-            title="Bhakti Mode"
-          >
-            <Icon name="Sparkles" className="size-4" />
-          </button>
           {currentUser && (
             <button
               onClick={handleLogout}
@@ -405,7 +394,7 @@ export function AppShell() {
   return (
     <NavigationContext.Provider value={{ navigate, goBack, pushState }}>
       <div className={cn("flex min-h-screen w-full transition-colors duration-700", isNightMode ? "bg-[#0e0805] text-[#FFF8F0]" : "bg-background text-foreground")}>
-      {bhatiMode && <BhatiMode />}
+
 
       {/* Floating Animated Diyas for Night Darshan Mode */}
       {isNightMode && showHeaderAndNav && (
