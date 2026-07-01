@@ -20,6 +20,8 @@ const hotels = [
     img: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=300&auto=format&fit=crop&q=60",
     features: ["AC & Non-AC", "Geyser", "Pure Veg Kitchen", "Lift"],
     featuresHi: ["एसी और नॉन-एसी", "गीजर", "शुद्ध शाकाहारी रसोई", "लिफ्ट"],
+    contactPhone: "+91 98290 11002",
+    address: "Opposite Shyam Kund, Main Walkway, Khatu Dham",
   },
   {
     id: 2,
@@ -32,6 +34,8 @@ const hotels = [
     img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&auto=format&fit=crop&q=60",
     features: ["Heritage Ambience", "Fine Dining", "Lawn", "WiFi"],
     featuresHi: ["हेरिटेज माहौल", "शानदार भोजन", "लॉन", "वाईफाई"],
+    contactPhone: "+91 98290 11001",
+    address: "Near North Gate 2, Main Bazaar Road, Khatu Dham",
   },
   {
     id: 3,
@@ -44,6 +48,8 @@ const hotels = [
     img: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=300&auto=format&fit=crop&q=60",
     features: ["AC Rooms", "Room Service", "Parking", "Restaurant"],
     featuresHi: ["एसी कमरे", "रूम सर्विस", "पार्किंग", "रेस्तरां"],
+    contactPhone: "+91 98290 11003",
+    address: "Gate 1 Exit Corridor, Near Prasad Counter, Khatu Dham",
   },
   {
     id: 4,
@@ -56,6 +62,8 @@ const hotels = [
     img: "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=300&auto=format&fit=crop&q=60",
     features: ["Free Food (Bhandara)", "Clean Rooms", "Water Cooler"],
     featuresHi: ["मुफ्त भोजन (भंडारा)", "साफ कमरे", "वाटर कूलर"],
+    contactPhone: "+91 98290 11004",
+    address: "Ringas Road Bypass, Close to Lot C Parking, Khatu Dham",
   },
 ]
 
@@ -145,9 +153,13 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                       <h3 className="font-heading font-bold text-base text-foreground">{t(h.name, h.nameHi)}</h3>
                       <span className="font-heading font-bold text-sm text-primary shrink-0">{h.price}</span>
                     </div>
-                    <p className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                      <Icon name="MapPin" className="size-3.5 text-primary" />
-                      {t(h.distance, h.distance)}
+                    <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-1 font-medium">
+                      <Icon name="MapPin" className="size-3.5 text-primary shrink-0" />
+                      {t(h.distance, h.distance)} · {h.address}
+                    </p>
+                    <p className="flex items-center gap-1 text-[11px] text-muted-foreground mt-1 font-semibold">
+                      <Icon name="Phone" className="size-3.5 text-primary shrink-0" />
+                      {h.contactPhone}
                     </p>
                     <div className="flex flex-wrap gap-1.5 mt-3">
                       {h.features.map((f, i) => (
@@ -175,8 +187,12 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
             <div>
               <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.hotelBooking.confirmStayDetails")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t(selectedHotel.name, selectedHotel.nameHi)}</p>
+              <div className="mt-2.5 rounded-2xl bg-muted/40 p-3 border border-border/40 text-[11px] text-muted-foreground space-y-1">
+                <p className="flex items-center gap-1"><Icon name="Phone" className="size-3.5 text-primary" /> <strong>Contact:</strong> {selectedHotel.contactPhone}</p>
+                <p className="flex items-center gap-1 mt-0.5"><Icon name="MapPin" className="size-3.5 text-primary" /> <strong>Address:</strong> {selectedHotel.address}</p>
+              </div>
             </div>
-            <button onClick={goBack} className="text-xs font-bold text-primary hover:underline">
+            <button onClick={() => setSelectedHotel(null)} className="text-xs font-bold text-primary hover:underline">
               {t("screens.services.hotelBooking.changeHotel")}
             </button>
           </div>

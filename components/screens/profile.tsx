@@ -3,7 +3,7 @@
 import { useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon, Om } from "@/components/shared"
-import { type ScreenKey } from "@/lib/data"
+import { bookings, type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 
 type ProfileUser = {
@@ -88,7 +88,7 @@ export function ProfileScreen({
   currentUser?: ProfileUser | null
   onUpdateUser?: (user: ProfileUser) => void
 }) {
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Standard fallback data
@@ -117,11 +117,22 @@ export function ProfileScreen({
 
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  const stats = [
-    { v: "12", lKey: "profile.card.stats.darshans" },
-    { v: "3", lKey: "profile.card.stats.upcoming" },
-    { v: "5★", lKey: "profile.card.stats.devotee" },
-  ]
+  const completedDarshansCount = (() => {
+    const staticCompleted = bookings.filter((b) => b.status === "completed")
+    let dynamicCompleted: any[] = []
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("khatu_bookings")
+        if (stored) {
+          const parsed = JSON.parse(stored)
+          if (Array.isArray(parsed)) {
+            dynamicCompleted = parsed.filter((b: any) => b.status === "completed")
+          }
+        }
+      } catch (e) {}
+    }
+    return staticCompleted.length + dynamicCompleted.length
+  })()
 
   // File upload reader
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,13 +267,13 @@ export function ProfileScreen({
             </div>
 
             {/* Stats block */}
-            <div className="relative mt-5 grid grid-cols-3 gap-2 rounded-2xl bg-black/15 p-3 text-center backdrop-blur-sm">
-              {stats.map((s) => (
-                <div key={s.lKey}>
-                  <p className="font-heading text-lg font-bold text-white">{s.v}</p>
-                  <p className="text-[11px] text-white/80 font-medium">{t(s.lKey)}</p>
-                </div>
-              ))}
+            <div className="relative mt-5 flex flex-col items-center justify-center rounded-2xl bg-black/15 p-4 text-center backdrop-blur-sm">
+              <p className="font-heading text-3xl font-extrabold text-white">
+                {completedDarshansCount}
+              </p>
+              <p className="text-xs text-white/80 font-bold mt-1 uppercase tracking-wider">
+                {t("profile.card.stats.completedDarshans")}
+              </p>
             </div>
 
             {/* Edit Profile Button - Prominent */}

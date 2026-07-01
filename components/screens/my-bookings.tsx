@@ -31,7 +31,7 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
         className="flex items-center gap-2 text-sm font-bold text-[#6b5440] hover:text-[#D97706]"
       >
         <Icon name="ArrowLeft" className="size-4" />
-        {t("components.shared.back", "Back")}
+        {t("back")}
       </button>
 
       {/* Tabs */}

@@ -63,10 +63,6 @@ export function PassengerDetailsScreen({
     })
   }
 
-  const addPassenger = (isChild = false) => {
-    const newId = Math.max(...passengers.map((p) => p.id)) + 1
-    setPassengers((prev) => [...prev, emptyPassenger(newId, isChild)])
-  }
 
   const removePassenger = (id: number) => {
     if (passengers.length <= 1) return
@@ -248,23 +244,6 @@ export function PassengerDetailsScreen({
           </div>
         ))}
 
-        {/* Add passenger / child buttons */}
-        <div className="flex flex-wrap gap-3">
-          <button
-            onClick={() => addPassenger(false)}
-            className="flex items-center gap-1.5 rounded-xl border border-primary bg-card px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-secondary active:scale-[0.98]"
-          >
-            <Icon name="Plus" className="size-4" />
-            {t("screens.passengerDetails.addPassenger")}
-          </button>
-          <button
-            onClick={() => addPassenger(true)}
-            className="flex items-center gap-1.5 rounded-xl border border-primary bg-card px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-secondary active:scale-[0.98]"
-          >
-            <Icon name="Baby" className="size-4" />
-            {t("screens.passengerDetails.addChild")}
-          </button>
-        </div>
 
         <p className="text-xs text-muted-foreground italic">
           *{t("screens.passengerDetails.childrenUnder5YearsOfAgeShallBeContactFre")}

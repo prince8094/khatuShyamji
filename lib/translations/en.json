@@ -172,9 +172,7 @@
     "card": {
       "title": "Personal Details",
       "stats": {
-        "darshans": "Darshans",
-        "upcoming": "Upcoming",
-        "devotee": "Devotee"
+        "completedDarshans": "Completed Darshans"
       },
       "editBtn": "Edit Profile"
     },

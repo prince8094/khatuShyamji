@@ -178,9 +178,7 @@
     "card": {
       "title": "व्यक्तिगत जानकारी",
       "stats": {
-        "darshans": "दर्शन",
-        "upcoming": "आने वाले",
-        "devotee": "भक्त"
+        "completedDarshans": "पूर्ण दर्शन"
       },
       "editBtn": "प्रोफ़ाइल संपादित करें"
     },

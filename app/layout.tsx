@@ -9,12 +9,14 @@ const devanagari = Noto_Serif_Devanagari({
   variable: '--font-devanagari',
   subsets: ['devanagari'],
   weight: ['400', '500', '600', '700'],
+  preload: false,
 })
 
 const cinzel = Cinzel({
   variable: '--font-cinzel',
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
+  preload: false,
 })
 const inter = Inter({
   variable: '--font-inter',

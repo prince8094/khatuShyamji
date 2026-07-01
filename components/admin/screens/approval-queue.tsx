@@ -1,14 +1,109 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
-import { AdminSectionTitle, ApprovalBadge } from "@/components/admin/admin-shared"
-import { approvalQueue, deptColors, type AdminScreenKey } from "@/lib/admin-data"
+import { AdminSectionTitle, ApprovalBadge, LiveDot } from "@/components/admin/admin-shared"
+import { approvalQueue as initialQueue, deptColors, type AdminScreenKey } from "@/lib/admin-data"
+
+type ExtendedApprovalItem = typeof initialQueue[0] & {
+  versionNumber: number
+  draftPayload: {
+    oldValues: Record<string, string>
+    newValues: Record<string, string>
+  }
+  reviewNotes?: string
+  actionedBy?: string
+  actionedAt?: string
+}
+
+const initialItems: ExtendedApprovalItem[] = [
+  {
+    id: "APR-001",
+    type: "hotel-update",
+    title: "Shyam Palace — New room photos",
+    submittedBy: "Priya Sharma",
+    submittedAt: "Today, 10:30 AM",
+    status: "pending",
+    department: "accommodation",
+    description: "Updated room photo URLs and deluxe descriptions to match peak tourism guidelines.",
+    versionNumber: 3,
+    draftPayload: {
+      oldValues: {
+        deluxe_photo: "/images/deluxe-room-old.jpg",
+        wifi_available: "false",
+        deluxe_price: "₹4,500",
+      },
+      newValues: {
+        deluxe_photo: "/images/deluxe-room-2026-v2.jpg",
+        wifi_available: "true",
+        deluxe_price: "₹4,800",
+      },
+    },
+  },
+  {
+    id: "APR-002",
+    type: "temple-info",
+    title: "Monsoon darshan timings",
+    submittedBy: "Rajesh Kumar",
+    submittedAt: "Today, 09:00 AM",
+    status: "pending",
+    department: "temple-info",
+    description: "Updated morning aarti to 5:00 AM due to sunrise change for the coming wet season.",
+    versionNumber: 2,
+    draftPayload: {
+      oldValues: {
+        mangla_aarti: "4:30 AM",
+        shringar_aarti: "7:00 AM",
+        closing_time: "9:00 PM",
+      },
+      newValues: {
+        mangla_aarti: "5:00 AM",
+        shringar_aarti: "7:30 AM",
+        closing_time: "9:30 PM",
+      },
+    },
+  },
+  {
+    id: "APR-003",
+    type: "announcement",
+    title: "Ekadashi special arrangements",
+    submittedBy: "Rajesh Kumar",
+    submittedAt: "Yesterday, 04:00 PM",
+    status: "approved",
+    department: "super-admin",
+    description: "Extra counters and extended darshan hours for Ekadashi",
+    versionNumber: 1,
+    draftPayload: { oldValues: { hours: "Standard" }, newValues: { hours: "Extended 24h" } },
+    reviewNotes: "All safety check barriers are mapped, approved for broadcast.",
+    actionedBy: "Nand Kumar",
+    actionedAt: "Yesterday, 05:00 PM",
+  },
+  {
+    id: "APR-004",
+    type: "service-listing",
+    title: "New transport operator added",
+    submittedBy: "Vikram Singh",
+    submittedAt: "Yesterday, 02:00 PM",
+    status: "rejected",
+    department: "parking",
+    description: "Shyam Travels — new bus service from Delhi",
+    versionNumber: 1,
+    draftPayload: { oldValues: { operator: "None" }, newValues: { operator: "Shyam Travels" } },
+    reviewNotes: "Duplicate license registration. Verify commercial permit again.",
+    actionedBy: "Nand Kumar",
+    actionedAt: "Yesterday, 03:00 PM",
+  },
+]
 
 export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
-  const pending = approvalQueue.filter((a) => a.status === "pending").length
-  const approved = approvalQueue.filter((a) => a.status === "approved").length
-  const rejected = approvalQueue.filter((a) => a.status === "rejected").length
+  const [queue, setQueue] = useState<ExtendedApprovalItem[]>(initialItems)
+  const [reviewId, setReviewId] = useState<string | null>(null)
+  const [reviewNotesInput, setReviewNotesInput] = useState("")
+
+  const pending = queue.filter((a) => a.status === "pending").length
+  const approved = queue.filter((a) => a.status === "approved").length
+  const rejected = queue.filter((a) => a.status === "rejected").length
 
   const typeIcons: Record<string, string> = {
     "hotel-update": "BedDouble",
@@ -18,6 +113,143 @@ export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey
     "parking-info": "SquareParking",
   }
 
+  const handleApprove = (id: string) => {
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) + ", Today"
+    
+    setQueue(prev =>
+      prev.map(item =>
+        item.id === id
+          ? { ...item, status: "approved" as const, reviewNotes: reviewNotesInput, actionedBy: "Nand Kumar", actionedAt: timeStr }
+          : item
+      )
+    )
+    setReviewId(null)
+    setReviewNotesInput("")
+  }
+
+  const handleReject = (id: string) => {
+    if (!reviewNotesInput.trim()) {
+      alert("A brief rejection remark is required to guide resubmissions.")
+      return
+    }
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) + ", Today"
+
+    setQueue(prev =>
+      prev.map(item =>
+        item.id === id
+          ? { ...item, status: "rejected" as const, reviewNotes: reviewNotesInput, actionedBy: "Nand Kumar", actionedAt: timeStr }
+          : item
+      )
+    )
+    setReviewId(null)
+    setReviewNotesInput("")
+  }
+
+  const selectedItem = queue.find(item => item.id === reviewId)
+
+  const renderReviewModal = () => {
+    if (!selectedItem) return null
+    const dc = deptColors[selectedItem.department]
+    const diff = selectedItem.draftPayload
+
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-2xl rounded-2xl border border-border bg-card p-5 shadow-xl flex flex-col max-h-[90vh]"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border pb-3 mb-4 shrink-0">
+            <div>
+              <h3 className="font-heading text-base font-bold text-foreground">Review Proposal changes</h3>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                Submitter: <strong>{selectedItem.submittedBy}</strong> · Submission Time: <strong>{selectedItem.submittedAt}</strong> · Version: V{selectedItem.versionNumber}
+              </p>
+            </div>
+            <button onClick={() => setReviewId(null)} className="text-muted-foreground hover:text-foreground">
+              <Icon name="X" className="size-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            {/* Meta Info */}
+            <div className="rounded-xl border border-border bg-muted/20 p-3 text-xs leading-relaxed text-muted-foreground">
+              <p className="font-extrabold text-foreground mb-1">Proposal summary description:</p>
+              {selectedItem.description}
+            </div>
+
+            {/* Side-by-side JSON payload diffs */}
+            <div>
+              <p className="text-[11px] font-extrabold text-foreground uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                <Icon name="FileJson" className="size-4 text-orange-600" />
+                Change Payload Difference Audits
+              </p>
+              
+              <div className="grid grid-cols-2 gap-3.5">
+                {/* Old Values */}
+                <div className="rounded-xl border border-red-200 bg-red-50/20 p-3">
+                  <p className="text-[10px] font-extrabold text-red-700 uppercase tracking-widest border-b border-red-100 pb-1.5 mb-2.5 flex items-center gap-1">
+                    <Icon name="Minus" className="size-3" /> Live Production values
+                  </p>
+                  <pre className="font-mono text-[10px] text-red-600 bg-red-50/10 p-2 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                    {JSON.stringify(diff.oldValues, null, 2)}
+                  </pre>
+                </div>
+                {/* New Values */}
+                <div className="rounded-xl border border-green-200 bg-green-50/20 p-3">
+                  <p className="text-[10px] font-extrabold text-green-700 uppercase tracking-widest border-b border-green-100 pb-1.5 mb-2.5 flex items-center gap-1">
+                    <Icon name="Plus" className="size-3" /> Proposed Draft values
+                  </p>
+                  <pre className="font-mono text-[10px] text-green-600 bg-green-50/10 p-2 rounded-lg overflow-x-auto whitespace-pre-wrap leading-relaxed">
+                    {JSON.stringify(diff.newValues, null, 2)}
+                  </pre>
+                </div>
+              </div>
+            </div>
+
+            {/* Review Form */}
+            <div className="border-t border-border pt-4">
+              <label className="block text-xs font-bold text-foreground mb-1.5">Reviewer Notes & Remarks *</label>
+              <textarea
+                required
+                rows={3}
+                placeholder="Enter approval details or specify validation corrections for rejections..."
+                value={reviewNotesInput}
+                onChange={e => setReviewNotesInput(e.target.value)}
+                className="w-full rounded-xl border border-border bg-card p-2.5 text-xs font-semibold focus:outline-none focus:border-orange-600 resize-none"
+              />
+            </div>
+          </div>
+
+          {/* Footer actions */}
+          <div className="flex gap-2 justify-end pt-3 mt-4 border-t border-border shrink-0">
+            <button
+              onClick={() => setReviewId(null)}
+              className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold hover:bg-muted/50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => handleReject(selectedItem.id)}
+              className="rounded-xl bg-red-600 hover:bg-red-700 px-4 py-2 text-xs font-bold text-white shadow-sm"
+            >
+              Reject Proposal
+            </button>
+            <button
+              onClick={() => handleApprove(selectedItem.id)}
+              className="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-xs font-bold text-white shadow-sm"
+            >
+              Approve & Publish Live
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-5 pb-6">
       {/* Header */}
@@ -25,8 +257,8 @@ export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
         <div className="relative flex items-start justify-between">
           <div>
-            <h1 className="font-heading text-xl font-bold">Approval Queue</h1>
-            <p className="text-sm text-white/80 mt-1">Review & approve content changes</p>
+            <h1 className="font-heading text-xl font-bold">Proposal Approvals Queue</h1>
+            <p className="text-xs text-white/80 mt-1">Review, diff audit & authorize operational database updates</p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/20 border border-white/20">
             <Icon name="ClipboardCheck" className="size-6" />
@@ -38,36 +270,44 @@ export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey
             { label: "Approved", value: approved },
             { label: "Rejected", value: rejected },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl bg-black/20 backdrop-blur-sm px-3 py-2 text-center">
-              <p className="text-[10px] text-white/70">{s.label}</p>
-              <p className="font-heading text-lg font-bold text-white">{s.value}</p>
+            <div key={s.label} className="rounded-xl bg-black/20 backdrop-blur-sm px-3 py-2.5 text-center border border-white/5">
+              <p className="text-[10px] text-white/70 uppercase tracking-wide font-semibold">{s.label}</p>
+              <p className="font-heading text-lg font-extrabold text-white mt-0.5">{s.value}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Info Notice */}
-      <div className="flex items-start gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3">
+      {/* Info Notice Banner */}
+      <div className="flex items-start gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 shadow-sm">
         <Icon name="Info" className="size-4 text-amber-600 shrink-0 mt-0.5" />
-        <p className="text-xs text-amber-700 font-medium leading-relaxed">
-          All non-emergency content must pass through approval before becoming visible to devotees. Emergency alerts bypass this queue.
+        <p className="text-xs text-amber-700 font-semibold leading-relaxed">
+          Standard operational configurations require audit validation before database synchronization. Critical emergency overrides bypass this queue.
         </p>
       </div>
 
-      {/* Approval Items */}
+      {/* Pending Reviews list */}
       <section>
-        <AdminSectionTitle title="Pending Review" icon="Clock" action={<span className="text-[11px] text-muted-foreground">{pending} pending</span>} />
-        <div className="space-y-3">
-          {approvalQueue
-            .filter((a) => a.status === "pending")
+        <AdminSectionTitle
+          title="Review Pending Proposals"
+          icon="Clock"
+          action={
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-green-600">
+              <LiveDot color="bg-green-500" /> Pending Action
+            </span>
+          }
+        />
+        <div className="space-y-3.5">
+          {queue
+            .filter(item => item.status === "pending")
             .map((item) => {
               const dc = deptColors[item.department]
               return (
                 <motion.div
                   key={item.id}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="rounded-2xl border border-amber-200 bg-amber-50/30 p-4 shadow-sm"
+                  className="rounded-2xl border border-amber-200 bg-amber-50/20 p-4 shadow-sm"
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
@@ -75,29 +315,32 @@ export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey
                         <Icon name={typeIcons[item.type] || "FileText"} className="size-5" />
                       </span>
                       <div>
-                        <p className="font-heading text-sm font-bold text-foreground">{item.title}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{item.type.replace(/-/g, " ")}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-heading text-sm font-bold text-foreground">{item.title}</p>
+                          <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono font-bold text-muted-foreground">{item.id}</span>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-0.5 capitalize">{item.type.replace(/-/g, " ")} Proposal</p>
                       </div>
                     </div>
                     <ApprovalBadge status={item.status} />
                   </div>
-                  <p className="mt-3 text-xs text-muted-foreground leading-relaxed rounded-xl bg-white/60 px-3 py-2 border border-amber-100">
+
+                  <p className="mt-3 text-xs text-muted-foreground leading-relaxed rounded-xl bg-white/60 p-2.5 border border-amber-100/60">
                     {item.description}
                   </p>
-                  <div className="mt-2 flex items-center gap-2 text-[10px] text-muted-foreground">
-                    <Icon name="User" className="size-3" /> {item.submittedBy}
-                    <span className="size-1 rounded-full bg-muted-foreground/30" />
-                    <Icon name="Clock" className="size-3" /> {item.submittedAt}
-                  </div>
-                  {/* Actions */}
-                  <div className="mt-3 grid grid-cols-2 gap-2">
-                    <button className="flex items-center justify-center gap-1.5 rounded-xl bg-green-500 py-2.5 text-[11px] font-bold text-white transition hover:bg-green-600 active:scale-[0.98]">
-                      <Icon name="CheckCircle" className="size-3.5" />
-                      Approve
-                    </button>
-                    <button className="flex items-center justify-center gap-1.5 rounded-xl bg-red-500 py-2.5 text-[11px] font-bold text-white transition hover:bg-red-600 active:scale-[0.98]">
-                      <Icon name="XCircle" className="size-3.5" />
-                      Reject
+
+                  <div className="mt-4 flex items-center justify-between border-t border-border/40 pt-3">
+                    <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-medium">
+                      <span>Submitted by: <strong>{item.submittedBy}</strong></span>
+                      <span className="size-1 rounded-full bg-muted-foreground/30" />
+                      <span>{item.submittedAt}</span>
+                    </div>
+                    
+                    <button
+                      onClick={() => setReviewId(item.id)}
+                      className="rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs px-4 py-2 shadow-sm transition active:scale-[0.98]"
+                    >
+                      Audit & Action
                     </button>
                   </div>
                 </motion.div>
@@ -106,33 +349,50 @@ export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey
         </div>
       </section>
 
-      {/* History */}
+      {/* Recent Decisions History */}
       <section>
-        <AdminSectionTitle title="Recent Decisions" icon="History" />
-        <div className="space-y-2">
-          {approvalQueue
-            .filter((a) => a.status !== "pending")
+        <AdminSectionTitle title="Authorization History Decisions Log" icon="History" />
+        <div className="space-y-3">
+          {queue
+            .filter(item => item.status !== "pending")
             .map((item) => {
               const dc = deptColors[item.department]
               return (
-                <div key={item.id} className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
-                  <span className={`grid size-10 place-items-center rounded-xl ${dc.bg} ${dc.text} shadow-sm shrink-0`}>
-                    <Icon name={typeIcons[item.type] || "FileText"} className="size-4" />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-foreground truncate">{item.title}</p>
-                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
-                      <span>{item.submittedBy}</span>
-                      <span className="size-1 rounded-full bg-muted-foreground/30" />
-                      <span>{item.submittedAt}</span>
+                <div key={item.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={`grid size-10 place-items-center rounded-xl ${dc.bg} ${dc.text} shadow-sm shrink-0`}>
+                        <Icon name={typeIcons[item.type] || "FileText"} className="size-4.5" />
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-foreground truncate">{item.title}</p>
+                        <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground font-medium">
+                          <span>Submitter: {item.submittedBy}</span>
+                          <span className="size-1 rounded-full bg-muted-foreground/30" />
+                          <span>Auditor: {item.actionedBy}</span>
+                        </div>
+                      </div>
                     </div>
+                    <ApprovalBadge status={item.status} />
                   </div>
-                  <ApprovalBadge status={item.status} />
+
+                  {item.reviewNotes && (
+                    <div className="mt-3 text-[11px] text-muted-foreground leading-relaxed bg-muted/40 p-2.5 rounded-xl border border-border/40">
+                      <strong>Auditor Remarks:</strong> {item.reviewNotes}
+                    </div>
+                  )}
+
+                  <div className="mt-2.5 text-[9px] text-muted-foreground text-right font-medium">
+                    Authorized: {item.actionedAt}
+                  </div>
                 </div>
               )
             })}
         </div>
       </section>
+
+      {/* Review Modal Drawer */}
+      {renderReviewModal()}
     </div>
   )
 }

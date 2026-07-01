@@ -18,6 +18,7 @@ export type AdminScreenKey =
   | "notifications-admin"
   | "admin-management"
   | "approval-queue"
+  | "pilgrim-registry"
 
 // ─── Roles ──────────────────────────────────────────────────────────────────
 export type AdminRoleKey =
@@ -26,7 +27,6 @@ export type AdminRoleKey =
   | "parking"
   | "traffic"
   | "lost-found"
-  | "seva"
   | "temple-info"
   | "donation"
   | "emergency"
@@ -100,17 +100,6 @@ export const adminRoles: AdminRole[] = [
     notifications: 4,
   },
   {
-    key: "seva",
-    name: "Seva Management",
-    description: "Puja bookings, slots & schedule",
-    icon: "Heart",
-    screen: "seva-management",
-    color: "from-[#DB2777] to-[#BE185D]",
-    liveCount: 34,
-    liveLabel: "Today's Sevas",
-    notifications: 2,
-  },
-  {
     key: "temple-info",
     name: "Temple Information",
     description: "Content, timings & guidelines",
@@ -164,7 +153,7 @@ export const adminUsers: AdminUser[] = [
     phone: "+91 98290 10001",
     email: "nand@khatushyamji.org",
     initials: "NK",
-    roles: ["super-admin", "accommodation", "parking", "traffic", "lost-found", "seva", "temple-info", "donation", "emergency"],
+    roles: ["super-admin", "accommodation", "parking", "traffic", "lost-found", "temple-info", "donation", "emergency"],
     isActive: true,
     lastLogin: "29 Jun 2026, 11:45 AM",
   },
@@ -214,7 +203,7 @@ export const adminUsers: AdminUser[] = [
     phone: "+91 98290 10006",
     email: "shahanaj@khatushyamji.org",
     initials: "SK",
-    roles: ["seva", "donation"],
+    roles: ["donation"],
     isActive: false,
     lastLogin: "25 Jun 2026, 03:00 PM",
   },
@@ -234,14 +223,16 @@ export type Hotel = {
   todayCheckIns: number
   todayCheckOuts: number
   rating: number
+  contactPhone: string
+  address: string
 }
 
 export const hotels: Hotel[] = [
-  { id: "HTL-001", name: "Shyam Palace", stars: 4, totalRooms: 120, occupied: 98, available: 22, priceRange: "₹2,500 – ₹6,000", assignedAdmin: "Priya Sharma", status: "active", todayCheckIns: 15, todayCheckOuts: 8, rating: 4.5 },
-  { id: "HTL-002", name: "Khatu Dham Residency", stars: 3, totalRooms: 80, occupied: 72, available: 8, priceRange: "₹1,200 – ₹3,500", assignedAdmin: "Priya Sharma", status: "active", todayCheckIns: 12, todayCheckOuts: 5, rating: 4.2 },
-  { id: "HTL-003", name: "Bhakti Niwas", stars: 3, totalRooms: 60, occupied: 45, available: 15, priceRange: "₹800 – ₹2,000", assignedAdmin: "Priya Sharma", status: "active", todayCheckIns: 8, todayCheckOuts: 10, rating: 4.0 },
-  { id: "HTL-004", name: "Shree Krishna Guest House", stars: 2, totalRooms: 40, occupied: 30, available: 10, priceRange: "₹500 – ₹1,500", assignedAdmin: "Priya Sharma", status: "active", todayCheckIns: 6, todayCheckOuts: 4, rating: 3.8 },
-  { id: "HTL-005", name: "Temple View Inn", stars: 3, totalRooms: 50, occupied: 0, available: 50, priceRange: "₹1,000 – ₹2,800", assignedAdmin: "Priya Sharma", status: "maintenance", todayCheckIns: 0, todayCheckOuts: 0, rating: 4.1 },
+  { id: "HTL-001", name: "Shyam Palace", stars: 4, totalRooms: 120, occupied: 98, available: 22, priceRange: "₹2,500 – ₹6,000", assignedAdmin: "Priya Sharma", status: "active", todayCheckIns: 15, todayCheckOuts: 8, rating: 4.5, contactPhone: "+91 98290 11001", address: "Near North Gate 2, Main Bazaar Road, Khatu Dham" },
+  { id: "HTL-002", name: "Khatu Dham Residency", stars: 3, totalRooms: 80, occupied: 72, available: 8, priceRange: "₹1,200 – ₹3,500", assignedAdmin: "Priya Sharma", status: "active", todayCheckIns: 12, todayCheckOuts: 5, rating: 4.2, contactPhone: "+91 98290 11002", address: "Opposite Shyam Kund, Main Walkway, Khatu Dham" },
+  { id: "HTL-003", name: "Bhakti Niwas", stars: 3, totalRooms: 60, occupied: 45, available: 15, priceRange: "₹800 – ₹2,000", assignedAdmin: "Priya Sharma", status: "active", todayCheckIns: 8, todayCheckOuts: 10, rating: 4.0, contactPhone: "+91 98290 11003", address: "Gate 1 Exit Corridor, Near Prasad Counter, Khatu Dham" },
+  { id: "HTL-004", name: "Shree Krishna Guest House", stars: 2, totalRooms: 40, occupied: 30, available: 10, priceRange: "₹500 – ₹1,500", assignedAdmin: "Priya Sharma", status: "active", todayCheckIns: 6, todayCheckOuts: 4, rating: 3.8, contactPhone: "+91 98290 11004", address: "Ringas Road Bypass, Close to Lot C Parking, Khatu Dham" },
+  { id: "HTL-005", name: "Temple View Inn", stars: 3, totalRooms: 50, occupied: 0, available: 50, priceRange: "₹1,000 – ₹2,800", assignedAdmin: "Priya Sharma", status: "maintenance", todayCheckIns: 0, todayCheckOuts: 0, rating: 4.1, contactPhone: "+91 98290 11005", address: "Main Sanctum West Archways, Khatu Dham" },
 ]
 
 // ─── Parking Blocks ─────────────────────────────────────────────────────────
@@ -256,13 +247,91 @@ export type ParkingBlock = {
   vehicleTypes: string[]
   revenueToday: number
   shuttleActive: boolean
+  locationInfo: string
+  revenueHistory: string[]
+  totalWorkers: number
+  vehicleEntries: number
+  vehicleExits: number
+  distribution: {
+    cars: number
+    bikes: number
+    others: number
+  }
 }
 
 export const parkingBlocks: ParkingBlock[] = [
-  { id: "PKG-A", name: "Parking Block A", totalCapacity: 500, occupied: 420, available: 80, status: "open", assignedAdmin: "Vikram Singh", vehicleTypes: ["Car", "SUV"], revenueToday: 42000, shuttleActive: true },
-  { id: "PKG-B", name: "Parking Block B", totalCapacity: 400, occupied: 320, available: 80, status: "open", assignedAdmin: "Vikram Singh", vehicleTypes: ["Car", "SUV", "Bus"], revenueToday: 38000, shuttleActive: true },
-  { id: "PKG-C", name: "Parking Block C", totalCapacity: 300, occupied: 300, available: 0, status: "full", assignedAdmin: "Vikram Singh", vehicleTypes: ["Two-Wheeler"], revenueToday: 15000, shuttleActive: false },
-  { id: "PKG-D", name: "Overflow Lot D", totalCapacity: 600, occupied: 200, available: 400, status: "open", assignedAdmin: "Vikram Singh", vehicleTypes: ["Car", "SUV", "Bus", "Two-Wheeler"], revenueToday: 12000, shuttleActive: true },
+  { 
+    id: "PKG-A", 
+    name: "Parking Block A", 
+    totalCapacity: 500, 
+    occupied: 420, 
+    available: 80, 
+    status: "open", 
+    assignedAdmin: "Vikram Singh", 
+    vehicleTypes: ["Car", "SUV"], 
+    revenueToday: 42000, 
+    shuttleActive: true,
+    locationInfo: "Ringas Road Entrance Corridor",
+    revenueHistory: ["Mon: ₹38k", "Tue: ₹40k", "Wed: ₹42k"],
+    totalWorkers: 8,
+    vehicleEntries: 640,
+    vehicleExits: 560,
+    distribution: { cars: 300, bikes: 90, others: 30 }
+  },
+  { 
+    id: "PKG-B", 
+    name: "Parking Block B", 
+    totalCapacity: 400, 
+    occupied: 320, 
+    available: 80, 
+    status: "open", 
+    assignedAdmin: "Vikram Singh", 
+    vehicleTypes: ["Car", "SUV", "Bus"], 
+    revenueToday: 38000, 
+    shuttleActive: true,
+    locationInfo: "Toran Dwar Crossing Zone",
+    revenueHistory: ["Mon: ₹32k", "Tue: ₹35k", "Wed: ₹38k"],
+    totalWorkers: 6,
+    vehicleEntries: 480,
+    vehicleExits: 400,
+    distribution: { cars: 220, bikes: 60, others: 40 }
+  },
+  { 
+    id: "PKG-C", 
+    name: "Parking Block C", 
+    totalCapacity: 300, 
+    occupied: 300, 
+    available: 0, 
+    status: "full", 
+    assignedAdmin: "Vikram Singh", 
+    vehicleTypes: ["Two-Wheeler"], 
+    revenueToday: 15000, 
+    shuttleActive: false,
+    locationInfo: "VIP Gate 2 Approach Lane",
+    revenueHistory: ["Mon: ₹12k", "Tue: ₹14k", "Wed: ₹15k"],
+    totalWorkers: 4,
+    vehicleEntries: 320,
+    vehicleExits: 320,
+    distribution: { cars: 0, bikes: 280, others: 20 }
+  },
+  { 
+    id: "PKG-D", 
+    name: "Overflow Lot D", 
+    totalCapacity: 600, 
+    occupied: 200, 
+    available: 400, 
+    status: "open", 
+    assignedAdmin: "Vikram Singh", 
+    vehicleTypes: ["Car", "SUV", "Bus", "Two-Wheeler"], 
+    revenueToday: 12000, 
+    shuttleActive: true,
+    locationInfo: "Sikar Highway Bypass Meadows",
+    revenueHistory: ["Mon: ₹10k", "Tue: ₹11k", "Wed: ₹12k"],
+    totalWorkers: 10,
+    vehicleEntries: 350,
+    vehicleExits: 150,
+    distribution: { cars: 120, bikes: 60, others: 20 }
+  },
 ]
 
 // ─── Traffic Alerts ─────────────────────────────────────────────────────────
@@ -308,24 +377,111 @@ export const lostFoundCases: LostFoundCase[] = [
   { id: "LF-2026-006", itemName: "Handbag", description: "Brown leather handbag with documents inside", location: "Shyam Kund", reportedAt: "27 Jun, 03:20 PM", reportedBy: "Kavita Sharma", phone: "+91 98765 43215", status: "verification", assignedTo: "Mahesh Choudhary", matchedFoundItem: "FND-042", icon: "ShoppingBag" },
 ]
 
-// ─── Seva Bookings ──────────────────────────────────────────────────────────
-export type SevaBooking = {
+// ─── Volunteer Applications ──────────────────────────────────────────────────
+export type VolunteerApplication = {
   id: string
-  sevaName: string
-  devoteeName: string
-  date: string
-  timeSlot: string
-  amount: number
-  status: "confirmed" | "pending" | "completed" | "cancelled"
-  phone: string
+  fullName: string
+  email: string
+  mobile: string
+  age: number
+  gender: string
+  city: string
+  preferredRole: string
+  preferredDate: string
+  preferredTimeSlot: string
+  experience?: string
+  reason: string
+  emergencyContact?: string
+  status: "pending" | "approved" | "rejected"
+  createdAt: string
 }
 
-export const sevaBookings: SevaBooking[] = [
-  { id: "SEV-001", sevaName: "Abhishek Puja", devoteeName: "Nand Kumar", date: "29 Jun 2026", timeSlot: "6:00 AM", amount: 1100, status: "confirmed", phone: "+91 98290 12345" },
-  { id: "SEV-002", sevaName: "Bhog Seva", devoteeName: "Radha Sharma", date: "29 Jun 2026", timeSlot: "12:00 PM", amount: 2100, status: "confirmed", phone: "+91 98290 12346" },
-  { id: "SEV-003", sevaName: "Aarti Seva", devoteeName: "Gopal Das", date: "29 Jun 2026", timeSlot: "7:30 PM", amount: 501, status: "pending", phone: "+91 98290 12347" },
-  { id: "SEV-004", sevaName: "Shringar Seva", devoteeName: "Meera Gupta", date: "29 Jun 2026", timeSlot: "7:00 AM", amount: 5100, status: "completed", phone: "+91 98290 12348" },
-  { id: "SEV-005", sevaName: "Prasad Distribution", devoteeName: "Hari Om", date: "29 Jun 2026", timeSlot: "1:00 PM", amount: 3100, status: "confirmed", phone: "+91 98290 12349" },
+export const volunteerApplications: VolunteerApplication[] = [
+  {
+    id: "VOL-001",
+    fullName: "Nand Kumar",
+    email: "nand.kumar@gmail.com",
+    mobile: "+91 98290 12345",
+    age: 48,
+    gender: "Male",
+    city: "Jaipur",
+    preferredRole: "Crowd Management Volunteer",
+    preferredDate: "02/07/2026",
+    preferredTimeSlot: "06:00 AM - 10:00 AM",
+    experience: "Assisted in local temple festival crowd management for 2 years.",
+    reason: "Want to offer self-service to Lord Shyam.",
+    emergencyContact: "Radha Devi (+91 98290 12300)",
+    status: "approved",
+    createdAt: "2026-06-29",
+  },
+  {
+    id: "VOL-002",
+    fullName: "Radha Sharma",
+    email: "radha.sharma@yahoo.com",
+    mobile: "+91 98290 12346",
+    age: 45,
+    gender: "Female",
+    city: "Sikar",
+    preferredRole: "Devotee Assistance Volunteer",
+    preferredDate: "02/07/2026",
+    preferredTimeSlot: "10:00 AM - 04:00 PM",
+    experience: "None",
+    reason: "To assist the elderly and disabled pilgrims.",
+    emergencyContact: "Gopal Sharma (+91 98290 12301)",
+    status: "pending",
+    createdAt: "2026-06-30",
+  },
+  {
+    id: "VOL-003",
+    fullName: "Gopal Das",
+    email: "gopal.das@gmail.com",
+    mobile: "+91 98290 12347",
+    age: 29,
+    gender: "Male",
+    city: "Delhi",
+    preferredRole: "Prasad Distribution Volunteer",
+    preferredDate: "03/07/2026",
+    preferredTimeSlot: "06:00 AM - 10:00 AM",
+    experience: "Regularly serve in bhandaras.",
+    reason: "Devoted pilgrim looking to serve.",
+    emergencyContact: "Hari Das (+91 98290 12302)",
+    status: "pending",
+    createdAt: "2026-07-01", // Today!
+  },
+  {
+    id: "VOL-004",
+    fullName: "Meera Gupta",
+    email: "meera.gupta@outlook.com",
+    mobile: "+91 98290 12348",
+    age: 38,
+    gender: "Female",
+    city: "Reengus",
+    preferredRole: "Temple Cleanliness Volunteer",
+    preferredDate: "02/07/2026",
+    preferredTimeSlot: "06:00 AM - 10:00 AM",
+    experience: "Participant in local Swachh Bharat campaigns.",
+    reason: "Cleanliness is next to godliness, especially at Shyam Dham.",
+    emergencyContact: "Amit Gupta (+91 98290 12303)",
+    status: "approved",
+    createdAt: "2026-06-28",
+  },
+  {
+    id: "VOL-005",
+    fullName: "Hari Om",
+    email: "hari.om@rediffmail.com",
+    mobile: "+91 98290 12349",
+    age: 19,
+    gender: "Male",
+    city: "Ringas",
+    preferredRole: "Queue Management Volunteer",
+    preferredDate: "01/07/2026",
+    preferredTimeSlot: "10:00 AM - 04:00 PM",
+    experience: "None",
+    reason: "College student wishing to dedicate holiday time to service.",
+    emergencyContact: "Sohan Lal (+91 98290 12304)",
+    status: "rejected",
+    createdAt: "2026-06-25",
+  },
 ]
 
 // ─── Donations ──────────────────────────────────────────────────────────────
@@ -363,7 +519,7 @@ export const activityFeed: ActivityEntry[] = [
   { id: "ACT-03", time: "11:30 AM", action: "Traffic alert published — NH-148D congestion", department: "traffic", actor: "Anita D.", icon: "TrafficCone" },
   { id: "ACT-04", time: "11:15 AM", action: "Parking Block C marked FULL", department: "parking", actor: "Vikram S.", icon: "SquareParking" },
   { id: "ACT-05", time: "10:45 AM", action: "Hotel Shyam Palace — 15 new check-ins", department: "accommodation", actor: "Priya S.", icon: "BedDouble" },
-  { id: "ACT-06", time: "10:30 AM", action: "Seva completed — Shringar Seva by Meera Gupta", department: "seva", actor: "System", icon: "Heart" },
+  { id: "ACT-06", time: "10:30 AM", action: "Seva completed — Shringar Seva by Meera Gupta", department: "super-admin", actor: "System", icon: "Heart" },
   { id: "ACT-07", time: "10:15 AM", action: "Temple timings updated for monsoon season", department: "temple-info", actor: "Rajesh K.", icon: "Landmark" },
   { id: "ACT-08", time: "09:30 AM", action: "Emergency drill conducted — all clear", department: "emergency", actor: "Anita D.", icon: "Siren" },
   { id: "ACT-09", time: "09:15 AM", action: "Global announcement — Ekadashi schedule", department: "super-admin", actor: "Rajesh K.", icon: "Megaphone" },
@@ -421,7 +577,6 @@ export const deptColors: Record<AdminRoleKey, { bg: string; text: string; border
   parking: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200" },
   traffic: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
   "lost-found": { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
-  seva: { bg: "bg-pink-50", text: "text-pink-700", border: "border-pink-200" },
   "temple-info": { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
   donation: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
   emergency: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
@@ -445,3 +600,153 @@ export const emergencyTypes = [
   { key: "weather", label: "Severe Weather", icon: "CloudLightning", color: "bg-blue-500" },
   { key: "stampede", label: "Crowd Control", icon: "Users", color: "bg-purple-500" },
 ] as const
+
+// ─── Pilgrim Registry Types & Mocks ──────────────────────────────────────────
+export type RegisteredProfile = {
+  id: string
+  name: string
+  phone: string
+  email?: string
+  createdAt: string
+}
+
+export type DarshanBooking = {
+  id: string
+  bookingNumber: string
+  profileId: string
+  bookingType: "solo" | "group"
+  bookingDate: string
+  visitorCount: number
+  status: "upcoming" | "completed" | "cancelled"
+  createdAt: string
+}
+
+export type BookingMember = {
+  id: string
+  bookingId: string
+  name: string
+  age: number
+  gender: string
+  relationship?: string
+  nationality: string
+  isChild: boolean
+}
+
+export const mockProfiles: RegisteredProfile[] = [
+  {
+    id: "PRF-001",
+    name: "Nand Kumar",
+    phone: "+91 98290 12345",
+    email: "nand.kumar@gmail.com",
+    createdAt: "2026-05-10",
+  },
+  {
+    id: "PRF-002",
+    name: "Rajesh Sharma",
+    phone: "+91 98765 00001",
+    email: "rajesh.sharma@yahoo.com",
+    createdAt: "2026-06-01",
+  },
+  {
+    id: "PRF-003",
+    name: "Anita Devi",
+    phone: "+91 98765 00002",
+    email: "anita.devi@rediffmail.com",
+    createdAt: "2026-07-01", // Today!
+  },
+  {
+    id: "PRF-004",
+    name: "Mahesh Gupta",
+    phone: "+91 98765 00003",
+    email: "mahesh.gupta@outlook.com",
+    createdAt: "2026-06-20",
+  },
+  {
+    id: "PRF-005",
+    name: "Priya Patel",
+    phone: "+91 98765 00004",
+    email: "priya.patel@gmail.com",
+    createdAt: "2026-07-01", // Today!
+  },
+]
+
+export const mockDarshanBookings: DarshanBooking[] = [
+  {
+    id: "BKG-001",
+    bookingNumber: "KSJ-2026-08841",
+    profileId: "PRF-001",
+    bookingType: "solo",
+    bookingDate: "2026-06-28",
+    visitorCount: 4,
+    status: "completed",
+    createdAt: "2026-06-25",
+  },
+  {
+    id: "BKG-002",
+    bookingNumber: "KSJ-2026-09120",
+    profileId: "PRF-001",
+    bookingType: "solo",
+    bookingDate: "2026-07-01", // Today!
+    visitorCount: 2,
+    status: "upcoming",
+    createdAt: "2026-06-29",
+  },
+  {
+    id: "BKG-003",
+    bookingNumber: "KSJ-2026-07102",
+    profileId: "PRF-002",
+    bookingType: "solo",
+    bookingDate: "2026-06-15",
+    visitorCount: 3,
+    status: "completed",
+    createdAt: "2026-06-10",
+  },
+  {
+    id: "BKG-004",
+    bookingNumber: "KSJ-2026-09230",
+    profileId: "PRF-003",
+    bookingType: "solo",
+    bookingDate: "2026-07-01", // Today!
+    visitorCount: 1,
+    status: "upcoming",
+    createdAt: "2026-07-01", // Today!
+  },
+  {
+    id: "BKG-005",
+    bookingNumber: "KSJ-2026-08990",
+    profileId: "PRF-004",
+    bookingType: "group",
+    bookingDate: "2026-06-25",
+    visitorCount: 5,
+    status: "completed",
+    createdAt: "2026-06-20",
+  },
+]
+
+export const mockBookingMembers: BookingMember[] = [
+  // BKG-001 (Nand Kumar, 4 members)
+  { id: "MBR-001", bookingId: "BKG-001", name: "Nand Kumar", age: 48, gender: "Male", nationality: "India", isChild: false },
+  { id: "MBR-002", bookingId: "BKG-001", name: "Radha Devi", age: 45, gender: "Female", relationship: "Wife", nationality: "India", isChild: false },
+  { id: "MBR-003", bookingId: "BKG-001", name: "Ramesh Kumar", age: 22, gender: "Male", relationship: "Son", nationality: "India", isChild: false },
+  { id: "MBR-004", bookingId: "BKG-001", name: "Sneha Kumari", age: 12, gender: "Female", relationship: "女儿", nationality: "India", isChild: true },
+
+  // BKG-002 (Nand Kumar, 2 members)
+  { id: "MBR-005", bookingId: "BKG-002", name: "Nand Kumar", age: 48, gender: "Male", nationality: "India", isChild: false },
+  { id: "MBR-006", bookingId: "BKG-002", name: "Radha Devi", age: 45, gender: "Female", relationship: "Wife", nationality: "India", isChild: false },
+
+  // BKG-003 (Rajesh Sharma, 3 members)
+  { id: "MBR-007", bookingId: "BKG-003", name: "Rajesh Sharma", age: 35, gender: "Male", nationality: "India", isChild: false },
+  { id: "MBR-008", bookingId: "BKG-003", name: "Priya Sharma", age: 32, gender: "Female", relationship: "Wife", nationality: "India", isChild: false },
+  { id: "MBR-009", bookingId: "BKG-003", name: "Aarav Sharma", age: 8, gender: "Male", relationship: "Son", nationality: "India", isChild: true },
+
+  // BKG-004 (Anita Devi, 1 member)
+  { id: "MBR-010", bookingId: "BKG-004", name: "Anita Devi", age: 52, gender: "Female", nationality: "India", isChild: false },
+
+  // BKG-005 (Mahesh Gupta, 5 members)
+  { id: "MBR-011", bookingId: "BKG-005", name: "Mahesh Gupta", age: 41, gender: "Male", nationality: "India", isChild: false },
+  { id: "MBR-012", bookingId: "BKG-005", name: "Suman Gupta", age: 38, gender: "Female", relationship: "Wife", nationality: "India", isChild: false },
+  { id: "MBR-013", bookingId: "BKG-005", name: "Rahul Gupta", age: 16, gender: "Male", relationship: "Son", nationality: "India", isChild: false },
+  { id: "MBR-014", bookingId: "BKG-005", name: "Divya Gupta", age: 14, gender: "Female", relationship: "Daughter", nationality: "India", isChild: false },
+  { id: "MBR-015", bookingId: "BKG-005", name: "Amit Gupta", age: 10, gender: "Male", relationship: "Son", nationality: "India", isChild: true },
+]
+

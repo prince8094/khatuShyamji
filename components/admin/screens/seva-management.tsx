@@ -1,128 +1,558 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { useState, useMemo } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
-import { AdminSectionTitle, MetricCard, QuickAction, ActivityItem, LiveDot } from "@/components/admin/admin-shared"
-import { sevaBookings, type AdminScreenKey } from "@/lib/admin-data"
+import { AdminSectionTitle, LiveDot } from "@/components/admin/admin-shared"
+import { volunteerApplications as initialApplications, type AdminScreenKey } from "@/lib/admin-data"
+
+type Application = typeof initialApplications[0]
 
 export function SevaManagementScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
-  const confirmed = sevaBookings.filter((s) => s.status === "confirmed").length
-  const pending = sevaBookings.filter((s) => s.status === "pending").length
-  const completed = sevaBookings.filter((s) => s.status === "completed").length
-  const totalRevenue = sevaBookings.filter((s) => s.status !== "cancelled").reduce((a, s) => a + s.amount, 0)
+  const [applications, setApplications] = useState<Application[]>(initialApplications)
+  const [statusFilter, setStatusFilter] = useState<string>("all")
+  const [roleFilter, setRoleFilter] = useState<string>("all")
+  const [dateFilter, setDateFilter] = useState<string>("all")
+  const [search, setSearch] = useState("")
 
-  const statusStyle: Record<string, { bg: string; text: string }> = {
-    confirmed: { bg: "bg-green-50 border-green-200", text: "text-green-700" },
-    pending: { bg: "bg-amber-50 border-amber-200", text: "text-amber-700" },
-    completed: { bg: "bg-blue-50 border-blue-200", text: "text-blue-700" },
-    cancelled: { bg: "bg-red-50 border-red-200", text: "text-red-700" },
+  const [selectedAppId, setSelectedAppId] = useState<string | null>(null)
+  const [toastMsg, setToastMsg] = useState("")
+
+  const triggerToast = (msg: string) => {
+    setToastMsg(msg)
+    setTimeout(() => setToastMsg(""), 3500)
   }
+
+  // Handle application approval
+  const handleApprove = (appId: string) => {
+    setApplications((prev) =>
+      prev.map((app) => (app.id === appId ? { ...app, status: "approved" as const } : app))
+    )
+    const app = applications.find((a) => a.id === appId)
+    if (app) {
+      triggerToast(`Volunteer application for ${app.fullName} has been APPROVED.`)
+    }
+  }
+
+  // Handle application rejection
+  const handleReject = (appId: string) => {
+    setApplications((prev) =>
+      prev.map((app) => (app.id === appId ? { ...app, status: "rejected" as const } : app))
+    )
+    const app = applications.find((a) => a.id === appId)
+    if (app) {
+      triggerToast(`Volunteer application for ${app.fullName} has been REJECTED.`)
+    }
+  }
+
+  // Unique list of roles and dates for filter dropdowns
+  const rolesList = useMemo(() => {
+    const roles = new Set(applications.map((app) => app.preferredRole))
+    return Array.from(roles)
+  }, [applications])
+
+  const datesList = useMemo(() => {
+    const dates = new Set(applications.map((app) => app.preferredDate))
+    return Array.from(dates)
+  }, [applications])
+
+  // Filter & Search Applications
+  const filteredApps = useMemo(() => {
+    return applications.filter((app) => {
+      const matchesStatus = statusFilter === "all" || app.status === statusFilter
+      const matchesRole = roleFilter === "all" || app.preferredRole === roleFilter
+      const matchesDate = dateFilter === "all" || app.preferredDate === dateFilter
+      const matchesSearch =
+        app.fullName.toLowerCase().includes(search.toLowerCase()) ||
+        app.mobile.includes(search)
+
+      return matchesStatus && matchesRole && matchesDate && matchesSearch
+    })
+  }, [applications, statusFilter, roleFilter, dateFilter, search])
+
+  // Dashboard Stats
+  const stats = useMemo(() => {
+    return {
+      total: applications.length,
+      pending: applications.filter((a) => a.status === "pending").length,
+      approved: applications.filter((a) => a.status === "approved").length,
+      rejected: applications.filter((a) => a.status === "rejected").length,
+    }
+  }, [applications])
+
+  // Selected Application Details
+  const selectedAppDetails = useMemo(() => {
+    if (!selectedAppId) return null
+    return applications.find((app) => app.id === selectedAppId) || null
+  }, [applications, selectedAppId])
 
   return (
     <div className="space-y-5 pb-6">
-      {/* Header */}
+      {/* Header Banner */}
       <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#DB2777] to-[#BE185D] p-6 text-white shadow-lg">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
-        <div className="relative flex items-start justify-between">
+        <div
+          className="absolute inset-0 opacity-10"
+          style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }}
+        />
+        <div className="relative flex items-center justify-between">
           <div>
-            <h1 className="font-heading text-xl font-bold">Seva Management</h1>
-            <p className="text-sm text-white/80 mt-1">Puja bookings, slots & devotee sevas</p>
+            <h1 className="font-heading text-xl font-bold flex items-center gap-2">
+              <Icon name="HeartHandshake" className="size-6 text-pink-200" />
+              Volunteer Management
+            </h1>
+            <p className="text-xs text-white/80 mt-1">
+              Review pilgrim registrations and coordinate temple volunteers
+            </p>
           </div>
           <span className="grid size-12 place-items-center rounded-2xl bg-white/20 border border-white/20">
-            <Icon name="Heart" className="size-6" />
+            <Icon name="Heart" className="size-6 text-white" />
           </span>
         </div>
         <div className="relative mt-4 grid grid-cols-4 gap-2">
           {[
-            { label: "Today's Sevas", value: sevaBookings.length },
-            { label: "Confirmed", value: confirmed },
-            { label: "Pending", value: pending },
-            { label: "Revenue", value: `₹${(totalRevenue / 1000).toFixed(1)}K` },
+            { label: "Total Applications", value: stats.total },
+            { label: "Pending Review", value: stats.pending },
+            { label: "Approved Volunteers", value: stats.approved },
+            { label: "Rejected Applications", value: stats.rejected },
           ].map((s) => (
-            <div key={s.label} className="rounded-xl bg-black/20 backdrop-blur-sm px-2 py-2 text-center">
-              <p className="text-[9px] text-white/70">{s.label}</p>
-              <p className="font-heading text-base font-bold text-white">{s.value}</p>
+            <div
+              key={s.label}
+              className="rounded-xl bg-black/20 backdrop-blur-sm px-2 py-2 text-center border border-white/5"
+            >
+              <p className="text-[9px] text-white/70 uppercase tracking-wide font-semibold">
+                {s.label}
+              </p>
+              <p className="font-heading text-base font-extrabold text-white mt-0.5">{s.value}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-2 gap-3">
-        <MetricCard icon="IndianRupee" label="Total Revenue" value={`₹${totalRevenue.toLocaleString()}`} sub="today's sevas" />
-        <MetricCard icon="CheckCircle" label="Completed" value={completed} sub="sevas performed" />
+      {/* Toast alert */}
+      <AnimatePresence>
+        {toastMsg && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="flex items-center gap-2 rounded-xl bg-green-600 text-white px-4 py-3 shadow-lg text-xs font-bold"
+          >
+            <Icon name="CheckCircle" className="size-4 shrink-0" />
+            <span>{toastMsg}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Search & Filters */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-card border border-border rounded-2xl p-4 shadow-sm">
+        {/* Name / Mobile Search */}
+        <div className="relative">
+          <label className="block text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            Search Applicant
+          </label>
+          <div className="relative">
+            <Icon name="Search" className="absolute left-3 top-2.5 size-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Name or mobile..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-border bg-muted/30 pl-9 pr-4 py-2 text-xs font-bold focus:border-[#DB2777] focus:outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Status Filter */}
+        <div>
+          <label className="block text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            Status
+          </label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold focus:border-[#DB2777] focus:outline-none"
+          >
+            <option value="all">All Applications</option>
+            <option value="pending">Pending Review</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+
+        {/* Role Filter */}
+        <div>
+          <label className="block text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            Volunteer Role
+          </label>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold focus:border-[#DB2777] focus:outline-none"
+          >
+            <option value="all">Any Preferred Role</option>
+            {rolesList.map((role) => (
+              <option key={role} value={role}>
+                {role}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Date Filter */}
+        <div>
+          <label className="block text-[9px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+            Preferred Date
+          </label>
+          <select
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="w-full rounded-xl border border-border bg-card px-3 py-2 text-xs font-bold focus:border-[#DB2777] focus:outline-none"
+          >
+            <option value="all">Any Date</option>
+            {datesList.map((date) => (
+              <option key={date} value={date}>
+                {date}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Applications list queue */}
       <section>
-        <AdminSectionTitle title="Quick Actions" icon="Zap" />
-        <div className="grid grid-cols-3 gap-2">
-          <QuickAction icon="Plus" label="Add Seva" />
-          <QuickAction icon="CalendarX" label="Block Slots" variant="danger" />
-          <QuickAction icon="Bell" label="Send Reminder" />
+        <AdminSectionTitle
+          title="Volunteer Applications"
+          icon="ClipboardList"
+          action={
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-pink-600">
+              <LiveDot color="bg-pink-500" /> Live Pipeline
+            </span>
+          }
+        />
+
+        <div className="grid grid-cols-1 gap-3.5">
+          {filteredApps.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-border bg-white p-8 text-center text-xs text-muted-foreground">
+              <Icon name="SearchX" className="mx-auto size-7 mb-1.5 text-muted-foreground/60" />
+              No matching volunteer applications found.
+            </div>
+          ) : (
+            filteredApps.map((app) => {
+              const statusColors = {
+                pending: "bg-amber-50 text-amber-700 border-amber-200",
+                approved: "bg-green-50 text-green-700 border-green-200",
+                rejected: "bg-red-50 text-red-700 border-red-200",
+              }
+
+              return (
+                <motion.div
+                  key={app.id}
+                  layoutId={app.id}
+                  className="rounded-2xl border border-border bg-card p-4 shadow-sm hover:shadow-md transition-all"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-heading text-sm font-extrabold text-foreground">
+                          {app.fullName}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          ({app.age} yrs · {app.gender})
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Preferred Role:{" "}
+                        <span className="font-bold text-foreground">{app.preferredRole}</span>
+                      </p>
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-[10px] text-muted-foreground font-medium">
+                        <span className="flex items-center gap-1">
+                          <Icon name="Phone" className="size-3 text-[#DB2777]" /> {app.mobile}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Icon name="MapPin" className="size-3 text-[#DB2777]" /> {app.city}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Icon name="Calendar" className="size-3 text-[#DB2777]" /> {app.preferredDate}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Icon name="Clock" className="size-3 text-[#DB2777]" /> {app.preferredTimeSlot}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 sm:self-start shrink-0">
+                      <span
+                        className={`inline-flex items-center gap-1.5 border px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase ${
+                          statusColors[app.status]
+                        }`}
+                      >
+                        <span
+                          className={`size-1.5 rounded-full ${
+                            app.status === "pending"
+                              ? "bg-amber-500 animate-pulse"
+                              : app.status === "approved"
+                              ? "bg-green-500"
+                              : "bg-red-500"
+                          }`}
+                        />
+                        {app.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Actions Transition Bar */}
+                  <div className="mt-3.5 border-t border-border/40 pt-3 flex items-center justify-between gap-2.5">
+                    <button
+                      onClick={() => {
+                        setSelectedAppId(app.id)
+                      }}
+                      className="rounded-xl border border-[#DB2777]/30 hover:border-[#DB2777] hover:bg-[#DB2777]/5 px-4 py-1.5 text-[10px] font-bold text-[#DB2777] transition active:scale-95"
+                    >
+                      View Details
+                    </button>
+
+                    {app.status === "pending" && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleReject(app.id)}
+                          className="rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-[10px] px-3.5 py-1.5 font-bold transition active:scale-95"
+                        >
+                          Reject
+                        </button>
+                        <button
+                          onClick={() => handleApprove(app.id)}
+                          className="rounded-xl bg-green-600 hover:bg-green-700 text-white text-[10px] px-4 py-1.5 font-bold shadow-sm transition active:scale-95"
+                        >
+                          Approve
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              )
+            })
+          )}
         </div>
       </section>
 
-      {/* Seva Cards */}
-      <section>
-        <AdminSectionTitle title="Today's Schedule" icon="Calendar" action={
-          <span className="flex items-center gap-1.5 text-[11px] font-semibold text-green-600">
-            <LiveDot color="bg-green-500" /> Live
-          </span>
-        } />
-        <div className="space-y-3">
-          {sevaBookings.map((seva) => {
-            const ss = statusStyle[seva.status]
-            return (
-              <motion.div
-                key={seva.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-border bg-card p-4 shadow-sm"
+      {/* Details Slide-Over Drawer Modal */}
+      <AnimatePresence>
+        {selectedAppDetails && (
+          <div className="fixed inset-0 z-50 flex justify-end">
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedAppId(null)}
+              className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            />
+
+            {/* Slide-over Content */}
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative z-10 flex h-full w-full max-w-xl flex-col bg-[#FFF8F0] shadow-2xl"
+            >
+              {/* Header */}
+              <div
+                className="relative overflow-hidden px-6 py-5 text-white shrink-0"
+                style={{ backgroundImage: "linear-gradient(135deg, #DB2777 0%, #BE185D 100%)" }}
               >
-                <div className="flex items-start justify-between">
+                <div
+                  className="absolute inset-0 opacity-[0.12]"
+                  style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "160px" }}
+                />
+                <div className="relative flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="grid size-11 place-items-center rounded-xl bg-pink-50 text-pink-600 shadow-sm">
-                      <Icon name="Heart" className="size-5" />
+                    <span className="grid size-12 place-items-center rounded-xl bg-white font-heading text-lg font-bold text-[#DB2777] shadow-md border border-white/20">
+                      {selectedAppDetails.fullName
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")}
                     </span>
                     <div>
-                      <p className="font-heading text-sm font-bold text-foreground">{seva.sevaName}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5">{seva.devoteeName}</p>
+                      <h2 className="font-heading text-lg font-bold">{selectedAppDetails.fullName}</h2>
+                      <p className="text-xs text-pink-100 uppercase tracking-wider">
+                        Volunteer Application Details
+                      </p>
                     </div>
                   </div>
-                  <span className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold ${ss.bg} ${ss.text}`}>
-                    {seva.status.charAt(0).toUpperCase() + seva.status.slice(1)}
+                  <button
+                    onClick={() => setSelectedAppId(null)}
+                    className="grid size-8 place-items-center rounded-lg bg-black/20 hover:bg-black/35 transition"
+                  >
+                    <Icon name="X" className="size-4 text-white" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-5">
+                {/* Status indicator */}
+                <div className="flex items-center justify-between border-b border-border pb-3">
+                  <span className="text-xs text-muted-foreground font-bold uppercase tracking-wide">
+                    Application ID: {selectedAppDetails.id}
+                  </span>
+                  <span
+                    className={`inline-flex items-center border px-3 py-1 rounded-lg text-xs font-bold uppercase ${
+                      selectedAppDetails.status === "pending"
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : selectedAppDetails.status === "approved"
+                        ? "bg-green-50 text-green-700 border-green-200"
+                        : "bg-red-50 text-red-700 border-red-200"
+                    }`}
+                  >
+                    {selectedAppDetails.status}
                   </span>
                 </div>
 
-                <div className="mt-3 grid grid-cols-3 gap-2">
-                  <div className="rounded-xl bg-muted/50 px-3 py-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">Time</p>
-                    <p className="font-heading text-xs font-bold">{seva.timeSlot}</p>
+                {/* Grid details */}
+                <div className="grid grid-cols-2 gap-4 text-xs font-medium text-muted-foreground">
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-0.5">
+                      Full Name
+                    </span>
+                    <span className="text-foreground text-sm font-semibold">
+                      {selectedAppDetails.fullName}
+                    </span>
                   </div>
-                  <div className="rounded-xl bg-muted/50 px-3 py-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">Amount</p>
-                    <p className="font-heading text-xs font-bold text-pink-600">₹{seva.amount.toLocaleString()}</p>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-0.5">
+                      Mobile Number
+                    </span>
+                    <span className="text-foreground text-sm font-semibold">
+                      {selectedAppDetails.mobile}
+                    </span>
                   </div>
-                  <div className="rounded-xl bg-muted/50 px-3 py-2 text-center">
-                    <p className="text-[10px] text-muted-foreground">ID</p>
-                    <p className="font-heading text-xs font-bold">{seva.id}</p>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-0.5">
+                      Email Address
+                    </span>
+                    <span className="text-foreground text-sm font-semibold">
+                      {selectedAppDetails.email}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-0.5">
+                      Age & Gender
+                    </span>
+                    <span className="text-foreground text-sm font-semibold">
+                      {selectedAppDetails.age} yrs · {selectedAppDetails.gender}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-0.5">
+                      City
+                    </span>
+                    <span className="text-foreground text-sm font-semibold">
+                      {selectedAppDetails.city}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-0.5">
+                      Preferred Date
+                    </span>
+                    <span className="text-foreground text-sm font-semibold">
+                      {selectedAppDetails.preferredDate}
+                    </span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-0.5">
+                      Preferred Volunteer Role
+                    </span>
+                    <span className="text-[#DB2777] text-sm font-bold flex items-center gap-1">
+                      <Icon name="HeartHandshake" className="size-4" />
+                      {selectedAppDetails.preferredRole}
+                    </span>
+                  </div>
+                  <div className="col-span-2">
+                    <span className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-0.5">
+                      Preferred Time Slot
+                    </span>
+                    <span className="text-foreground text-sm font-semibold">
+                      {selectedAppDetails.preferredTimeSlot}
+                    </span>
                   </div>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                    <Icon name="Phone" className="size-3" /> {seva.phone}
+                {/* Custom text areas */}
+                <div className="space-y-4 pt-3 border-t border-border/60">
+                  {/* Prior Experience */}
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">
+                      Prior Experience Details
+                    </label>
+                    <div className="rounded-xl border border-border bg-white p-3 text-xs font-semibold text-foreground leading-relaxed">
+                      {selectedAppDetails.experience || "No prior volunteering experience listed."}
+                    </div>
                   </div>
-                  <button className="flex items-center gap-1 text-[11px] font-bold text-[#D97706] hover:text-[#B45309] transition">
-                    Manage <Icon name="ArrowRight" className="size-3" />
-                  </button>
+
+                  {/* Reason for volunteering */}
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">
+                      Reason for Volunteering
+                    </label>
+                    <div className="rounded-xl border border-border bg-white p-3 text-xs font-semibold text-foreground leading-relaxed">
+                      {selectedAppDetails.reason}
+                    </div>
+                  </div>
+
+                  {/* Emergency Contact */}
+                  <div>
+                    <label className="block text-[10px] uppercase font-bold text-muted-foreground/60 mb-1">
+                      Emergency Contact Details
+                    </label>
+                    <div className="rounded-xl border border-border bg-white p-3 text-xs font-semibold text-foreground leading-relaxed">
+                      {selectedAppDetails.emergencyContact || "No emergency contact listed."}
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
-            )
-          })}
-        </div>
-      </section>
+              </div>
+
+              {/* Footer */}
+              <div className="border-t border-border bg-white px-6 py-4 flex items-center justify-between shrink-0">
+                {selectedAppDetails.status === "pending" ? (
+                  <div className="flex gap-2 w-full">
+                    <button
+                      onClick={() => {
+                        handleReject(selectedAppDetails.id)
+                        setSelectedAppId(null)
+                      }}
+                      className="flex-1 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-xs py-2.5 font-bold transition active:scale-95"
+                    >
+                      Reject Application
+                    </button>
+                    <button
+                      onClick={() => {
+                        handleApprove(selectedAppDetails.id)
+                        setSelectedAppId(null)
+                      }}
+                      className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 text-white text-xs py-2.5 font-bold shadow-sm transition active:scale-95"
+                    >
+                      Approve Application
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-between w-full">
+                    <span className="text-[10px] font-bold text-muted-foreground/75 uppercase">
+                      Application Audited
+                    </span>
+                    <button
+                      onClick={() => setSelectedAppId(null)}
+                      className="rounded-xl bg-[#DB2777] hover:bg-[#BE185D] px-5 py-2.5 text-xs font-bold text-white shadow-sm transition active:scale-95"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

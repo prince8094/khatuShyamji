@@ -35,6 +35,7 @@ export type ScreenKey =
   | "donation"
   | "seva-booking"
   | "offerings"
+  | "aarti-timings"
 
 export type AppUser = {
   name: string
@@ -74,7 +75,7 @@ export const liveStatus = {
 
 export const services = [
   { key: "live-darshan", label: "Live Darshan", hindi: "लाइव दर्शन", icon: "Video", desc: "Real-time shrine feed", meta: "Live", screenKey: "live-darshan" as const },
-  { key: "aarti", label: "Aarti Timings", hindi: "आरती दर्शन", icon: "Flame", desc: "Daily aarti timings", meta: "Timings", screenKey: "home" as const },
+  { key: "aarti", label: "Aarti Timings", hindi: "आरती दर्शन", icon: "Flame", desc: "Daily aarti timings", meta: "Timings", screenKey: "aarti-timings" as const },
   { key: "temple", label: "Temple Guide", hindi: "मंदिर विवरण", icon: "Landmark", desc: "Temple information", meta: "Guide", screenKey: "temple" as const },
   { key: "hotel", label: "Hotel Booking", hindi: "होटल बुकिंग", icon: "BedDouble", desc: "Stays near Khatu Dham", meta: "120+ stays", screenKey: "hotel-booking" as const },
   { key: "transport", label: "Transport", hindi: "परिवहन", icon: "Bus", desc: "Buses, taxis & shared rides", meta: "Book now", screenKey: "transport" as const },
@@ -82,7 +83,7 @@ export const services = [
   { key: "shyam-bus", label: "Shyam Bus", hindi: "श्याम बस", icon: "BusFront", desc: "Dedicated pilgrim buses", meta: "Daily", screenKey: "shyam-bus" as const },
   { key: "prashad", label: "Prashad", hindi: "प्रसाद", icon: "ShoppingBag", desc: "Order sacred prasad", meta: "Fresh daily", screenKey: "prashad" as const },
   { key: "donation", label: "Donation", hindi: "दान", icon: "HandCoins", desc: "Support the temple", meta: "Tax receipt", screenKey: "donation" as const },
-  { key: "seva", label: "Seva Booking", hindi: "सेवा बुकिंग", icon: "Heart", desc: "Book special seva & puja", meta: "Book", screenKey: "seva-booking" as const },
+  { key: "seva", label: "Volunteering Services", hindi: "स्वयंसेवक सेवा", icon: "HeartHandshake", desc: "Serve at the temple", meta: "Volunteer", screenKey: "seva-booking" as const },
   { key: "offerings", label: "Offerings", hindi: "भेंट", icon: "Gift", desc: "Flowers, coconut & more", meta: "Counter 2", screenKey: "offerings" as const },
   { key: "emergency", label: "Emergency Helpline", hindi: "आपातकालीन हेल्पलाइन", icon: "Siren", desc: "24/7 medical & police help", meta: "Dial 112", screenKey: "emergency" as const },
   { key: "parking", label: "Parking Info", hindi: "पार्किंग जानकारी", icon: "SquareParking", desc: "Find spot availability", meta: "Live", screenKey: "parking" as const },
@@ -139,4 +140,12 @@ export const travelModes = [
   { mode: "By Train", icon: "TrainFront", detail: "Nearest station: Reengus Junction (17 km). Ample taxis & autos available." },
   { mode: "By Bus", icon: "BusFront", detail: "Regular RSRTC & Shyam buses from Jaipur, Sikar & Delhi to Khatu Dham." },
   { mode: "Parking", icon: "SquareParking", detail: "3 large lots (A, B, C) with free shuttle service to the main temple gate." },
+]
+
+export const announcements = [
+  { id: 1, text: "Ekadashi rush expected this weekend. Devotees are advised to arrive before **7:00 AM**." },
+  { id: 2, text: "Special Aarti on **Purnima**. All devotees are cordially invited." },
+  { id: 3, text: "Temple will remain open until **11:00 PM** on Saturdays." },
+  { id: 4, text: "VIP Darshan booking will be unavailable due to maintenance." },
+  { id: 5, text: "Free Prasad distribution at **12:00 PM** daily." },
 ]

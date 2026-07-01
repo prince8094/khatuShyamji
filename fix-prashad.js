@@ -1,27 +1,14 @@
 const fs = require('fs');
+let text = fs.readFileSync('components/screens/services/prashad.tsx', 'utf8');
 
-const file = './components/screens/services/prashad.tsx';
-let content = fs.readFileSync(file, 'utf8');
-
-if (!content.includes('useHistoryState')) {
-  const importIndex = content.indexOf('import { useNavigation }');
-  content = content.slice(0, importIndex) + 'import { useHistoryState } from "@/lib/hooks/useHistoryState"\n' + content.slice(importIndex);
-}
-
-content = content.replace(
-  'const [checkout, setCheckout] = useState(false)',
-  'const [checkout, setCheckout] = useHistoryState<boolean>("checkout", false)'
+text = text.replace(
+  'import type { ScreenKey } from "@/lib/data"',
+  'import { useNavigation } from "@/lib/contexts/NavigationContext"\nimport type { ScreenKey } from "@/lib/data"'
 );
 
-content = content.replace(
-  'onClick={() => setCheckout(false)}',
-  'onClick={goBack}'
+text = text.replace(
+  'const { t } = useLanguage()',
+  'const { t } = useLanguage()\n  const { goBack } = useNavigation()'
 );
 
-content = content.replace(
-  'setCheckout(false)',
-  'goBack()'
-);
-
-fs.writeFileSync(file, content);
-console.log('Fixed prashad.tsx');
+fs.writeFileSync('components/screens/services/prashad.tsx', text);

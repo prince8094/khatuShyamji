@@ -24,6 +24,7 @@ import { DonationScreen } from "@/components/screens/services/donation"
 import { SevaBookingScreen } from "@/components/screens/services/seva-booking"
 import { OfferingsScreen } from "@/components/screens/services/offerings"
 import { EmergencyHelplineScreen } from "@/components/screens/services/emergency-helpline"
+import { AartiTimingsScreen } from "@/components/screens/services/aarti-timings"
 import { ParkingInfoScreen } from "@/components/screens/services/parking-info"
 import { TrafficUpdatesScreen } from "@/components/screens/services/traffic-updates"
 import { MyBookingsScreen } from "@/components/screens/my-bookings"
@@ -86,8 +87,9 @@ const titles: Record<ScreenKey, { en: string; hi: string }> = {
   "shyam-bus": { en: "Shyam Bus", hi: "श्याम बस" },
   prashad: { en: "Prashad", hi: "प्रसाद" },
   donation: { en: "Donation", hi: "दान" },
-  "seva-booking": { en: "Seva Booking", hi: "सेवा बुकिंग" },
+  "seva-booking": { en: "Volunteering Services", hi: "स्वयंसेवक सेवा" },
   offerings: { en: "Offerings", hi: "भेंट" },
+  "aarti-timings": { en: "Aarti Timings", hi: "आरती का समय" },
 }
 
 const bottomNav: { key: ScreenKey; icon: string }[] = [
@@ -207,7 +209,11 @@ export function AppShell() {
 
   const navigateWithDate = (s: ScreenKey, date: string) => {
     setBookingDate(date)
+    if (typeof window !== "undefined") {
+      window.history.pushState({ screen: s }, "", `?screen=${s}`)
+    }
     setScreen(s)
+    setInternalHistoryCount(c => c + 1)
     if (typeof window !== "undefined") window.scrollTo({ top: 0 })
   }
 
@@ -469,7 +475,7 @@ export function AppShell() {
 
               <div className="min-w-0 flex-1">
                 <h1 className="truncate font-heading text-base font-bold leading-tight drop-shadow-sm md:text-lg">
-                  {t(titles[screen].en, titles[screen].hi)}
+                  {titles[screen] ? t(titles[screen].en, titles[screen].hi) : screen}
                 </h1>
                 <p className="truncate text-[10px] uppercase tracking-wider text-white/80">
                   {t("app.header.subtitle")}
@@ -552,7 +558,7 @@ export function AppShell() {
           {screen === "home" && <HomeScreen navigate={navigate} currentUser={currentUser} />}
           {screen === "book" && <BookDarshanScreen navigate={navigate} navigateWithDate={navigateWithDate} />}
           {screen === "passenger-details" && <PassengerDetailsScreen navigate={navigate} bookingDate={bookingDate} />}
-          {screen === "group-booking" && <GroupBookingScreen navigate={navigate} />}
+          {screen === "group-booking" && <GroupBookingScreen navigate={navigate} bookingDate={bookingDate} />}
           {screen === "services" && <ServicesScreen navigate={navigate} />}
           {screen === "hotel-booking" && <HotelBookingScreen navigate={navigate} />}
           {screen === "transport" && <TransportScreen navigate={navigate} />}
@@ -562,6 +568,7 @@ export function AppShell() {
           {screen === "donation" && <DonationScreen navigate={navigate} />}
           {screen === "seva-booking" && <SevaBookingScreen navigate={navigate} />}
           {screen === "offerings" && <OfferingsScreen navigate={navigate} />}
+          {screen === "aarti-timings" && <AartiTimingsScreen />}
           {screen === "emergency" && <EmergencyHelplineScreen navigate={navigate} />}
           {screen === "parking" && <ParkingInfoScreen navigate={navigate} />}
           {screen === "traffic" && <TrafficUpdatesScreen navigate={navigate} />}
@@ -588,8 +595,8 @@ export function AppShell() {
 
       {/* Mobile Bottom nav */}
       {showHeaderAndNav && (
-        <nav className="lg:hidden fixed inset-x-0 bottom-0 z-30 w-full border-t border-border bg-card/95 backdrop-blur-md pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-          <div className="grid grid-cols-5 h-16">
+        <nav className="lg:hidden fixed inset-x-0 bottom-0 z-50 w-full border-t border-border bg-card/95 backdrop-blur-md pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+          <div className="grid grid-cols-5 h-16 w-full">
             {bottomNav.map((item) => {
               const active = screen === item.key
               return (
@@ -602,7 +609,7 @@ export function AppShell() {
                       navigate(item.key)
                     }
                   }}
-                  className="relative flex flex-col items-center justify-center gap-1 h-full transition-transform active:scale-95"
+                  className="relative flex flex-col items-center justify-center gap-1 h-full w-full min-w-0 px-1 transition-transform active:scale-95"
                   aria-current={active ? "page" : undefined}
                 >
                   {active && (
@@ -610,15 +617,15 @@ export function AppShell() {
                   )}
                   <span
                     className={cn(
-                      "grid size-8 place-items-center rounded-full transition-all duration-300",
+                      "grid size-7 sm:size-8 shrink-0 place-items-center rounded-full transition-all duration-300",
                       active ? "bg-gradient-to-r from-[#D97706] to-[#D4AF37] text-white shadow-lg -translate-y-1" : "text-muted-foreground",
                     )}
                   >
-                    <Icon name={item.icon} className="size-[18px]" />
+                    <Icon name={item.icon} className="size-4 sm:size-[18px]" />
                   </span>
                   <span
                     className={cn(
-                      "text-[10px] font-semibold transition-colors duration-300",
+                      "text-[9px] sm:text-[10px] w-full text-center truncate font-semibold transition-colors duration-300",
                       active ? "text-[#D97706]" : "text-muted-foreground",
                     )}
                   >

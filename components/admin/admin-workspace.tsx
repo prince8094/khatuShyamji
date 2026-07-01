@@ -26,6 +26,7 @@ import { EmergencyOpsScreen } from "@/components/admin/screens/emergency-ops"
 import { NotificationsAdminScreen } from "@/components/admin/screens/notifications-admin"
 import { AdminManagementScreen } from "@/components/admin/screens/admin-management"
 import { ApprovalQueueScreen } from "@/components/admin/screens/approval-queue"
+import { PilgrimRegistryScreen } from "@/components/admin/screens/pilgrim-registry"
 
 // Screen titles
 const screenTitles: Record<Exclude<AdminScreenKey, "admin-login">, string> = {
@@ -42,22 +43,24 @@ const screenTitles: Record<Exclude<AdminScreenKey, "admin-login">, string> = {
   "notifications-admin": "Notifications",
   "admin-management": "Admin Management",
   "approval-queue": "Approval Queue",
+  "pilgrim-registry": "Pilgrim Registry",
 }
 
 // Sidebar menu items
 const sidebarItems: { key: AdminScreenKey; icon: string; label: string; group: string }[] = [
   { key: "command-center", icon: "Shield", label: "Command Center", group: "Operations" },
-  { key: "accommodation", icon: "BedDouble", label: "Accommodation", group: "Management" },
-  { key: "parking-management", icon: "SquareParking", label: "Parking", group: "Management" },
-  { key: "traffic-ops", icon: "TrafficCone", label: "Traffic", group: "Management" },
-  { key: "lost-found-admin", icon: "PackageSearch", label: "Lost & Found", group: "Management" },
-  { key: "seva-management", icon: "Heart", label: "Seva", group: "Management" },
-  { key: "temple-info-admin", icon: "Landmark", label: "Temple Info", group: "Management" },
-  { key: "donation-management", icon: "HandCoins", label: "Donations", group: "Management" },
-  { key: "emergency-ops", icon: "Siren", label: "Emergency", group: "Management" },
-  { key: "notifications-admin", icon: "Bell", label: "Notifications", group: "System" },
+  { key: "parking-management", icon: "SquareParking", label: "Parking", group: "Operations" },
+  { key: "traffic-ops", icon: "TrafficCone", label: "Traffic", group: "Operations" },
+  { key: "emergency-ops", icon: "Siren", label: "Emergency", group: "Operations" },
+  { key: "accommodation", icon: "BedDouble", label: "Accommodation", group: "Services" },
+  { key: "seva-management", icon: "Heart", label: "Seva", group: "Services" },
+  { key: "temple-info-admin", icon: "Landmark", label: "Temple Info", group: "Services" },
+  { key: "donation-management", icon: "HandCoins", label: "Donations", group: "Services" },
+  { key: "notifications-admin", icon: "Bell", label: "Notifications", group: "Communication" },
+  { key: "lost-found-admin", icon: "PackageSearch", label: "Lost & Found", group: "Communication" },
   { key: "admin-management", icon: "Users", label: "Admin Users", group: "System" },
   { key: "approval-queue", icon: "ClipboardCheck", label: "Approvals", group: "System" },
+  { key: "pilgrim-registry", icon: "BookOpen", label: "Pilgrim Registry", group: "System" },
 ]
 
 /**
@@ -100,7 +103,6 @@ export function AdminWorkspace({
       parking: ["parking-management"],
       traffic: ["traffic-ops"],
       "lost-found": ["lost-found-admin"],
-      seva: ["seva-management"],
       "temple-info": ["temple-info-admin"],
       donation: ["donation-management"],
       emergency: ["emergency-ops"],
@@ -119,7 +121,7 @@ export function AdminWorkspace({
   const showHeaderAndNav = screen !== "role-hub"
 
   // Group menu items
-  const groups = ["Operations", "Management", "System"]
+  const groups = ["Operations", "Services", "Communication", "System"]
   const groupedItems = groups
     .map((g) => ({ group: g, items: menuItems.filter((i) => i.group === g) }))
     .filter((g) => g.items.length > 0)
@@ -341,23 +343,24 @@ export function AdminWorkspace({
         <main className={cn("flex-1 w-full max-w-5xl mx-auto px-4 md:px-8", showHeaderAndNav ? "pt-5 pb-24 lg:pb-8" : "")}>
           {screen === "command-center" && <CommandCenterScreen navigate={navigate} />}
           {screen === "accommodation" && <AccommodationScreen navigate={navigate} />}
-          {screen === "parking-management" && <ParkingManagementScreen navigate={navigate} />}
+          {screen === "parking-management" && <ParkingManagementScreen navigate={navigate} currentAdmin={currentAdmin} />}
           {screen === "traffic-ops" && <TrafficOpsScreen navigate={navigate} />}
           {screen === "lost-found-admin" && <LostFoundAdminScreen navigate={navigate} />}
           {screen === "seva-management" && <SevaManagementScreen navigate={navigate} />}
-          {screen === "temple-info-admin" && <TempleInfoAdminScreen navigate={navigate} />}
+          {screen === "temple-info-admin" && <TempleInfoAdminScreen navigate={navigate} currentAdmin={currentAdmin} />}
           {screen === "donation-management" && <DonationManagementScreen navigate={navigate} />}
           {screen === "emergency-ops" && <EmergencyOpsScreen navigate={navigate} />}
           {screen === "notifications-admin" && <NotificationsAdminScreen navigate={navigate} />}
           {screen === "admin-management" && <AdminManagementScreen navigate={navigate} />}
           {screen === "approval-queue" && <ApprovalQueueScreen navigate={navigate} />}
+          {screen === "pilgrim-registry" && <PilgrimRegistryScreen navigate={navigate} />}
         </main>
       </div>
 
       {/* Mobile Bottom Nav */}
       {showHeaderAndNav && (
-        <nav className="lg:hidden fixed inset-x-0 bottom-0 z-30 w-full border-t border-border bg-card/95 backdrop-blur-md pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-          <div className="grid grid-cols-5 h-14">
+        <nav className="lg:hidden fixed inset-x-0 bottom-0 z-50 w-full border-t border-border bg-card/95 backdrop-blur-md pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+          <div className="grid grid-cols-5 h-14 w-full">
             {[
               { key: "command-center" as AdminScreenKey, icon: "Shield", label: "TOCC" },
               { key: "accommodation" as AdminScreenKey, icon: "BedDouble", label: "Hotels" },
@@ -370,7 +373,7 @@ export function AdminWorkspace({
                 <button
                   key={item.key}
                   onClick={() => navigate(item.key)}
-                  className="relative flex flex-col items-center justify-center gap-0.5 h-full transition-transform active:scale-95"
+                  className="relative flex flex-col items-center justify-center gap-0.5 h-full w-full min-w-0 px-1 transition-transform active:scale-95"
                 >
                   {active && <span className="absolute -top-0.5 w-8 h-1 bg-[#D97706] rounded-b-full" />}
                   <span
@@ -383,7 +386,7 @@ export function AdminWorkspace({
                   </span>
                   <span
                     className={cn(
-                      "text-[9px] font-semibold transition-colors",
+                      "text-[9px] w-full text-center truncate font-semibold transition-colors",
                       active ? "text-[#D97706]" : "text-muted-foreground",
                     )}
                   >
