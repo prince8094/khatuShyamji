@@ -471,7 +471,7 @@ export function AppShell() {
 
               <div className="min-w-0 flex-1">
                 <h1 className="truncate font-heading text-base font-bold leading-tight drop-shadow-sm md:text-lg">
-                  {t(titles[screen].en, titles[screen].hi)}
+                  {titles[screen] ? t(titles[screen].en, titles[screen].hi) : screen}
                 </h1>
                 <p className="truncate text-[10px] uppercase tracking-wider text-white/80">
                   {t("app.header.subtitle")}

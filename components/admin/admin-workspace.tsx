@@ -26,6 +26,7 @@ import { EmergencyOpsScreen } from "@/components/admin/screens/emergency-ops"
 import { NotificationsAdminScreen } from "@/components/admin/screens/notifications-admin"
 import { AdminManagementScreen } from "@/components/admin/screens/admin-management"
 import { ApprovalQueueScreen } from "@/components/admin/screens/approval-queue"
+import { PilgrimRegistryScreen } from "@/components/admin/screens/pilgrim-registry"
 
 // Screen titles
 const screenTitles: Record<Exclude<AdminScreenKey, "admin-login">, string> = {
@@ -42,6 +43,7 @@ const screenTitles: Record<Exclude<AdminScreenKey, "admin-login">, string> = {
   "notifications-admin": "Notifications",
   "admin-management": "Admin Management",
   "approval-queue": "Approval Queue",
+  "pilgrim-registry": "Pilgrim Registry",
 }
 
 // Sidebar menu items
@@ -58,6 +60,7 @@ const sidebarItems: { key: AdminScreenKey; icon: string; label: string; group: s
   { key: "lost-found-admin", icon: "PackageSearch", label: "Lost & Found", group: "Communication" },
   { key: "admin-management", icon: "Users", label: "Admin Users", group: "System" },
   { key: "approval-queue", icon: "ClipboardCheck", label: "Approvals", group: "System" },
+  { key: "pilgrim-registry", icon: "BookOpen", label: "Pilgrim Registry", group: "System" },
 ]
 
 /**
@@ -350,6 +353,7 @@ export function AdminWorkspace({
           {screen === "notifications-admin" && <NotificationsAdminScreen navigate={navigate} />}
           {screen === "admin-management" && <AdminManagementScreen navigate={navigate} />}
           {screen === "approval-queue" && <ApprovalQueueScreen navigate={navigate} />}
+          {screen === "pilgrim-registry" && <PilgrimRegistryScreen navigate={navigate} />}
         </main>
       </div>
 
