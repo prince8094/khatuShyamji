@@ -245,7 +245,7 @@ export function WelcomeScreen({
                   {/* Admin Header */}
                   <div className="flex items-center justify-center gap-2 mb-1">
                     <span className="grid size-7 place-items-center rounded-lg bg-[#FFF3E0] text-[#D97706]">
-                      <Icon name="Shield" className="size-4" />
+                      <Icon name="Landmark" className="size-4" />
                     </span>
                     <p className="font-heading text-sm font-bold text-[#D97706] tracking-wide">
                       Temple Operations
@@ -322,36 +322,14 @@ export function WelcomeScreen({
                         </motion.div>
                       ) : (
                         <>
-                          <Icon name="Shield" className="size-4" />
+                          <Icon name="Landmark" className="size-4" />
                           Temple Operations Login
                         </>
                       )}
                     </button>
                   </form>
 
-                  {/* Quick Demo Access */}
-                  <div className="mt-5 border-t border-amber-100 pt-4">
-                    <p className="text-center text-[9px] font-bold uppercase tracking-widest text-[#6b5440]/50 mb-3">
-                      Quick Demo Access
-                    </p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {demoAccounts.map((acc) => (
-                        <button
-                          key={acc.id}
-                          onClick={() => handleQuickAdminLogin(acc.id)}
-                          className="flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50/30 px-2.5 py-2 text-left transition-all hover:bg-[#FFF3E0] hover:border-[#FFB74D] active:scale-[0.97]"
-                        >
-                          <span className="grid size-7 place-items-center rounded-lg bg-[#FFF3E0] text-[#D97706] shrink-0">
-                            <Icon name="UserCircle" className="size-3.5" />
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-[#6b5440] truncate">{acc.label}</p>
-                            <p className="text-[9px] text-[#6b5440]/60">{acc.id}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+                   
                 </motion.div>
               )}
             </AnimatePresence>
