@@ -125,11 +125,10 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
               <button
                 key={tab.id}
                 onClick={() => setCategory(tab.id)}
-                className={`rounded-full px-4 py-2 text-xs font-bold whitespace-nowrap border transition-all duration-200 ${
-                  category === tab.id
+                className={`rounded-full px-4 py-2 text-xs font-bold whitespace-nowrap border transition-all duration-200 ${category === tab.id
                     ? "bg-primary border-primary text-white shadow-md shadow-primary/20"
                     : "bg-card border-border text-muted-foreground hover:text-foreground dark:bg-muted dark:border-border/30"
-                }`}
+                  }`}
               >
                 {t(tab.en, tab.hi)}
               </button>
@@ -222,7 +221,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                     <input
                       type="text"
                       required
-                      placeholder="Mohan Sharma"
+                      placeholder="Nand Kumar"
                       value={bookingForm.name}
                       onChange={e => setBookingForm({ ...bookingForm, name: e.target.value })}
                       className="dark:bg-muted dark:border-border/30"

@@ -47,7 +47,7 @@ export function SignupScreen({
       .toUpperCase()
       .slice(0, 2) || "DV"
 
-    const newUser = { name, phone: `+91 ${phone}`, initials }
+    const newUser = { name, phone: `+91 ${phone}`, initials, provider: "phone" }
     onSignupSuccess(newUser)
     
     localStorage.setItem("temp_login_phone", `+91 ${phone}`)
@@ -89,7 +89,7 @@ export function SignupScreen({
 
         {/* Middle Deity Arch Portrait */}
         <div className="relative my-6 text-center z-10">
-          <div className="relative w-60 h-72 mx-auto rounded-t-full overflow-hidden border-4 border-amber-600/20 shadow-2xl bg-white p-2">
+          <div className="relative w-80 h-110 mx-auto rounded-t-full overflow-hidden border-4 border-amber-600/20 shadow-2xl bg-white p-2">
             <div className="relative w-full h-full rounded-t-full overflow-hidden">
               <Image
                 src="/images/khatu-shyam-deity.png"

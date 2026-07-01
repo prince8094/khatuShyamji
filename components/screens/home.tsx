@@ -25,7 +25,7 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Hero */}
       <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
         <div className="relative h-52 w-full">

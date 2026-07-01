@@ -195,9 +195,8 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                   <button
                     type="button"
                     onClick={() => setDeliveryType("pickup")}
-                    className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all ${
-                      deliveryType === "pickup" ? "bg-primary text-white shadow" : "text-muted-foreground"
-                    }`}
+                    className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all ${deliveryType === "pickup" ? "bg-primary text-white shadow" : "text-muted-foreground"
+                      }`}
                   >
                     <Icon name="Package" className="size-3.5" />
                     {t("screens.services.prashad.counterPickup")}
@@ -205,9 +204,8 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                   <button
                     type="button"
                     onClick={() => setDeliveryType("home")}
-                    className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all ${
-                      deliveryType === "home" ? "bg-primary text-white shadow" : "text-muted-foreground"
-                    }`}
+                    className={`flex items-center justify-center gap-1.5 rounded-xl py-2.5 text-xs font-bold transition-all ${deliveryType === "home" ? "bg-primary text-white shadow" : "text-muted-foreground"
+                      }`}
                   >
                     <Icon name="Home" className="size-3.5" />
                     {t("screens.services.prashad.homeDelivery")}
@@ -220,7 +218,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                     <input
                       type="text"
                       required
-                      placeholder="Mohan Sharma"
+                      placeholder="Nand Kumar"
                       value={shippingForm.name}
                       onChange={e => setShippingForm({ ...shippingForm, name: e.target.value })}
                       className="dark:bg-muted dark:border-border/30"
@@ -289,4 +287,4 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
   )
 }
 
- 
+

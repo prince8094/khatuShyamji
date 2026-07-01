@@ -166,7 +166,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                     <input
                       type="text"
                       required
-                      placeholder="Mohan Sharma"
+                      placeholder="Nand Kumar"
                       value={bookingForm.name}
                       onChange={e => setBookingForm({ ...bookingForm, name: e.target.value })}
                       className="dark:bg-muted dark:border-border/30"

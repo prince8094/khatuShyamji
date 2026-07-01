@@ -256,7 +256,7 @@ export function AppShell() {
   const SidebarContent = () => (
     <>
       <div
-        className="relative overflow-hidden px-5 pb-6 pt-6 text-white shrink-0"
+        className="relative overflow-hidden px-5 pb-4 pt-3 text-white shrink-0"
         style={{
           backgroundImage: "linear-gradient(135deg, #D97706 0%, #D4AF37 100%)",
         }}
@@ -321,7 +321,7 @@ export function AppShell() {
       </div>
 
       {/* Sidebar items grouped */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+      <nav className="flex-1 px-5 py-5 overflow-y-auto">
         {sidebarGroups.map((group) => {
           const groupItems = drawerItems.filter((item) => group.items.includes(item.key))
           if (groupItems.length === 0) return null
@@ -521,7 +521,15 @@ export function AppShell() {
               onAdminLogin={(user) => setAdminUser(user)}
             />
           )}
-          {screen === "login" && <LoginScreen navigate={navigate} />}
+          {screen === "login" && (
+            <LoginScreen
+              navigate={navigate}
+              onLoginSuccess={(u) => {
+                setCurrentUser(u)
+                localStorage.setItem("current_user", JSON.stringify(u))
+              }}
+            />
+          )}
           {screen === "signup" && (
             <SignupScreen
               navigate={navigate}
