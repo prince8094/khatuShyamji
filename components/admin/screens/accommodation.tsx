@@ -52,7 +52,7 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false)
   const [showManageModal, setShowManageModal] = useState<string | null>(null)
-  
+
   // Add form fields
   const [newName, setNewName] = useState("")
   const [newType, setNewType] = useState<"hotel" | "dharamshala">("hotel")
@@ -370,7 +370,7 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
                 className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#2563EB] focus:outline-none"
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border pt-4">
               {/* Status Controls */}
               <div className="space-y-3">
@@ -386,7 +386,7 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
                     <option value="maintenance">Maintenance</option>
                   </select>
                 </div>
-                
+
                 {/* Checkboxes */}
                 <div className="space-y-2">
                   <label className="flex items-center gap-2.5 text-xs font-bold text-foreground select-none cursor-pointer">
@@ -398,7 +398,7 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
                     />
                     <span>Verified Accommodation Stay</span>
                   </label>
-                  
+
                   <label className="flex items-center gap-2.5 text-xs font-bold text-foreground select-none cursor-pointer">
                     <input
                       type="checkbox"
@@ -491,11 +491,10 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
             <button
               key={tab}
               onClick={() => setFilterType(tab)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-bold capitalize transition-all ${
-                filterType === tab
+              className={`rounded-lg px-3 py-1.5 text-xs font-bold capitalize transition-all ${filterType === tab
                   ? "bg-white text-[#2563EB] shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               {tab === "all" ? "All Stays" : tab + "s"}
             </button>
@@ -539,17 +538,15 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
             >
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div className="flex items-start gap-3.5">
-                  <span className={`grid size-11 place-items-center rounded-xl shadow-sm shrink-0 ${
-                    hotel.type === "hotel" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"
-                  }`}>
+                  <span className={`grid size-11 place-items-center rounded-xl shadow-sm shrink-0 ${hotel.type === "hotel" ? "bg-blue-50 text-blue-600" : "bg-purple-50 text-purple-600"
+                    }`}>
                     <Icon name="Building" className="size-5" />
                   </span>
                   <div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <p className="font-heading text-sm font-extrabold text-foreground">{hotel.name}</p>
-                      <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
-                        hotel.type === "hotel" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"
-                      }`}>
+                      <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${hotel.type === "hotel" ? "bg-blue-100 text-blue-800" : "bg-purple-100 text-purple-800"
+                        }`}>
                         {hotel.type}
                       </span>
                     </div>
@@ -575,28 +572,24 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
 
                 {/* Badges Column */}
                 <div className="flex sm:flex-col items-start sm:items-end gap-2 shrink-0">
-                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase ${
-                    hotel.status === "active" ? "bg-green-50 text-green-700 border-green-200" :
-                    hotel.status === "maintenance" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                    "bg-red-50 text-red-700 border-red-200"
-                  }`}>
-                    <span className={`size-1.5 rounded-full ${
-                      hotel.status === "active" ? "bg-green-500" :
-                      hotel.status === "maintenance" ? "bg-amber-500" : "bg-red-500"
-                    }`} />
+                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase ${hotel.status === "active" ? "bg-green-50 text-green-700 border-green-200" :
+                      hotel.status === "maintenance" ? "bg-amber-50 text-amber-700 border-amber-200" :
+                        "bg-red-50 text-red-700 border-red-200"
+                    }`}>
+                    <span className={`size-1.5 rounded-full ${hotel.status === "active" ? "bg-green-500" :
+                        hotel.status === "maintenance" ? "bg-amber-500" : "bg-red-500"
+                      }`} />
                     {hotel.status}
                   </span>
 
-                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase ${
-                    hotel.isVerified ? "bg-green-100 text-green-800 border-green-200" : "bg-amber-100 text-amber-800 border-amber-200"
-                  }`}>
+                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase ${hotel.isVerified ? "bg-green-100 text-green-800 border-green-200" : "bg-amber-100 text-amber-800 border-amber-200"
+                    }`}>
                     <Icon name={hotel.isVerified ? "Check" : "AlertTriangle"} className="size-2.5" />
                     {hotel.isVerified ? "Verified Stay" : "Unverified"}
                   </span>
 
-                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase ${
-                    hotel.isVisibleInPilgrimApp ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-gray-100 text-gray-700 border-gray-200"
-                  }`}>
+                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase ${hotel.isVisibleInPilgrimApp ? "bg-blue-50 text-blue-700 border-blue-200" : "bg-gray-100 text-gray-700 border-gray-200"
+                    }`}>
                     <Icon name={hotel.isVisibleInPilgrimApp ? "Eye" : "EyeOff"} className="size-2.5" />
                     {hotel.isVisibleInPilgrimApp ? "Visible to Pilgrims" : "Hidden in App"}
                   </span>
