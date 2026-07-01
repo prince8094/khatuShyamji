@@ -18,6 +18,7 @@ export type AdminScreenKey =
   | "notifications-admin"
   | "admin-management"
   | "approval-queue"
+  | "pilgrim-registry"
 
 // ─── Roles ──────────────────────────────────────────────────────────────────
 export type AdminRoleKey =
@@ -376,24 +377,111 @@ export const lostFoundCases: LostFoundCase[] = [
   { id: "LF-2026-006", itemName: "Handbag", description: "Brown leather handbag with documents inside", location: "Shyam Kund", reportedAt: "27 Jun, 03:20 PM", reportedBy: "Kavita Sharma", phone: "+91 98765 43215", status: "verification", assignedTo: "Mahesh Choudhary", matchedFoundItem: "FND-042", icon: "ShoppingBag" },
 ]
 
-// ─── Seva Bookings ──────────────────────────────────────────────────────────
-export type SevaBooking = {
+// ─── Volunteer Applications ──────────────────────────────────────────────────
+export type VolunteerApplication = {
   id: string
-  sevaName: string
-  devoteeName: string
-  date: string
-  timeSlot: string
-  amount: number
-  status: "Booking Created" | "Payment Completed" | "Active" | "Completed" | "Cancelled" | "Refunded"
-  phone: string
+  fullName: string
+  email: string
+  mobile: string
+  age: number
+  gender: string
+  city: string
+  preferredRole: string
+  preferredDate: string
+  preferredTimeSlot: string
+  experience?: string
+  reason: string
+  emergencyContact?: string
+  status: "pending" | "approved" | "rejected"
+  createdAt: string
 }
 
-export const sevaBookings: SevaBooking[] = [
-  { id: "SEV-001", sevaName: "Abhishek Puja", devoteeName: "Nand Kumar", date: "29 Jun 2026", timeSlot: "6:00 AM", amount: 1100, status: "Payment Completed", phone: "+91 98290 12345" },
-  { id: "SEV-002", sevaName: "Bhog Seva", devoteeName: "Radha Sharma", date: "29 Jun 2026", timeSlot: "12:00 PM", amount: 2100, status: "Active", phone: "+91 98290 12346" },
-  { id: "SEV-003", sevaName: "Aarti Seva", devoteeName: "Gopal Das", date: "29 Jun 2026", timeSlot: "7:30 PM", amount: 501, status: "Booking Created", phone: "+91 98290 12347" },
-  { id: "SEV-004", sevaName: "Shringar Seva", devoteeName: "Meera Gupta", date: "29 Jun 2026", timeSlot: "7:00 AM", amount: 5100, status: "Completed", phone: "+91 98290 12348" },
-  { id: "SEV-005", sevaName: "Prasad Distribution", devoteeName: "Hari Om", date: "29 Jun 2026", timeSlot: "1:00 PM", amount: 3100, status: "Cancelled", phone: "+91 98290 12349" },
+export const volunteerApplications: VolunteerApplication[] = [
+  {
+    id: "VOL-001",
+    fullName: "Nand Kumar",
+    email: "nand.kumar@gmail.com",
+    mobile: "+91 98290 12345",
+    age: 48,
+    gender: "Male",
+    city: "Jaipur",
+    preferredRole: "Crowd Management Volunteer",
+    preferredDate: "02/07/2026",
+    preferredTimeSlot: "06:00 AM - 10:00 AM",
+    experience: "Assisted in local temple festival crowd management for 2 years.",
+    reason: "Want to offer self-service to Lord Shyam.",
+    emergencyContact: "Radha Devi (+91 98290 12300)",
+    status: "approved",
+    createdAt: "2026-06-29",
+  },
+  {
+    id: "VOL-002",
+    fullName: "Radha Sharma",
+    email: "radha.sharma@yahoo.com",
+    mobile: "+91 98290 12346",
+    age: 45,
+    gender: "Female",
+    city: "Sikar",
+    preferredRole: "Devotee Assistance Volunteer",
+    preferredDate: "02/07/2026",
+    preferredTimeSlot: "10:00 AM - 04:00 PM",
+    experience: "None",
+    reason: "To assist the elderly and disabled pilgrims.",
+    emergencyContact: "Gopal Sharma (+91 98290 12301)",
+    status: "pending",
+    createdAt: "2026-06-30",
+  },
+  {
+    id: "VOL-003",
+    fullName: "Gopal Das",
+    email: "gopal.das@gmail.com",
+    mobile: "+91 98290 12347",
+    age: 29,
+    gender: "Male",
+    city: "Delhi",
+    preferredRole: "Prasad Distribution Volunteer",
+    preferredDate: "03/07/2026",
+    preferredTimeSlot: "06:00 AM - 10:00 AM",
+    experience: "Regularly serve in bhandaras.",
+    reason: "Devoted pilgrim looking to serve.",
+    emergencyContact: "Hari Das (+91 98290 12302)",
+    status: "pending",
+    createdAt: "2026-07-01", // Today!
+  },
+  {
+    id: "VOL-004",
+    fullName: "Meera Gupta",
+    email: "meera.gupta@outlook.com",
+    mobile: "+91 98290 12348",
+    age: 38,
+    gender: "Female",
+    city: "Reengus",
+    preferredRole: "Temple Cleanliness Volunteer",
+    preferredDate: "02/07/2026",
+    preferredTimeSlot: "06:00 AM - 10:00 AM",
+    experience: "Participant in local Swachh Bharat campaigns.",
+    reason: "Cleanliness is next to godliness, especially at Shyam Dham.",
+    emergencyContact: "Amit Gupta (+91 98290 12303)",
+    status: "approved",
+    createdAt: "2026-06-28",
+  },
+  {
+    id: "VOL-005",
+    fullName: "Hari Om",
+    email: "hari.om@rediffmail.com",
+    mobile: "+91 98290 12349",
+    age: 19,
+    gender: "Male",
+    city: "Ringas",
+    preferredRole: "Queue Management Volunteer",
+    preferredDate: "01/07/2026",
+    preferredTimeSlot: "10:00 AM - 04:00 PM",
+    experience: "None",
+    reason: "College student wishing to dedicate holiday time to service.",
+    emergencyContact: "Sohan Lal (+91 98290 12304)",
+    status: "rejected",
+    createdAt: "2026-06-25",
+  },
 ]
 
 // ─── Donations ──────────────────────────────────────────────────────────────
@@ -512,3 +600,153 @@ export const emergencyTypes = [
   { key: "weather", label: "Severe Weather", icon: "CloudLightning", color: "bg-blue-500" },
   { key: "stampede", label: "Crowd Control", icon: "Users", color: "bg-purple-500" },
 ] as const
+
+// ─── Pilgrim Registry Types & Mocks ──────────────────────────────────────────
+export type RegisteredProfile = {
+  id: string
+  name: string
+  phone: string
+  email?: string
+  createdAt: string
+}
+
+export type DarshanBooking = {
+  id: string
+  bookingNumber: string
+  profileId: string
+  bookingType: "solo" | "group"
+  bookingDate: string
+  visitorCount: number
+  status: "upcoming" | "completed" | "cancelled"
+  createdAt: string
+}
+
+export type BookingMember = {
+  id: string
+  bookingId: string
+  name: string
+  age: number
+  gender: string
+  relationship?: string
+  nationality: string
+  isChild: boolean
+}
+
+export const mockProfiles: RegisteredProfile[] = [
+  {
+    id: "PRF-001",
+    name: "Nand Kumar",
+    phone: "+91 98290 12345",
+    email: "nand.kumar@gmail.com",
+    createdAt: "2026-05-10",
+  },
+  {
+    id: "PRF-002",
+    name: "Rajesh Sharma",
+    phone: "+91 98765 00001",
+    email: "rajesh.sharma@yahoo.com",
+    createdAt: "2026-06-01",
+  },
+  {
+    id: "PRF-003",
+    name: "Anita Devi",
+    phone: "+91 98765 00002",
+    email: "anita.devi@rediffmail.com",
+    createdAt: "2026-07-01", // Today!
+  },
+  {
+    id: "PRF-004",
+    name: "Mahesh Gupta",
+    phone: "+91 98765 00003",
+    email: "mahesh.gupta@outlook.com",
+    createdAt: "2026-06-20",
+  },
+  {
+    id: "PRF-005",
+    name: "Priya Patel",
+    phone: "+91 98765 00004",
+    email: "priya.patel@gmail.com",
+    createdAt: "2026-07-01", // Today!
+  },
+]
+
+export const mockDarshanBookings: DarshanBooking[] = [
+  {
+    id: "BKG-001",
+    bookingNumber: "KSJ-2026-08841",
+    profileId: "PRF-001",
+    bookingType: "solo",
+    bookingDate: "2026-06-28",
+    visitorCount: 4,
+    status: "completed",
+    createdAt: "2026-06-25",
+  },
+  {
+    id: "BKG-002",
+    bookingNumber: "KSJ-2026-09120",
+    profileId: "PRF-001",
+    bookingType: "solo",
+    bookingDate: "2026-07-01", // Today!
+    visitorCount: 2,
+    status: "upcoming",
+    createdAt: "2026-06-29",
+  },
+  {
+    id: "BKG-003",
+    bookingNumber: "KSJ-2026-07102",
+    profileId: "PRF-002",
+    bookingType: "solo",
+    bookingDate: "2026-06-15",
+    visitorCount: 3,
+    status: "completed",
+    createdAt: "2026-06-10",
+  },
+  {
+    id: "BKG-004",
+    bookingNumber: "KSJ-2026-09230",
+    profileId: "PRF-003",
+    bookingType: "solo",
+    bookingDate: "2026-07-01", // Today!
+    visitorCount: 1,
+    status: "upcoming",
+    createdAt: "2026-07-01", // Today!
+  },
+  {
+    id: "BKG-005",
+    bookingNumber: "KSJ-2026-08990",
+    profileId: "PRF-004",
+    bookingType: "group",
+    bookingDate: "2026-06-25",
+    visitorCount: 5,
+    status: "completed",
+    createdAt: "2026-06-20",
+  },
+]
+
+export const mockBookingMembers: BookingMember[] = [
+  // BKG-001 (Nand Kumar, 4 members)
+  { id: "MBR-001", bookingId: "BKG-001", name: "Nand Kumar", age: 48, gender: "Male", nationality: "India", isChild: false },
+  { id: "MBR-002", bookingId: "BKG-001", name: "Radha Devi", age: 45, gender: "Female", relationship: "Wife", nationality: "India", isChild: false },
+  { id: "MBR-003", bookingId: "BKG-001", name: "Ramesh Kumar", age: 22, gender: "Male", relationship: "Son", nationality: "India", isChild: false },
+  { id: "MBR-004", bookingId: "BKG-001", name: "Sneha Kumari", age: 12, gender: "Female", relationship: "女儿", nationality: "India", isChild: true },
+
+  // BKG-002 (Nand Kumar, 2 members)
+  { id: "MBR-005", bookingId: "BKG-002", name: "Nand Kumar", age: 48, gender: "Male", nationality: "India", isChild: false },
+  { id: "MBR-006", bookingId: "BKG-002", name: "Radha Devi", age: 45, gender: "Female", relationship: "Wife", nationality: "India", isChild: false },
+
+  // BKG-003 (Rajesh Sharma, 3 members)
+  { id: "MBR-007", bookingId: "BKG-003", name: "Rajesh Sharma", age: 35, gender: "Male", nationality: "India", isChild: false },
+  { id: "MBR-008", bookingId: "BKG-003", name: "Priya Sharma", age: 32, gender: "Female", relationship: "Wife", nationality: "India", isChild: false },
+  { id: "MBR-009", bookingId: "BKG-003", name: "Aarav Sharma", age: 8, gender: "Male", relationship: "Son", nationality: "India", isChild: true },
+
+  // BKG-004 (Anita Devi, 1 member)
+  { id: "MBR-010", bookingId: "BKG-004", name: "Anita Devi", age: 52, gender: "Female", nationality: "India", isChild: false },
+
+  // BKG-005 (Mahesh Gupta, 5 members)
+  { id: "MBR-011", bookingId: "BKG-005", name: "Mahesh Gupta", age: 41, gender: "Male", nationality: "India", isChild: false },
+  { id: "MBR-012", bookingId: "BKG-005", name: "Suman Gupta", age: 38, gender: "Female", relationship: "Wife", nationality: "India", isChild: false },
+  { id: "MBR-013", bookingId: "BKG-005", name: "Rahul Gupta", age: 16, gender: "Male", relationship: "Son", nationality: "India", isChild: false },
+  { id: "MBR-014", bookingId: "BKG-005", name: "Divya Gupta", age: 14, gender: "Female", relationship: "Daughter", nationality: "India", isChild: false },
+  { id: "MBR-015", bookingId: "BKG-005", name: "Amit Gupta", age: 10, gender: "Male", relationship: "Son", nationality: "India", isChild: true },
+]
+
