@@ -11,10 +11,10 @@ import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 import { supabase } from "@/lib/supabase"
 
-export function OtpScreen({ 
+export function OtpScreen({
   navigate,
-  onLoginSuccess 
-}: { 
+  onLoginSuccess
+}: {
   navigate: (s: any) => void
   onLoginSuccess: (user: { name: string; phone: string; initials: string; id?: string; city?: string }) => void
 }) {
@@ -117,14 +117,14 @@ export function OtpScreen({
 
   return (
     <div className="relative -mx-4 md:-mx-8 -mt-5 -mb-24 lg:-mb-10 min-h-[100dvh] flex flex-col lg:flex-row overflow-hidden bg-[#FAF6F0]">
-      
+
       {/* LEFT PANEL - Desktop Only (Golden Temple Arch & Deity Photo) */}
       <section className="hidden lg:flex lg:w-1/2 flex-col justify-between p-12 bg-gradient-to-b from-[#FAF0E4] via-[#FFEEDC] to-[#FFF5EB] relative border-r border-amber-100/50">
-        <div 
+        <div
           className="absolute inset-0 pointer-events-none opacity-[0.04] mix-blend-overlay bg-center"
           style={{ backgroundImage: "url('/images/mandala-pattern.png')", backgroundSize: "400px" }}
         />
-        
+
         {/* Traditional Temple Spires Silhouette Watermark */}
         <div className="absolute bottom-0 inset-x-0 h-32 pointer-events-none overflow-hidden select-none">
           <svg viewBox="0 0 800 200" className="w-full h-full fill-amber-900/5">
@@ -149,7 +149,7 @@ export function OtpScreen({
 
         {/* Middle Deity Arch Portrait */}
         <div className="relative my-6 text-center z-10">
-          <div className="relative w-60 h-72 mx-auto rounded-t-full overflow-hidden border-4 border-amber-600/20 shadow-2xl bg-white p-2">
+          <div className="relative w-80 h-110 mx-auto rounded-t-full overflow-hidden border-4 border-amber-800/20 shadow-2xl bg-white p-2">
             <div className="relative w-full h-full rounded-t-full overflow-hidden">
               <Image
                 src="/images/khatu-shyam-deity.png"
@@ -292,7 +292,7 @@ export function OtpScreen({
               )}
             </div>
           </motion.div>
-          
+
           {/* Back Button */}
           <button
             onClick={goBack}

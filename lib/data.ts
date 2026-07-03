@@ -143,9 +143,9 @@ export const travelModes = [
 ]
 
 export const announcements = [
-  { id: 1, text: "Ekadashi rush expected this weekend. Devotees are advised to arrive before **7:00 AM**." },
-  { id: 2, text: "Special Aarti on **Purnima**. All devotees are cordially invited." },
-  { id: 3, text: "Temple will remain open until **11:00 PM** on Saturdays." },
-  { id: 4, text: "VIP Darshan booking will be unavailable due to maintenance." },
-  { id: 5, text: "Free Prasad distribution at **12:00 PM** daily." },
+  { id: 1, key: "home.announcements.ekadashi", text: "Ekadashi rush expected this weekend. Devotees are advised to arrive before **7:00 AM**." },
+  { id: 2, key: "home.announcements.purnima", text: "Special Aarti on **Purnima**. All devotees are cordially invited." },
+  { id: 3, key: "home.announcements.saturday", text: "Temple will remain open until **11:00 PM** on Saturdays." },
+  { id: 4, key: "home.announcements.maintenance", text: "VIP Darshan booking will be unavailable due to maintenance." },
+  { id: 5, key: "home.announcements.prasad", text: "Free Prasad distribution at **12:00 PM** daily." },
 ]

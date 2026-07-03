@@ -7,6 +7,7 @@ import { Icon } from "@/components/shared"
 import type { ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { devoteeApi } from "@/lib/api-client"
+import { useHistoryState } from "@/lib/hooks/useHistoryState"
 
 type BookingType = "solo" | "group" | null
 
@@ -17,17 +18,85 @@ export function BookDarshanScreen({
   navigate: (s: ScreenKey) => void
   navigateWithDate: (s: ScreenKey, date: string) => void
 }) {
-  const { t, tObject } = useLanguage()
+  const { lang, t, tObject } = useLanguage()
   const MONTHS = tObject("booking.months") || [
     "January", "February", "March", "April", "May", "June",
     "July", "August", "September", "October", "November", "December",
   ]
   const WEEKDAYS = tObject("booking.weekdays") || ["S", "M", "T", "W", "T", "F", "S"]
-  const [bookingType, setBookingType] = useState<BookingType>(null)
-  const [month, setMonth] = useState(5) // June (0-indexed)
+  const [bookingType, setBookingType] = useHistoryState<BookingType>("bookingType", null)
+  
+  const [month, _setMonth] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("booking_month")
+      if (saved !== null) return Number(saved)
+    }
+    return 5
+  })
+  const setMonth = (val: number | ((prev: number) => number)) => {
+    if (typeof val === "function") {
+      _setMonth((prev) => {
+        const next = val(prev)
+        localStorage.setItem("booking_month", String(next))
+        return next
+      })
+    } else {
+      _setMonth(val)
+      localStorage.setItem("booking_month", String(val))
+    }
+  }
+
+  const [selected, _setSelected] = useState<number | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("booking_selected_day")
+      if (saved !== null) return Number(saved)
+    }
+    return 28
+  })
+  const setSelected = (val: number | null | ((prev: number | null) => number | null)) => {
+    if (typeof val === "function") {
+      _setSelected((prev) => {
+        const next = val(prev)
+        if (next !== null) {
+          localStorage.setItem("booking_selected_day", String(next))
+        } else {
+          localStorage.removeItem("booking_selected_day")
+        }
+        return next
+      })
+    } else {
+      _setSelected(val)
+      if (val !== null) {
+        localStorage.setItem("booking_selected_day", String(val))
+      } else {
+        localStorage.removeItem("booking_selected_day")
+      }
+    }
+  }
+
+  const [devoteesCount, _setDevoteesCount] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("booking_devotees_count")
+      if (saved !== null) return Number(saved)
+      const currentBookingType = window.history.state?.bookingType
+      if (currentBookingType === "group") return 7
+    }
+    return 1
+  })
+  const setDevoteesCount = (val: number | ((prev: number) => number)) => {
+    if (typeof val === "function") {
+      _setDevoteesCount((prev) => {
+        const next = val(prev)
+        localStorage.setItem("booking_devotees_count", String(next))
+        return next
+      })
+    } else {
+      _setDevoteesCount(val)
+      localStorage.setItem("booking_devotees_count", String(val))
+    }
+  }
+
   const year = 2026
-  const [selected, setSelected] = useState<number | null>(28)
-  const [devoteesCount, setDevoteesCount] = useState<number>(1)
   const [bookedDates, setBookedDates] = useState<string[]>([])
 
   useEffect(() => {
@@ -64,20 +133,31 @@ export function BookDarshanScreen({
 
   const today = 23
 
+  const minDevotees = bookingType === "group" ? 7 : 1
+  const maxDevotees = bookingType === "group" ? 100 : 6
+
+  const title = bookingType === "group"
+    ? (lang === "hi" ? "समूह बुकिंग पास" : "Group Booking Pass")
+    : (lang === "hi" ? "मानक बुकिंग पास" : "Standard Booking Pass")
+
+  const subtitle = bookingType === "group"
+    ? (devoteesCount === 7
+        ? (lang === "hi" ? "न्यूनतम 7 श्रद्धालु" : "Minimum 7 devotees")
+        : (lang === "hi" ? `${devoteesCount} श्रद्धालु` : `${devoteesCount} devotees`))
+    : (lang === "hi" ? "6 श्रद्धालुओं तक" : "Up to 6 devotees")
+
   const handleContinue = () => {
-    if (bookingType === "group") {
-      navigate("group-booking")
-      return
-    }
-    if (!selected) return
+    if (!bookingType || !selected) return
     const dateStr = `${selected} ${MONTHS[month]} ${year}`
     localStorage.setItem("booking_devotees_count", String(devoteesCount))
-    navigateWithDate("passenger-details", dateStr)
+    if (bookingType === "group") {
+      navigateWithDate("group-booking", dateStr)
+    } else {
+      navigateWithDate("passenger-details", dateStr)
+    }
   }
 
-  const isContinueDisabled =
-    !bookingType ||
-    (bookingType === "solo" && !selected)
+  const isContinueDisabled = !bookingType || !selected
 
   return (
     <div className="space-y-6 pb-36 md:pb-8">
@@ -108,7 +188,10 @@ export function BookDarshanScreen({
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 relative z-10">
           {/* Solo / Family */}
           <button
-            onClick={() => { setBookingType("solo"); }}
+            onClick={() => {
+              setBookingType("solo");
+              setDevoteesCount(1);
+            }}
             className={cn(
               "group relative flex flex-col items-start gap-3 overflow-hidden rounded-2xl border-2 p-5 text-left transition-all duration-200",
               bookingType === "solo"
@@ -137,7 +220,10 @@ export function BookDarshanScreen({
 
           {/* Group Booking */}
           <button
-            onClick={() => setBookingType("group")}
+            onClick={() => {
+              setBookingType("group");
+              setDevoteesCount(7);
+            }}
             className={cn(
               "group relative flex flex-col items-start gap-3 overflow-hidden rounded-2xl border-2 p-5 text-left transition-all duration-200",
               bookingType === "group"
@@ -166,32 +252,13 @@ export function BookDarshanScreen({
         </div>
       </section>
 
-      {/* For Group: show proceed immediately */}
+      {/* For Solo/Family and Group Booking: show devotees count + calendar */}
       <AnimatePresence>
-        {bookingType === "group" && (
-          <motion.section
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="rounded-3xl border border-[#D4AF37]/30 bg-gradient-to-br from-[#8B1E1E]/10 to-transparent p-5 shadow-sm"
-          >
-            <div className="flex items-center gap-2.5 text-[#8B1E1E] font-bold text-sm mb-2">
-              <Icon name="Info" className="size-4" />
-              <span>{t("screens.bookDarshan.groupBookingSelected")}</span>
-            </div>
-            <p className="text-xs text-[#6b5440] leading-relaxed">
-              {t("screens.bookDarshan.for7DevoteesAUnifiedGroupQrPassIsIssuedY")}
-            </p>
-          </motion.section>
-        )}
-      </AnimatePresence>
-
-      {/* For Solo/Family: show devotees count + calendar */}
-      <AnimatePresence>
-        {bookingType === "solo" && (
+        {bookingType && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 10 }}
             className="space-y-5"
           >
             {/* Step 2: Devotees Count */}
@@ -206,7 +273,8 @@ export function BookDarshanScreen({
 
               <div className="flex items-center justify-center gap-6 py-4 relative z-10">
                 <button
-                  onClick={() => setDevoteesCount(Math.max(1, devoteesCount - 1))}
+                  type="button"
+                  onClick={() => setDevoteesCount(Math.max(minDevotees, devoteesCount - 1))}
                   className="grid size-12 place-items-center rounded-full bg-white border border-[#E8D5B7] text-[#D97706] shadow-sm transition hover:border-[#D4AF37] active:scale-95"
                 >
                   <Icon name="Minus" className="size-5" />
@@ -215,15 +283,17 @@ export function BookDarshanScreen({
                   <span className="font-heading text-4xl font-extrabold text-[#D97706]">{devoteesCount}</span>
                 </div>
                 <button
-                  onClick={() => setDevoteesCount(Math.min(6, devoteesCount + 1))}
+                  type="button"
+                  onClick={() => setDevoteesCount(Math.min(maxDevotees, devoteesCount + 1))}
                   className="grid size-12 place-items-center rounded-full bg-white border border-[#E8D5B7] text-[#D97706] shadow-sm transition hover:border-[#D4AF37] active:scale-95"
                 >
                   <Icon name="Plus" className="size-5" />
                 </button>
               </div>
-              <p className="text-center text-xs text-[#6b5440] font-semibold">
-                {t("screens.bookDarshan.standardBookingPassUpTo6Devotees")}
-              </p>
+              <div className="text-center text-xs text-[#6b5440] font-semibold">
+                <p className="text-[#1A120B] font-bold">{title}</p>
+                <p className="text-muted-foreground font-normal mt-0.5">({subtitle})</p>
+              </div>
             </section>
 
             {/* Step 3: Calendar */}

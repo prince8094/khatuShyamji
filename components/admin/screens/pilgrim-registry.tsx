@@ -714,8 +714,8 @@ export function PilgrimRegistryScreen({ navigate }: { navigate: (s: AdminScreenK
                   Showing {bookingsList.filter(b => {
                     const matchesSearch = 
                       b.bookingNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      b.devoteeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      b.mobileNumber.includes(searchTerm)
+                      (b.devoteeName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      (b.mobileNumber || "").includes(searchTerm)
                     const matchesStatus = statusFilter === "all" || b.status === statusFilter
                     return matchesSearch && matchesStatus
                   }).length} of {bookingsList.length} bookings
@@ -748,16 +748,16 @@ export function PilgrimRegistryScreen({ navigate }: { navigate: (s: AdminScreenK
                   {bookingsList.filter(b => {
                     const matchesSearch = 
                       b.bookingNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      b.devoteeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                      b.mobileNumber.includes(searchTerm)
+                      (b.devoteeName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      (b.mobileNumber || "").includes(searchTerm)
                     const matchesStatus = statusFilter === "all" || b.status === statusFilter
                     return matchesSearch && matchesStatus
                   }).length > 0 ? (
                     bookingsList.filter(b => {
                       const matchesSearch = 
                         b.bookingNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        b.devoteeName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        b.mobileNumber.includes(searchTerm)
+                        (b.devoteeName || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+                        (b.mobileNumber || "").includes(searchTerm)
                       const matchesStatus = statusFilter === "all" || b.status === statusFilter
                       return matchesSearch && matchesStatus
                     }).map((booking) => {

@@ -38,7 +38,7 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
   // Modals state
   const [showAddModal, setShowAddModal] = useState(false)
   const [showManageModal, setShowManageModal] = useState<string | null>(null)
-  
+
   // Add form fields
   const [newName, setNewName] = useState("")
   const [newType, setNewType] = useState<"hotel" | "dharamshala">("hotel")
@@ -555,7 +555,7 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
                 className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#2563EB] focus:outline-none"
               />
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t border-border pt-4">
               {/* Status Controls */}
               <div className="space-y-3">
@@ -571,7 +571,7 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
                     <option value="maintenance">Maintenance</option>
                   </select>
                 </div>
-                
+
                 {/* Checkboxes */}
                 <div className="space-y-2">
                   <label className="flex items-center gap-2.5 text-xs font-bold text-foreground select-none cursor-pointer">
@@ -583,7 +583,7 @@ export function AccommodationScreen({ navigate }: { navigate: (s: AdminScreenKey
                     />
                     <span>Verified Accommodation Stay</span>
                   </label>
-                  
+
                   <label className="flex items-center gap-2.5 text-xs font-bold text-foreground select-none cursor-pointer">
                     <input
                       type="checkbox"

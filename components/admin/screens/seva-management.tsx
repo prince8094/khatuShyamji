@@ -414,7 +414,7 @@ export function SevaManagementScreen({ navigate }: { navigate: (s: AdminScreenKe
                     <div className="flex items-center gap-2 sm:self-start shrink-0">
                       <span
                         className={`inline-flex items-center gap-1.5 border px-2.5 py-0.5 rounded-full text-[9px] font-extrabold uppercase ${
-                          statusColors[app.status]
+                          (statusColors as Record<string, string>)[app.status]
                         }`}
                       >
                         <span
@@ -501,7 +501,7 @@ export function SevaManagementScreen({ navigate }: { navigate: (s: AdminScreenKe
                     <span className="grid size-12 place-items-center rounded-xl bg-white font-heading text-lg font-bold text-[#DB2777] shadow-md border border-white/20">
                       {selectedAppDetails.fullName
                         .split(" ")
-                        .map((n) => n[0])
+                        .map((n: string) => n[0])
                         .join("")}
                     </span>
                     <div>

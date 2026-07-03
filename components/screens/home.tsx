@@ -30,8 +30,8 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
     is_global_alarm: false,
   })
   const [announcements, setAnnouncements] = useState<any[]>([])
-  const [parkingStats, setParkingStats] = useState({ value: "Available", tone: "success" as const, hint: "Shuttles active" })
-  const [trafficStats, setTrafficStats] = useState({ value: "Smooth", tone: "success" as const, hint: "All routes clear" })
+  const [parkingStats, setParkingStats] = useState<{ value: string; tone: "success" | "danger" | "orange"; hint: string }>({ value: "Available", tone: "success", hint: "Shuttles active" })
+  const [trafficStats, setTrafficStats] = useState<{ value: string; tone: "success" | "danger" | "orange"; hint: string }>({ value: "Smooth", tone: "success", hint: "All routes clear" })
 
   useEffect(() => {
     devoteeApi.getTempleInfo()
@@ -142,7 +142,7 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Hero */}
       <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
         <div className="relative h-52 w-full">

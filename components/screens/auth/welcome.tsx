@@ -28,6 +28,7 @@ export function WelcomeScreen({
   const { goBack } = useNavigation()
   const { t } = useLanguage()
   const [mode, setMode] = useState<"user" | "admin">("user")
+  const [adminPhase, setAdminPhase] = useState<1 | 2>(1)
 
   // Admin login state
   const [adminId, setAdminId] = useState("")
@@ -238,7 +239,7 @@ export function WelcomeScreen({
 
         {/* Middle Deity Arch Portrait */}
         <div className="relative my-6 text-center z-10">
-          <div className="relative w-60 h-72 mx-auto rounded-t-full overflow-hidden border-4 border-amber-600/20 shadow-2xl bg-white p-2">
+          <div className="relative w-80 h-110 mx-auto rounded-t-full overflow-hidden border-4 border-amber-600/20 shadow-2xl bg-white p-2">
             <div className="relative w-full h-full rounded-t-full overflow-hidden">
               <Image
                 src="/images/khatu-shyam-deity.png"
@@ -324,10 +325,13 @@ export function WelcomeScreen({
             {/* ── Portal Switcher Tab ── */}
             <div className="mt-7 flex rounded-2xl bg-amber-50/80 border border-amber-100 p-1 gap-1">
               <button
-                onClick={() => setMode("user")}
+                onClick={() => {
+                  setMode("user")
+                  setAdminPhase(1)
+                }}
                 className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all duration-300 ${
                   mode === "user"
-                    ? "bg-gradient-to-r from-[#800000] to-[#E25822] text-white shadow-md"
+                    ? "bg-gradient-to-r from-[#5c0612] via-[#9e1b24] to-[#f97316] text-white shadow-md"
                     : "text-[#6b5440]/70 hover:text-[#800000]"
                 }`}
               >
@@ -335,11 +339,14 @@ export function WelcomeScreen({
                 {t("info.crowd.liveTracking") === "लाइव ट्रैकिंग" ? "भक्त" : "User"}
               </button>
               <button
-                onClick={() => setMode("admin")}
+                onClick={() => {
+                  setMode("admin")
+                  setAdminPhase(1)
+                }}
                 className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all duration-300 ${
                   mode === "admin"
-                    ? "bg-gradient-to-r from-[#D97706] to-[#D4AF37] text-white shadow-md"
-                    : "text-[#6b5440]/70 hover:text-[#D97706]"
+                    ? "bg-gradient-to-r from-[#5c0612] via-[#9e1b24] to-[#f97316] text-white shadow-md"
+                    : "text-[#6b5440]/70 hover:text-[#800000]"
                 }`}
               >
                 <Icon name="Shield" className="size-4" />
@@ -349,7 +356,7 @@ export function WelcomeScreen({
 
             {/* ── Animated Content Swap ── */}
             <AnimatePresence mode="wait">
-              {mode === "user" ? (
+              {mode === "user" && (
                 /* ── USER MODE ── */
                 <motion.div
                   key="user"
@@ -361,7 +368,7 @@ export function WelcomeScreen({
                 >
                   <button
                     onClick={() => navigate("login")}
-                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#800000] to-[#E25822] py-4 text-base font-bold text-white shadow-[0_4px_15px_rgba(128,0,0,0.25)] transition duration-300 hover:shadow-[0_6px_20px_rgba(128,0,0,0.35)] active:scale-[0.98]"
+                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#5c0612] via-[#9e1b24] to-[#f97316] py-4 text-base font-bold text-white shadow-[0_4px_15px_rgba(158,27,36,0.25)] transition duration-300 hover:shadow-[0_6px_20px_rgba(158,27,36,0.35)] active:scale-[0.98]"
                   >
                     <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                     {t("auth.welcome.enter")}
@@ -375,22 +382,53 @@ export function WelcomeScreen({
                     {t("auth.welcome.guest")}
                   </button>
                 </motion.div>
-              ) : (
-                /* ── ADMIN MODE ── */
+              )}
+
+              {mode === "admin" && adminPhase === 1 && (
+                /* ── ADMIN MODE STEP 1 ── */
                 <motion.div
-                  key="admin"
+                  key="admin-step-1"
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3, ease: "easeInOut" }}
+                  className="mt-8"
+                >
+                  <button
+                    onClick={() => setAdminPhase(2)}
+                    className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#5c0612] via-[#9e1b24] to-[#f97316] py-4 text-base font-bold text-white shadow-[0_4px_15px_rgba(158,27,36,0.25)] transition duration-300 hover:shadow-[0_6px_20px_rgba(158,27,36,0.35)] active:scale-[0.98]"
+                  >
+                    <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    {t("auth.welcome.enter")}
+                    <Icon name="ArrowRight" className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </button>
+                </motion.div>
+              )}
+
+              {mode === "admin" && adminPhase === 2 && (
+                /* ── ADMIN MODE STEP 2 (Login Form) ── */
+                <motion.div
+                  key="admin-step-2"
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
                   className="mt-6"
                 >
                   {/* Admin Header */}
-                  <div className="flex items-center justify-center gap-2 mb-1">
-                    <span className="grid size-7 place-items-center rounded-lg bg-[#FFF3E0] text-[#D97706]">
-                      <Icon name="Shield" className="size-4" />
+                  <div className="relative flex items-center justify-center gap-2 mb-1">
+                    <button
+                      type="button"
+                      onClick={() => setAdminPhase(1)}
+                      className="absolute left-0 p-1 text-[#800000] hover:bg-[#FAF0E4] rounded-full transition"
+                      title="Back"
+                    >
+                      <Icon name="ArrowLeft" className="size-4" />
+                    </button>
+                    <span className="grid size-7 place-items-center rounded-lg bg-[#FAF0E4] text-[#800000]">
+                      <Icon name="Landmark" className="size-4" />
                     </span>
-                    <p className="font-heading text-sm font-bold text-[#D97706] tracking-wide">
+                    <p className="font-heading text-sm font-bold text-[#800000] tracking-wide">
                       Temple Operations
                     </p>
                   </div>
@@ -403,7 +441,7 @@ export function WelcomeScreen({
                     <div>
                       <label className="block text-xs font-bold text-[#6b5440] mb-1.5">Admin ID</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b5440]/50">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#800000]/50">
                           <Icon name="User" className="size-4" />
                         </span>
                         <input
@@ -411,7 +449,7 @@ export function WelcomeScreen({
                           value={adminId}
                           onChange={(e) => setAdminId(e.target.value)}
                           placeholder="e.g. ADM-001"
-                          className="w-full rounded-xl border border-amber-200 bg-amber-50/30 px-4 py-3 pl-10 text-sm text-foreground placeholder:text-[#6b5440]/40 focus:border-[#D97706] focus:ring-2 focus:ring-[#D97706]/20 transition outline-none"
+                          className="w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 pl-10 text-sm text-[#1A120B] placeholder:text-[#6b5440]/40 shadow-inner focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 transition outline-none"
                           required
                         />
                       </div>
@@ -419,7 +457,7 @@ export function WelcomeScreen({
                     <div>
                       <label className="block text-xs font-bold text-[#6b5440] mb-1.5">Password</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6b5440]/50">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[#800000]/50">
                           <Icon name="Lock" className="size-4" />
                         </span>
                         <input
@@ -427,13 +465,13 @@ export function WelcomeScreen({
                           value={password}
                           onChange={(e) => setPassword(e.target.value)}
                           placeholder="Enter your password"
-                          className="w-full rounded-xl border border-amber-200 bg-amber-50/30 px-4 py-3 pl-10 pr-10 text-sm text-foreground placeholder:text-[#6b5440]/40 focus:border-[#D97706] focus:ring-2 focus:ring-[#D97706]/20 transition outline-none"
+                          className="w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 pl-10 pr-10 text-sm text-[#1A120B] placeholder:text-[#6b5440]/40 shadow-inner focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 transition outline-none"
                           required
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#6b5440]/50 hover:text-[#6b5440] transition"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#800000]/50 hover:text-[#800000] transition"
                         >
                           <Icon name={showPassword ? "EyeOff" : "Eye"} className="size-4" />
                         </button>
@@ -454,7 +492,7 @@ export function WelcomeScreen({
                     <button
                       type="submit"
                       disabled={adminLoading}
-                      className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] py-3.5 text-base font-bold text-white shadow-[0_4px_15px_rgba(217,119,6,0.25)] transition duration-300 hover:shadow-[0_6px_20px_rgba(217,119,6,0.35)] active:scale-[0.98] disabled:opacity-60"
+                      className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#5c0612] via-[#9e1b24] to-[#f97316] py-3.5 text-base font-bold text-white shadow-[0_4px_15px_rgba(158,27,36,0.25)] transition duration-300 hover:shadow-[0_6px_20px_rgba(158,27,36,0.35)] active:scale-[0.98] disabled:opacity-60"
                     >
                       {adminLoading ? (
                         <motion.div
@@ -465,36 +503,12 @@ export function WelcomeScreen({
                         </motion.div>
                       ) : (
                         <>
-                          <Icon name="Shield" className="size-4" />
-                          Temple Operations Login
+                          <Icon name="Landmark" className="size-4" />
+                          Enter to Temple Operations
                         </>
                       )}
                     </button>
                   </form>
-
-                  {/* Quick Demo Access */}
-                  <div className="mt-5 border-t border-amber-100 pt-4">
-                    <p className="text-center text-[9px] font-bold uppercase tracking-widest text-[#6b5440]/50 mb-3">
-                      Quick Demo Access
-                    </p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {demoAccounts.map((acc) => (
-                        <button
-                          key={acc.id}
-                          onClick={() => handleQuickAdminLogin(acc.id)}
-                          className="flex items-center gap-2 rounded-xl border border-amber-100 bg-amber-50/30 px-2.5 py-2 text-left transition-all hover:bg-[#FFF3E0] hover:border-[#FFB74D] active:scale-[0.97]"
-                        >
-                          <span className="grid size-7 place-items-center rounded-lg bg-[#FFF3E0] text-[#D97706] shrink-0">
-                            <Icon name="UserCircle" className="size-3.5" />
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-[11px] font-bold text-[#6b5440] truncate">{acc.label}</p>
-                            <p className="text-[9px] text-[#6b5440]/60">{acc.id}</p>
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

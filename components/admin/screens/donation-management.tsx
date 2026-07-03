@@ -17,6 +17,8 @@ interface ExtendedDonation {
   phone: string
   panNumber: string
   txnId: string
+  mode?: string
+  time?: string
 }
 
 export function DonationManagementScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {

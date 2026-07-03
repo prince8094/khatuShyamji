@@ -4,10 +4,12 @@ import { useState, useEffect } from "react"
 import { Icon } from "@/components/shared"
 import { announcements as defaultAnnouncements } from "@/lib/data"
 import { motion, AnimatePresence } from "framer-motion"
+import { useLanguage } from "@/lib/contexts/LanguageContext"
 
 export function AnnouncementBanner({ announcements = defaultAnnouncements }) {
   const [currentIndex, setCurrentIndex] = useState(0)
   const [isHovered, setIsHovered] = useState(false)
+  const { t } = useLanguage()
 
   // Parse markdown bold text
   const parseText = (text: string) => {
@@ -30,8 +32,10 @@ export function AnnouncementBanner({ announcements = defaultAnnouncements }) {
     return () => clearInterval(timer)
   }, [isHovered, announcements.length])
 
-
   if (!announcements || announcements.length === 0) return null
+
+  const currentAnnouncement = announcements[currentIndex]
+  const translatedText = currentAnnouncement.key ? t(currentAnnouncement.key) : currentAnnouncement.text
 
   return (
     <section 
@@ -41,8 +45,8 @@ export function AnnouncementBanner({ announcements = defaultAnnouncements }) {
     >
       {/* Background Pattern */}
       <div 
-        className="absolute inset-y-0 right-0 w-1/2 opacity-[0.04] pointer-events-none"
-        style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "150px", backgroundPosition: "right center" }}
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
+        style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "150px", backgroundPosition: "center" }}
         aria-hidden="true"
       />
 
@@ -55,7 +59,7 @@ export function AnnouncementBanner({ announcements = defaultAnnouncements }) {
         {/* Right Side: Title and Sliding Content */}
         <div className="flex flex-col flex-1 min-w-0">
           <h2 className="font-heading text-sm font-extrabold tracking-wider text-[#800000] uppercase mb-1">
-            Announcement
+            {t("home.announcements.heading")}
           </h2>
           
           <div className="relative overflow-hidden min-h-[2.5rem] flex items-center">
@@ -68,7 +72,7 @@ export function AnnouncementBanner({ announcements = defaultAnnouncements }) {
                 transition={{ duration: 0.3 }}
                 className="text-sm leading-relaxed text-[#8a5a22] break-words"
               >
-                {parseText(announcements[currentIndex].text)}
+                {parseText(translatedText)}
               </motion.div>
             </AnimatePresence>
           </div>

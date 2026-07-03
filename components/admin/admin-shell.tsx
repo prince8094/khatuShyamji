@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { AdminLoginScreen } from "@/components/admin/screens/admin-login"
-import { AdminWorkspace } from "@/components/admin/admin-workspace"
+import { AdminWorkspace } from "./admin-workspace"
 import { type AdminUser } from "@/lib/admin-data"
 
 /**

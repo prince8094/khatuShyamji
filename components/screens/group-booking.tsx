@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Icon } from "@/components/shared"
@@ -9,7 +9,7 @@ import { useNavigation } from "@/lib/contexts/NavigationContext"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { devoteeApi } from "@/lib/api-client"
 
-type GroupMember = {
+ type GroupMember = {
   id: number
   name: string
   age: string
@@ -27,7 +27,13 @@ const emptyMember = (id: number): GroupMember => ({
   identityProofNumber: "",
 })
 
-export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
+export function GroupBookingScreen({
+  navigate,
+  bookingDate,
+}: {
+  navigate: (s: ScreenKey) => void
+  bookingDate?: string | null
+}) {
   const { goBack } = useNavigation()
   const { t } = useLanguage()
   
@@ -42,7 +48,17 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
     leaderPhone: "",
     specialRequirements: "",
   })
-  
+ useEffect(() => {
+  if (typeof window !== "undefined") {
+    const savedCount = localStorage.getItem("booking_devotees_count")
+    if (savedCount) {
+      const count = Number(savedCount)
+      if (count >= 7) {
+        setMembers(Array.from({ length: count }, (_, i) => emptyMember(i + 1)))
+      }
+    }
+  }
+}, [])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -105,16 +121,24 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
       const profileId = activeUser?.id
 
       const bookingNumber = `KSJ-GRP-${Math.floor(10000 + Math.random() * 90000)}`
-      const dateStr = new Date().toISOString().split("T")[0]
+      
+      let bookingDateObj = new Date()
+      if (bookingDate) {
+        const parsed = Date.parse(bookingDate)
+        if (!isNaN(parsed)) {
+          bookingDateObj = new Date(parsed)
+        }
+      }
+      const dateStr = bookingDateObj.toISOString().split("T")[0]
+      const dayName = bookingDateObj.toLocaleDateString('en-US', { weekday: 'long' })
       const visitorsCount = members.length
-      const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
 
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       if (!supabaseUrl || !profileId) {
         // Fallback mock mode
         const newBooking = {
           id: bookingNumber,
-          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+          date: bookingDate || bookingDateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
           day: dayName,
           visitors: visitorsCount,
           name: formData.groupName,
@@ -158,7 +182,7 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
 
       const newBooking = {
         id: bookingData.booking_number || bookingNumber,
-        date: new Date(dateStr).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+        date: bookingDate || bookingDateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
         day: dayName,
         visitors: visitorsCount,
         name: formData.groupName,
@@ -184,10 +208,17 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
       console.error(err)
       // Fallback local save on error
       const bookingNumber = `KSJ-GRP-${Math.floor(10000 + Math.random() * 90000)}`
+      let bookingDateObj = new Date()
+      if (bookingDate) {
+        const parsed = Date.parse(bookingDate)
+        if (!isNaN(parsed)) {
+          bookingDateObj = new Date(parsed)
+        }
+      }
       const newBooking = {
         id: bookingNumber,
-        date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
-        day: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
+        date: bookingDate || bookingDateObj.toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+        day: bookingDateObj.toLocaleDateString('en-US', { weekday: 'long' }),
         visitors: members.length,
         name: formData.groupName,
         leaderName: formData.leaderName,
@@ -197,14 +228,12 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
       }
       localStorage.setItem("latest_booking", JSON.stringify(newBooking))
       localStorage.setItem("booking_devotees_count", String(members.length))
-      
       try {
         const stored = localStorage.getItem("khatu_bookings")
         const currentList = stored ? JSON.parse(stored) : []
         currentList.unshift(newBooking)
         localStorage.setItem("khatu_bookings", JSON.stringify(currentList))
       } catch (e) {}
-
       navigate("booking-success" as any)
     } finally {
       setIsSubmitting(false)
@@ -221,6 +250,23 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
         <Icon name="ArrowLeft" className="size-4" />
         {t("screens.groupBooking.backToBooking")}
       </button>
+
+      {/* Booking date banner */}
+      {bookingDate && (
+        <div className="flex items-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-secondary px-4 py-3 text-white shadow-sm">
+          <Icon name="CalendarCheck" className="size-5" />
+          <div>
+            <p className="text-xs text-white/80">{t("screens.passengerDetails.darshanDate")}</p>
+            <p className="font-heading text-sm font-bold">{bookingDate}</p>
+          </div>
+          <button
+            onClick={() => navigate("book")}
+            className="ml-auto rounded-lg bg-white/20 px-3 py-1 text-xs font-semibold transition hover:bg-white/30"
+          >
+            {t("screens.passengerDetails.change")}
+          </button>
+        </div>
+      )}
 
       {/* Header */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#1A120B] to-[#2A1D13] p-8 text-center shadow-lg border border-[#D4AF37]/20">

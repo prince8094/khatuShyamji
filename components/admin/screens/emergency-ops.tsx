@@ -22,7 +22,7 @@ type DevoteeIncident = {
 }
 
 const initialIncidents: DevoteeIncident[] = [
-  { id: "INC-2026-001", devoteeName: "Mohan Sharma", phone: "+91 98765 43210", incidentType: "medical", locationText: "Queue Complex Section 4, Gate 2", severity: "high", status: "pending", assignedTeam: "", details: "Elderly devotee experiencing extreme breathlessness and chest tightness due to congestion.", time: "10 mins ago" },
+  { id: "INC-2026-001", devoteeName: "Nand Kumar", phone: "+91 98765 43210", incidentType: "medical", locationText: "Queue Complex Section 4, Gate 2", severity: "high", status: "pending", assignedTeam: "", details: "Elderly devotee experiencing extreme breathlessness and chest tightness due to congestion.", time: "10 mins ago" },
   { id: "INC-2026-002", devoteeName: "Amit Patel", phone: "+91 99887 76655", incidentType: "crowd", locationText: "Entrance Gate 1 Outer Courtyard", severity: "critical", status: "dispatched", assignedTeam: "Security Shift Alpha", details: "Crowd surge causing barricade pressure. Direct push alert required.", time: "25 mins ago" },
   { id: "INC-2026-003", devoteeName: "Ramesh Gupta", phone: "+91 94140 11223", incidentType: "fire", locationText: "Prasad Kitchen exhaust exhaust zone", severity: "critical", status: "resolved", assignedTeam: "Fire Team A", details: "Exhaust smoke reported near storage racks. Resolved safely.", time: "1 hour ago", resolutionDetails: "Exhaust fan blockage cleared. All sensors back to green." },
 ]
@@ -37,7 +37,7 @@ export function EmergencyOpsScreen({ navigate }: { navigate: (s: AdminScreenKey)
   // Modals state
   const [dispatchId, setDispatchId] = useState<string | null>(null)
   const [selectedTeam, setSelectedTeam] = useState("Medical Team A")
-  
+
   const [escalateId, setEscalateId] = useState<string | null>(null)
   const [escalationNote, setEscalationNote] = useState("")
   const [escalateSupervisorCode, setEscalateSupervisorCode] = useState("")
@@ -460,26 +460,23 @@ export function EmergencyOpsScreen({ navigate }: { navigate: (s: AdminScreenKey)
                 key={inc.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className={`rounded-2xl border p-4 shadow-sm ${
-                  inc.severity === "critical" ? "bg-red-50/40 border-red-200" : "bg-card border-border"
-                }`}
+                className={`rounded-2xl border p-4 shadow-sm ${inc.severity === "critical" ? "bg-red-50/40 border-red-200" : "bg-card border-border"
+                  }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
-                    <span className={`grid size-11 place-items-center rounded-xl shadow-sm ${
-                      inc.severity === "critical" ? "bg-red-600 text-white animate-pulse" : "bg-red-50 text-red-600"
-                    }`}>
+                    <span className={`grid size-11 place-items-center rounded-xl shadow-sm ${inc.severity === "critical" ? "bg-red-600 text-white animate-pulse" : "bg-red-50 text-red-600"
+                      }`}>
                       <Icon name={getIncidentIcon(inc.incidentType)} className="size-5" />
                     </span>
                     <div>
                       <div className="flex items-center gap-2">
                         <p className="font-heading text-sm font-bold text-foreground">{inc.devoteeName}</p>
                         <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded font-mono font-bold text-muted-foreground">{inc.id}</span>
-                        <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${
-                          inc.severity === "critical" ? "bg-red-200 text-red-900" :
-                          inc.severity === "high" ? "bg-orange-100 text-orange-800" :
-                          "bg-blue-100 text-blue-800"
-                        }`}>
+                        <span className={`text-[9px] font-extrabold uppercase px-1.5 py-0.5 rounded ${inc.severity === "critical" ? "bg-red-200 text-red-900" :
+                            inc.severity === "high" ? "bg-orange-100 text-orange-800" :
+                              "bg-blue-100 text-blue-800"
+                          }`}>
                           {inc.severity}
                         </span>
                       </div>
@@ -487,15 +484,13 @@ export function EmergencyOpsScreen({ navigate }: { navigate: (s: AdminScreenKey)
                     </div>
                   </div>
 
-                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase ${
-                    inc.status === "pending" ? "bg-red-100 text-red-800 border-red-200 animate-pulse" :
-                    inc.status === "acknowledged" ? "bg-amber-100 text-amber-800 border-amber-200" :
-                    "bg-blue-100 text-blue-800 border-blue-200"
-                  }`}>
-                    <span className={`size-1 rounded-full ${
-                      inc.status === "pending" ? "bg-red-500" :
-                      inc.status === "acknowledged" ? "bg-amber-500" : "bg-blue-500"
-                    }`} />
+                  <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-extrabold uppercase ${inc.status === "pending" ? "bg-red-100 text-red-800 border-red-200 animate-pulse" :
+                      inc.status === "acknowledged" ? "bg-amber-100 text-amber-800 border-amber-200" :
+                        "bg-blue-100 text-blue-800 border-blue-200"
+                    }`}>
+                    <span className={`size-1 rounded-full ${inc.status === "pending" ? "bg-red-500" :
+                        inc.status === "acknowledged" ? "bg-amber-500" : "bg-blue-500"
+                      }`} />
                     {inc.status}
                   </span>
                 </div>

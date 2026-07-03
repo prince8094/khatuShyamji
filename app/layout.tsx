@@ -28,7 +28,11 @@ export const metadata: Metadata = {
   title: 'Khatu Shyam Ji · Digital Darshan',
   description:
     'Book your darshan at Khatu Shyam Ji temple. Live crowd status, traffic updates, QR pass, hotels, transport and more. Jai Shree Shyam.',
-  generator: 'v0.app',
+  generator: "Khatu Shyam Ji Digital Pilgrimage Platform",
+  icons: {
+    icon: '/images/khatu-shyam-logo.png',
+    apple: '/images/khatu-shyam-logo.png',
+  },
 }
 
 export const viewport: Viewport = {

@@ -9,8 +9,44 @@ import type { ScreenKey } from "@/lib/data"
 import { useHistoryState } from "@/lib/hooks/useHistoryState"
 import { devoteeApi } from "@/lib/api-client"
 
+const DEFAULT_PRASHAD_ITEMS = [
+  {
+    id: 1,
+    name: "Desi Ghee Churma Prashad",
+    nameHi: "देसी घी चूरमा प्रसाद",
+    price: 320,
+    weight: "500g Box",
+    weightHi: "500 ग्राम डिब्बा",
+    desc: "Traditional, home-cooked sweet prasad prepared in pure desi ghee.",
+    descHi: "शुद्ध देसी घी में तैयार किया गया पारंपरिक और स्वादिष्ट मीठा प्रसाद।",
+    img: "https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=300&auto=format&fit=crop&q=60",
+  },
+  {
+    id: 2,
+    name: "Makhan Mishri & dry fruits",
+    nameHi: "माखन मिश्री और सूखे मेवे",
+    price: 180,
+    weight: "250g Box",
+    weightHi: "250 ग्राम डिब्बा",
+    desc: "Shri Krishna's favorite makhan mishri combined with premium almonds & cashews.",
+    descHi: "श्री कृष्ण की पसंदीदा माखन मिश्री के साथ प्रीमियम बादाम और काजू।",
+    img: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=300&auto=format&fit=crop&q=60",
+  },
+  {
+    id: 3,
+    name: "Baba Shyam Khazana (Silver coins + dry fruits)",
+    nameHi: "बाबा श्याम खजाना (चांदी का सिक्का + सूखे मेवे)",
+    price: 650,
+    weight: "Premium Gift Box",
+    weightHi: "प्रीमियम उपहार डिब्बा",
+    desc: "Blessed silver coin with Baba's relief work, dry fruits, and incense sticks.",
+    descHi: "बाबा के रिलीफ वर्क के साथ अभिमंत्रित चांदी का सिक्का, सूखे मेवे और धूपबत्ती।",
+    img: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=300&auto=format&fit=crop&q=60",
+  },
+]
+
 export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
-  const { t } = useLanguage()
+  const { lang, t } = useLanguage()
   const { goBack } = useNavigation()
   const [quantities, setQuantities] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0 })
   const [deliveryType, setDeliveryType] = useState<"pickup" | "home">("pickup")
@@ -23,7 +59,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
   })
   const [ordered, setOrdered] = useState(false)
 
-  const [itemsList, setItemsList] = useState<any[]>([])
+  const [itemsList, setItemsList] = useState<any[]>(DEFAULT_PRASHAD_ITEMS)
 
   useEffect(() => {
     const fetchPrashadItems = async () => {
@@ -146,10 +182,10 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                     <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
                   </span>
                   <div>
-                    <h3 className="font-heading font-bold text-sm text-foreground">{t(item.name, item.nameHi)}</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t(item.desc, item.descHi)}</p>
+                    <h3 className="font-heading font-bold text-sm text-foreground">{lang === "hi" ? item.nameHi : item.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{lang === "hi" ? item.descHi : item.desc}</p>
                     <p className="text-xs font-bold text-primary mt-2">
-                      ₹{item.price} · {t(item.weight, item.weightHi)}
+                      ₹{item.price} · {lang === "hi" ? item.weightHi : item.weight}
                     </p>
                   </div>
                 </div>

@@ -211,7 +211,7 @@ export function TrafficScreen({ navigate }: { navigate: (s: any) => void }) {
         <SectionTitle title="Major Routes" hindi="प्रमुख मार्ग" />
         <div className="space-y-3">
           {routesList.map((route) => {
-            const cfg = statusConfig[route.status]
+            const cfg = (statusConfig as any)[route.status] || statusConfig.smooth
             return (
               <div key={route.name} className={`rounded-2xl border p-4 shadow-sm ${cfg.bg}`}>
                 <div className="flex items-start justify-between mb-2">

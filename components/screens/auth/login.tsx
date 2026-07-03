@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { Icon, Om } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
@@ -11,13 +11,22 @@ import { useNavigation } from "@/lib/contexts/NavigationContext"
 
 import { supabase } from "@/lib/supabase"
 
-export function LoginScreen({ navigate }: { navigate: (s: any) => void }) {
+export function LoginScreen({ 
+  navigate,
+  onLoginSuccess
+}: { 
+  navigate: (s: any) => void 
+  onLoginSuccess?: (user: any) => void
+}) {
   const { goBack } = useNavigation();
   const { t } = useLanguage()
   const { playTempleBell } = useAudio()
+  
+  // Mobile state
   const [phone, setPhone] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+  const [googleMessage, setGoogleMessage] = useState("")
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -67,6 +76,25 @@ export function LoginScreen({ navigate }: { navigate: (s: any) => void }) {
     }
   }
 
+  // Google Sign In handler placeholder for future integration
+  const handleGoogleLogin = () => {
+    playTempleBell('single')
+    
+    // TODO: Connect Supabase Google OAuth Authentication later
+    // Example:
+    // const { data, error } = await supabase.auth.signInWithOAuth({
+    //   provider: 'google',
+    //   options: { redirectTo: window.location.origin }
+    // })
+
+    setGoogleMessage("Google Sign-In will be available after backend integration.")
+    
+    // Clear message after 3 seconds
+    setTimeout(() => {
+      setGoogleMessage("")
+    }, 3000)
+  }
+
   return (
     <div className="relative -mx-4 md:-mx-8 -mt-5 -mb-24 lg:-mb-10 min-h-[100dvh] flex flex-col lg:flex-row overflow-hidden bg-[#FAF6F0]">
       
@@ -102,7 +130,7 @@ export function LoginScreen({ navigate }: { navigate: (s: any) => void }) {
 
         {/* Middle Deity Arch Portrait */}
         <div className="relative my-6 text-center z-10">
-          <div className="relative w-60 h-72 mx-auto rounded-t-full overflow-hidden border-4 border-amber-600/20 shadow-2xl bg-white p-2">
+          <div className="relative w-80 h-110 mx-auto rounded-t-full overflow-hidden border-4 border-amber-600/20 shadow-2xl bg-white p-2">
             <div className="relative w-full h-full rounded-t-full overflow-hidden">
               <Image
                 src="/images/khatu-shyam-deity.png"
@@ -237,26 +265,52 @@ export function LoginScreen({ navigate }: { navigate: (s: any) => void }) {
               </button>
             </form>
 
-            {/* Divider line OR */}
-            <div className="relative flex py-4 items-center">
-              <div className="flex-grow border-t border-amber-100"></div>
-              <span className="flex-shrink mx-4 text-xs font-bold text-amber-900/30 uppercase tracking-widest">
-                {t("common.or")}
-              </span>
-              <div className="flex-grow border-t border-amber-100"></div>
-            </div>
 
-            {/* Link to Signup */}
-            <button
-              type="button"
-              onClick={() => navigate("signup")}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-100 bg-amber-50/20 py-3.5 text-sm font-bold text-[#6b5440] hover:bg-amber-50 transition active:scale-[0.99]"
-            >
-              <Icon name="UserCircle2" className="size-5 text-[#800000]" />
-              {t("auth.login.noAccount")}{" "}
-              <span className="text-[#800000] underline ml-1">{t("auth.login.signUpLink")}</span>
-            </button>
-          </motion.div>
+              {/* Divider */}
+              <div className="relative flex py-5 items-center">
+                <div className="flex-grow border-t border-amber-100"></div>
+                <span className="flex-shrink mx-4 text-xs font-bold text-amber-900/30 uppercase tracking-widest">
+                  {t("common.or")}
+                </span>
+                <div className="flex-grow border-t border-amber-100"></div>
+              </div>
+
+              {/* Google Login Section */}
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <p className="block text-xs font-bold text-[#6b5440] uppercase tracking-wider text-left mb-1.5">
+                    Continue with Google
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="flex w-full items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-white py-3.5 text-base font-bold text-gray-700 shadow-sm transition hover:shadow-md hover:bg-gray-50 active:scale-[0.98] hover:border-amber-200"
+                  >
+                    <svg className="size-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                      <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                      <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05"/>
+                      <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335"/>
+                    </svg>
+                    <span>Continue with Google</span>
+                  </button>
+                </div>
+
+                <AnimatePresence>
+                  {googleMessage && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      className="flex items-center gap-2 rounded-xl bg-amber-50 border border-amber-200 px-4 py-2.5 text-xs font-semibold text-amber-800"
+                    >
+                      <Icon name="Info" className="size-4 shrink-0 text-amber-700" />
+                      <span>{googleMessage}</span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
           
           {/* Back Button */}
           <button

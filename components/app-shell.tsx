@@ -36,7 +36,6 @@ import { InfoScreens } from "@/components/screens/info-screens"
 import { ShyamSahayakScreen } from "@/components/screens/shyam-sahayak"
 import { OpeningAnimation } from "@/components/features/opening-animation"
 import { LanguageToggle } from "@/components/ui/language-toggle"
-import { BhatiMode } from "@/components/features/bhati-mode"
 import { VirtualDarshanScreen } from "@/components/screens/virtual-darshan"
 import { LiveDarshanScreen } from "@/components/screens/live-darshan"
 import { HelpSupportScreen } from "@/components/screens/help-support"
@@ -271,7 +270,11 @@ export function AppShell() {
 
   const navigateWithDate = (s: ScreenKey, date: string) => {
     setBookingDate(date)
+    if (typeof window !== "undefined") {
+      window.history.pushState({ screen: s }, "", `?screen=${s}`)
+    }
     setScreen(s)
+    setInternalHistoryCount(c => c + 1)
     if (typeof window !== "undefined") window.scrollTo({ top: 0 })
   }
 
@@ -319,7 +322,7 @@ export function AppShell() {
   const SidebarContent = () => (
     <>
       <div
-        className="relative overflow-hidden px-5 pb-6 pt-6 text-white shrink-0"
+        className="relative overflow-hidden px-5 pb-4 pt-3 text-white shrink-0"
         style={{
           backgroundImage: "linear-gradient(135deg, #D97706 0%, #D4AF37 100%)",
         }}
@@ -384,7 +387,7 @@ export function AppShell() {
       </div>
 
       {/* Sidebar items grouped */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
+      <nav className="flex-1 px-5 py-5 overflow-y-auto">
         {sidebarGroups.map((group) => {
           const groupItems = drawerItems.filter((item) => group.items.includes(item.key))
           if (groupItems.length === 0) return null
@@ -438,16 +441,6 @@ export function AppShell() {
           >
             <Icon name={soundEnabled ? "Volume2" : "VolumeX"} className="size-4" />
           </button>
-          <button
-            onClick={() => setBhatiMode(!bhatiMode)}
-            className={cn(
-              "grid size-10 place-items-center rounded-full border shadow-sm transition",
-              bhatiMode ? "bg-[#D97706] border-[#D97706] text-white" : "bg-card border-border text-[#D97706] hover:bg-[#D97706]/10",
-            )}
-            title="Bhakti Mode"
-          >
-            <Icon name="Sparkles" className="size-4" />
-          </button>
           {currentUser && (
             <button
               onClick={handleLogout}
@@ -466,8 +459,8 @@ export function AppShell() {
 
   return (
     <NavigationContext.Provider value={{ navigate, goBack, pushState }}>
-      <div className={cn("flex min-h-screen w-full transition-colors duration-700", isNightMode ? "bg-[#0e0805] text-[#FFF8F0]" : "bg-background text-foreground")}>
-      {bhatiMode && <BhatiMode />}
+      <div className="flex min-h-screen w-full transition-colors duration-700 bg-background text-foreground">
+
 
       {/* Floating Animated Diyas for Night Darshan Mode */}
       {isNightMode && showHeaderAndNav && (
@@ -587,14 +580,22 @@ export function AppShell() {
         )}
 
         {/* Page Content */}
-        <main className={cn("flex-1 w-full max-w-5xl mx-auto px-4 md:px-8", showHeaderAndNav ? "pt-5 pb-24 lg:pb-10" : "")}>
+        <main className={cn("flex-1 w-full mx-auto px-4 md:px-8", showHeaderAndNav ? "pt-5 pb-24 lg:pb-10" : "")}>
           {screen === "welcome" && (
             <WelcomeScreen
               navigate={navigate}
               onAdminLogin={(user) => setAdminUser(user)}
             />
           )}
-          {screen === "login" && <LoginScreen navigate={navigate} />}
+          {screen === "login" && (
+            <LoginScreen
+              navigate={navigate}
+              onLoginSuccess={(u) => {
+                setCurrentUser(u)
+                localStorage.setItem("current_user", JSON.stringify(u))
+              }}
+            />
+          )}
           {screen === "signup" && (
             <SignupScreen
               navigate={navigate}
@@ -620,7 +621,7 @@ export function AppShell() {
           {screen === "home" && <HomeScreen navigate={navigate} currentUser={currentUser} />}
           {screen === "book" && <BookDarshanScreen navigate={navigate} navigateWithDate={navigateWithDate} />}
           {screen === "passenger-details" && <PassengerDetailsScreen navigate={navigate} bookingDate={bookingDate} />}
-          {screen === "group-booking" && <GroupBookingScreen navigate={navigate} />}
+          {screen === "group-booking" && <GroupBookingScreen navigate={navigate} bookingDate={bookingDate} />}
           {screen === "services" && <ServicesScreen navigate={navigate} />}
           {screen === "hotel-booking" && <HotelBookingScreen navigate={navigate} />}
           {screen === "transport" && <TransportScreen navigate={navigate} />}

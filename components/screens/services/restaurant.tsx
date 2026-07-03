@@ -209,7 +209,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                     <input
                       type="text"
                       required
-                      placeholder="Mohan Sharma"
+                      placeholder="Nand Kumar"
                       value={reserveForm.name}
                       onChange={e => setReserveForm({ ...reserveForm, name: e.target.value })}
                       className="dark:bg-muted dark:border-border/30 w-full"

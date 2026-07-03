@@ -1,5 +1,9 @@
-import { useEffect } from "react"
+import { useState, useEffect } from "react"
+import { motion } from "framer-motion"
+import { Icon } from "@/components/shared"
+import { AdminSectionTitle, ActivityItem } from "@/components/admin/admin-shared"
 import { devoteeApi, adminApi } from "@/lib/api-client"
+import { type AdminScreenKey, type AdminUser } from "@/lib/admin-data"
 
 type TempleContentState = {
   id: string
@@ -68,7 +72,7 @@ export function TempleInfoAdminScreen({
           }
 
           // 2. Guides
-          setContentList(prev => prev.map(c => {
+          setContentList((prev: TempleContentState[]) => prev.map((c: TempleContentState) => {
             let key = ""
             if (c.id === "TC-01" || c.title.includes("Darshan Timings")) key = "darshan_timings"
             else if (c.id === "TC-03" || c.title.includes("Guidelines")) key = "temple_guidelines"
@@ -111,8 +115,8 @@ export function TempleInfoAdminScreen({
   const [tempTimes, setTempTimes] = useState<Record<string, string>>({})
 
   // Stats
-  const published = contentList.filter((c) => c.status === "published").length
-  const pendingReview = contentList.filter((c) => c.status === "pending-review").length
+  const published = contentList.filter((c: TempleContentState) => c.status === "published").length
+  const pendingReview = contentList.filter((c: TempleContentState) => c.status === "pending-review").length
 
   const handleEditClick = (item: TempleContentState) => {
     setEditingItemId(item.id)
@@ -412,7 +416,7 @@ export function TempleInfoAdminScreen({
         <section className="space-y-4">
           <AdminSectionTitle title="Guidelines & Schedules Catalog" icon="FileText" />
           <div className="space-y-3">
-            {contentList.map((item) => (
+            {contentList.map((item: TempleContentState) => (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 8 }}
@@ -479,7 +483,7 @@ export function TempleInfoAdminScreen({
         <section className="space-y-4">
           <AdminSectionTitle title="Aarti Timings Scheduler" icon="Flame" />
           <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border/60">
-            {aartiTimings.map((aarti) => (
+            {aartiTimings.map((aarti: AartiTimingState) => (
               <div key={aarti.id} className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/10 transition">
                 <div className="flex items-center gap-3">
                   <span className="grid size-9 place-items-center rounded-lg bg-amber-50 text-amber-600">
@@ -503,7 +507,7 @@ export function TempleInfoAdminScreen({
                         <Icon name="Check" className="size-4" />
                       </button>
                       <button
-                        onClick={() => setAartiTimings(prev => prev.map(t => (t.id === aarti.id ? { ...t, isEditing: false } : t)))}
+                        onClick={() => setAartiTimings((prev: AartiTimingState[]) => prev.map((t: AartiTimingState) => (t.id === aarti.id ? { ...t, isEditing: false } : t)))}
                         className="grid size-8 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted/50"
                       >
                         <Icon name="X" className="size-4" />
@@ -531,7 +535,7 @@ export function TempleInfoAdminScreen({
       <section>
         <AdminSectionTitle title="Information Change Log" icon="History" />
         <div className="rounded-2xl border border-border bg-card px-4 py-2 shadow-sm">
-          {activityLogs.map((log) => (
+          {activityLogs.map((log: any) => (
             <ActivityItem
               key={log.id}
               time={log.time}
