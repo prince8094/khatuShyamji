@@ -9,12 +9,14 @@ import { useAudio } from "@/lib/contexts/AudioContext"
 import { LanguageToggle } from "@/components/ui/language-toggle"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
 
+import { supabase } from "@/lib/supabase"
+
 export function SignupScreen({ 
   navigate,
   onSignupSuccess 
 }: { 
   navigate: (s: any) => void
-  onSignupSuccess: (user: { name: string; phone: string; initials: string }) => void
+  onSignupSuccess: (user: { name: string; phone: string; initials: string; id?: string; city?: string }) => void
 }) {
   const { goBack } = useNavigation();
   const { t } = useLanguage()
@@ -23,6 +25,8 @@ export function SignupScreen({
   const [phone, setPhone] = useState("")
   const [city, setCity] = useState("")
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [dbError, setDbError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   const validate = () => {
     const newErrors: Record<string, string> = {}
@@ -34,25 +38,72 @@ export function SignupScreen({
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
+    setDbError("")
+    setLoading(true)
 
-    playTempleBell("triple")
-    
-    const initials = name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2) || "DV"
+    try {
+      const unspacedPhone = `+91${phone}`
+      const initials = name
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2) || "PL"
 
-    const newUser = { name, phone: `+91 ${phone}`, initials }
-    onSignupSuccess(newUser)
-    
-    localStorage.setItem("temp_login_phone", `+91 ${phone}`)
-    localStorage.setItem("temp_signup_user", JSON.stringify(newUser))
-    navigate("otp")
+      // Check profile duplication via backend validator (and bootstrap if dev mode)
+      const checkRes = await fetch("/api/devotee/auth-init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phone: unspacedPhone, signup: true })
+      })
+      const checkResult = await checkRes.json()
+      if (!checkResult.success) {
+        setDbError(checkResult.error || "Signup check failed.")
+        setLoading(false)
+        return
+      }
+
+      // Development Mode bypass for any phone number
+      if (process.env.NEXT_PUBLIC_DEV_MODE === "true") {
+        playTempleBell("triple")
+        const newUser = { name, phone: unspacedPhone, initials, city }
+        onSignupSuccess(newUser)
+        
+        localStorage.setItem("temp_login_phone", unspacedPhone)
+        localStorage.setItem("temp_signup_user", JSON.stringify(newUser))
+        navigate("otp")
+        setLoading(false)
+        return
+      }
+
+      // Request OTP with metadata (Real flow)
+      const { error: signUpError } = await supabase.auth.signInWithOtp({
+        phone: unspacedPhone,
+        options: {
+          data: {
+            name: name,
+            city: city,
+          }
+        }
+      })
+      if (signUpError) throw signUpError
+
+      playTempleBell("triple")
+      const newUser = { name, phone: unspacedPhone, initials, city }
+      onSignupSuccess(newUser)
+      
+      localStorage.setItem("temp_login_phone", unspacedPhone)
+      localStorage.setItem("temp_signup_user", JSON.stringify(newUser))
+      navigate("otp")
+    } catch (err: any) {
+      console.error(err)
+      setDbError(err.message || "Database signup failed. Please check connection.")
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -207,7 +258,8 @@ export function SignupScreen({
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                     maxLength={10}
-                    className="w-full rounded-2xl border border-amber-200 bg-white py-3.5 pl-28 pr-4 text-sm font-semibold text-[#1A120B] shadow-inner outline-none transition duration-300 focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 placeholder-amber-900/25"
+                    disabled={loading}
+                    className="w-full rounded-2xl border border-amber-200 bg-white py-3.5 pl-28 pr-4 text-sm font-semibold text-[#1A120B] shadow-inner outline-none transition duration-300 focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 placeholder-amber-900/25 disabled:opacity-55"
                   />
                 </div>
                 {errors.phone && <p className="mt-1.5 text-xs text-red-500 font-semibold">{errors.phone}</p>}
@@ -227,18 +279,38 @@ export function SignupScreen({
                     placeholder={t("auth.signup.cityPlaceholder")}
                     value={city}
                     onChange={(e) => setCity(e.target.value)}
-                    className="w-full rounded-2xl border border-amber-200 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-[#1A120B] shadow-inner outline-none transition duration-300 focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 placeholder-amber-900/25"
+                    disabled={loading}
+                    className="w-full rounded-2xl border border-amber-200 bg-white py-3.5 pl-11 pr-4 text-sm font-semibold text-[#1A120B] shadow-inner outline-none transition duration-300 focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 placeholder-amber-900/25 disabled:opacity-55"
                   />
                 </div>
               </div>
 
+              {dbError && (
+                <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 text-xs font-semibold text-red-600">
+                  <Icon name="TriangleAlert" className="size-4 shrink-0" />
+                  {dbError}
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#800000] to-[#E25822] py-4 text-base font-bold text-white shadow-[0_6px_20px_rgba(128,0,0,0.25)] transition duration-300 hover:shadow-[0_8px_25px_rgba(128,0,0,0.35)] active:scale-[0.98]"
+                disabled={loading}
+                className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#800000] to-[#E25822] py-4 text-base font-bold text-white shadow-[0_6px_20px_rgba(128,0,0,0.25)] transition duration-300 hover:shadow-[0_8px_25px_rgba(128,0,0,0.35)] active:scale-[0.98] disabled:opacity-55"
               >
-                <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                {t("auth.signup.button")}
-                <Icon name="ArrowRight" className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                {loading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Icon name="Loader2" className="size-5" />
+                  </motion.div>
+                ) : (
+                  <>
+                    <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    {t("auth.signup.button")}
+                    <Icon name="ArrowRight" className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </>
+                )}
               </button>
             </form>
 

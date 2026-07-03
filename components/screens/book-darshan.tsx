@@ -1,13 +1,12 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Icon } from "@/components/shared"
 import type { ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
-
-const BOOKED = [7, 14, 22]
+import { devoteeApi } from "@/lib/api-client"
 
 type BookingType = "solo" | "group" | null
 
@@ -29,6 +28,31 @@ export function BookDarshanScreen({
   const year = 2026
   const [selected, setSelected] = useState<number | null>(28)
   const [devoteesCount, setDevoteesCount] = useState<number>(1)
+  const [bookedDates, setBookedDates] = useState<string[]>([])
+
+  useEffect(() => {
+    const fetchSlots = async () => {
+      try {
+        const bookings = await devoteeApi.getDarshanSlots()
+        const totals: Record<string, number> = {}
+        bookings.forEach((b: any) => {
+          const d = b.booking_date
+          totals[d] = (totals[d] || 0) + (b.visitor_count || 1)
+        })
+        const full: string[] = []
+        const MAX_DAILY_CAPACITY = 100 // Block slot if daily manifest matches limit
+        Object.entries(totals).forEach(([d, count]) => {
+          if (count >= MAX_DAILY_CAPACITY) {
+            full.push(d)
+          }
+        })
+        setBookedDates(full)
+      } catch (err) {
+        console.error("Failed to fetch slots count:", err)
+      }
+    }
+    fetchSlots()
+  }, [])
 
   const days = useMemo(() => {
     const first = new Date(year, month, 1).getDay()
@@ -247,7 +271,8 @@ export function BookDarshanScreen({
                 {days.map((d, i) => {
                   if (d === null) return <span key={i} />
                   const isPast = d < today
-                  const isBooked = BOOKED.includes(d)
+                  const dateStrDb = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`
+                  const isBooked = bookedDates.includes(dateStrDb)
                   const disabled = isPast || isBooked
                   const isSel = selected === d
                   return (

@@ -8,6 +8,7 @@ import { motion } from "framer-motion"
 import { drawerItems, user as staticUser, type ScreenKey, type AppUser } from "@/lib/data"
 import { type AdminUser } from "@/lib/admin-data"
 import { AdminWorkspace } from "@/components/admin/admin-workspace"
+import { supabase } from "@/lib/supabase"
 
 // Screen components
 import { HomeScreen } from "@/components/screens/home"
@@ -25,7 +26,7 @@ import { SevaBookingScreen } from "@/components/screens/services/seva-booking"
 import { OfferingsScreen } from "@/components/screens/services/offerings"
 import { EmergencyHelplineScreen } from "@/components/screens/services/emergency-helpline"
 import { AartiTimingsScreen } from "@/components/screens/services/aarti-timings"
-import { ParkingInfoScreen } from "@/components/screens/services/parking-info"
+import { ParkingScreen } from "@/components/screens/parking"
 import { TrafficUpdatesScreen } from "@/components/screens/services/traffic-updates"
 import { MyBookingsScreen } from "@/components/screens/my-bookings"
 import { QrPassScreen } from "@/components/screens/qr-pass"
@@ -143,6 +144,62 @@ export function AppShell() {
       setCurrentUser(JSON.parse(sessionUser))
     }
 
+    // Subscribe to real-time auth changes if Supabase URL is present
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    let subscription: any = null
+
+    if (supabaseUrl) {
+      const initSession = async () => {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id, name, phone, city")
+            .eq("id", session.user.id)
+            .maybeSingle()
+
+          if (profile) {
+            const userObj = {
+              id: profile.id,
+              name: profile.name,
+              phone: profile.phone,
+              city: profile.city || "",
+              initials: profile.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+            }
+            setCurrentUser(userObj)
+            localStorage.setItem("current_user", JSON.stringify(userObj))
+          }
+        }
+      }
+      initSession()
+
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("id, name, phone, city")
+            .eq("id", session.user.id)
+            .maybeSingle()
+
+          if (profile) {
+            const userObj = {
+              id: profile.id,
+              name: profile.name,
+              phone: profile.phone,
+              city: profile.city || "",
+              initials: profile.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+            }
+            setCurrentUser(userObj)
+            localStorage.setItem("current_user", JSON.stringify(userObj))
+          }
+        } else {
+          setCurrentUser(null)
+          localStorage.removeItem("current_user")
+        }
+      })
+      subscription = authListener.subscription
+    }
+
     const hasSeen = sessionStorage.getItem("seen_opening")
     if (hasSeen) {
       setShowOpening(false)
@@ -169,7 +226,12 @@ export function AppShell() {
       }
 
       window.addEventListener("popstate", handlePopState)
-      return () => window.removeEventListener("popstate", handlePopState)
+      return () => {
+        window.removeEventListener("popstate", handlePopState)
+        if (subscription) {
+          subscription.unsubscribe()
+        }
+      }
     } else {
       setScreen(initialScreen)
     }
@@ -221,7 +283,11 @@ export function AppShell() {
     }
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (supabaseUrl) {
+      await supabase.auth.signOut()
+    }
     setCurrentUser(null)
     localStorage.removeItem("current_user")
     localStorage.removeItem("temp_signup_user")
@@ -566,7 +632,7 @@ export function AppShell() {
           {screen === "offerings" && <OfferingsScreen navigate={navigate} />}
           {screen === "aarti-timings" && <AartiTimingsScreen />}
           {screen === "emergency" && <EmergencyHelplineScreen navigate={navigate} />}
-          {screen === "parking" && <ParkingInfoScreen navigate={navigate} />}
+          {screen === "parking" && <ParkingScreen navigate={navigate} />}
           {screen === "traffic" && <TrafficUpdatesScreen navigate={navigate} />}
           {screen === "bookings" && <MyBookingsScreen navigate={navigate} />}
           {screen === "qr" && <QrPassScreen />}

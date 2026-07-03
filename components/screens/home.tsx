@@ -1,10 +1,13 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Icon, Ornament, SectionTitle, StatusDot } from "@/components/shared"
 import { aartiTimings, liveStatus, services, user, type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { AnnouncementBanner } from "@/components/features/announcement-banner"
+import { devoteeApi } from "@/lib/api-client"
+import { supabase } from "@/lib/supabase"
 
 const quickActions: { key: ScreenKey; icon: string }[] = [
   { key: "bookings", icon: "Ticket" },
@@ -17,11 +20,125 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
   const activeUser = currentUser || user
   const { lang, t } = useLanguage()
 
+  const [telemetry, setTelemetry] = useState<any>({
+    crowd_level: "Moderate",
+    crowd_count: 6420,
+    wait_time_minutes: 35,
+    darshan_status: "Open",
+    is_emergency_mode: false,
+    is_darshan_closed: false,
+    is_global_alarm: false,
+  })
+  const [announcements, setAnnouncements] = useState<any[]>([])
+  const [parkingStats, setParkingStats] = useState({ value: "Available", tone: "success" as const, hint: "Shuttles active" })
+  const [trafficStats, setTrafficStats] = useState({ value: "Smooth", tone: "success" as const, hint: "All routes clear" })
+
+  useEffect(() => {
+    devoteeApi.getTempleInfo()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          const telemetryRecord = res.find((r: any) => r.section_key === "live_telemetry")
+          if (telemetryRecord && telemetryRecord.content) {
+            setTelemetry(telemetryRecord.content)
+          }
+        }
+      })
+      .catch((err) => console.error("Error loading telemetry", err))
+
+    devoteeApi.getAnnouncements()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          setAnnouncements(res.map((a: any) => {
+            const trans = a.announcement_translations?.find((t: any) => t.language_code === "en") || a.announcement_translations?.[0]
+            return {
+              id: a.id,
+              text: trans ? trans.description : a.body_en || a.title_en || ""
+            }
+          }))
+        }
+      })
+      .catch((err) => console.error("Error loading announcements", err))
+
+    const fetchParkingStats = () => {
+      devoteeApi.getParkingBlocks()
+        .then((res: any) => {
+          if (Array.isArray(res) && res.length > 0) {
+            const total = res.reduce((a, b) => a + Number(b.total_capacity || 0), 0)
+            const occupied = res.reduce((a, b) => a + Number(b.occupied || 0), 0)
+            const pct = total > 0 ? (occupied / total) : 0
+            const isFull = pct >= 0.95
+            setParkingStats({
+              value: isFull ? "Full" : "Available",
+              tone: isFull ? ("danger" as const) : ("success" as const),
+              hint: `${occupied}/${total} occupied`
+            })
+          }
+        })
+        .catch((err) => console.error("Error loading home parking stats", err))
+    }
+
+    fetchParkingStats()
+
+    devoteeApi.getTraffic()
+      .then((res: any) => {
+        if (Array.isArray(res) && res.length > 0) {
+          const congested = res.filter(r => r.status === "congested" || r.status === "blocked")
+          const hasAlerts = congested.length > 0
+          setTrafficStats({
+            value: hasAlerts ? "Slow" : "Smooth",
+            tone: hasAlerts ? ("orange" as const) : ("success" as const),
+            hint: hasAlerts ? `${congested.length} heavy zones` : "All routes clear"
+          })
+        }
+      })
+      .catch((err) => console.error("Error loading home traffic stats", err))
+
+    const channel = supabase
+      .channel("public:home:parking_blocks")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "parking_blocks" },
+        () => {
+          console.log("Realtime home parking_blocks update detected!")
+          fetchParkingStats()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
   const statusList = [
-    { key: "crowd", icon: "Users", tone: liveStatus.crowd.tone },
-    { key: "traffic", icon: "TrafficCone", tone: liveStatus.traffic.tone },
-    { key: "parking", icon: "SquareParking", tone: liveStatus.parking.tone },
-    { key: "darshan", icon: "DoorOpen", tone: liveStatus.darshan.tone },
+    {
+      key: "crowd",
+      icon: "Users",
+      tone: telemetry.crowd_level?.toLowerCase() === "high" ? "orange" as const : (telemetry.crowd_level?.toLowerCase() === "critical" ? "danger" as const : "success" as const),
+      value: telemetry.crowd_level || "Moderate",
+      hint: `~ ${Number(telemetry.crowd_count || 6420).toLocaleString()} devotees`
+    },
+    {
+      key: "traffic",
+      icon: "TrafficCone",
+      tone: trafficStats.tone,
+      value: trafficStats.value,
+      hint: trafficStats.hint
+    },
+    {
+      key: "parking",
+      icon: "SquareParking",
+      tone: parkingStats.tone,
+      value: parkingStats.value,
+      hint: parkingStats.hint
+    },
+    {
+      key: "darshan",
+      icon: "DoorOpen",
+      tone: telemetry.is_darshan_closed ? "danger" as const : "success" as const,
+      value: telemetry.is_darshan_closed ? "CLOSED" : (telemetry.darshan_status || "Open"),
+      hint: telemetry.is_darshan_closed ? "Gates Offline" : `Wait: ${telemetry.wait_time_minutes || 35} mins`
+    },
   ]
 
   return (
@@ -78,7 +195,7 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
       </section>
 
       {/* Announcements */}
-      <AnnouncementBanner />
+      {announcements.length > 0 ? <AnnouncementBanner announcements={announcements} /> : <AnnouncementBanner />}
 
       {/* Primary CTA */}
       <button
@@ -120,15 +237,15 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
               <div className="flex items-center gap-2.5">
                 <span
                   className={`grid size-9 place-items-center rounded-xl ${
-                    s.tone === "success" ? "bg-[#e7f3ea] text-success" : "bg-[#FFF3E0] text-[#FF8C00]"
+                    s.tone === "success" ? "bg-[#e7f3ea] text-success" : s.tone === "danger" ? "bg-red-50 text-red-650" : "bg-[#FFF3E0] text-[#FF8C00]"
                   }`}
                 >
                   <Icon name={s.icon} className="size-5" />
                 </span>
                 <p className="text-xs font-medium text-muted-foreground">{t(`home.liveStatus.${s.key}.label`)}</p>
               </div>
-              <p className="mt-3 font-heading text-lg font-bold leading-none text-foreground">{t(`home.liveStatus.${s.key}.value`)}</p>
-              <p className="mt-1 text-[11px] text-muted-foreground">{t(`home.liveStatus.${s.key}.hint`)}</p>
+              <p className="mt-3 font-heading text-lg font-bold leading-none text-foreground">{s.value}</p>
+              <p className="mt-1 text-[11px] text-muted-foreground">{s.hint}</p>
             </div>
           ))}
         </div>

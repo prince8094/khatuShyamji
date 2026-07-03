@@ -1,7 +1,10 @@
 "use client"
 
+import { useEffect, useState } from "react"
 import { Icon, StatusDot, SectionTitle } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { devoteeApi } from "@/lib/api-client"
+import TrafficMap from "@/components/shared/TrafficMap"
 
 const routes = [
   {
@@ -68,6 +71,35 @@ const statusConfig = {
 
 export function TrafficScreen({ navigate }: { navigate: (s: any) => void }) {
   const { t } = useLanguage()
+  const [showTempleRoute, setShowTempleRoute] = useState(true)
+  const [showParkingRoute, setShowParkingRoute] = useState(true)
+  const [showAlternativeRoute, setShowAlternativeRoute] = useState(true)
+  const [showTrafficLayer, setShowTrafficLayer] = useState(true)
+  const [routesList, setRoutesList] = useState<any[]>(routes)
+  const [alerts, setAlerts] = useState<any[]>([])
+
+  useEffect(() => {
+    devoteeApi.getTraffic()
+      .then((res) => {
+        if (res.alerts) setAlerts(res.alerts)
+        if (res.routes && res.routes.length > 0) {
+          setRoutesList(res.routes.map((r: any) => {
+            const mapped = routes.find(mr => mr.name.toLowerCase() === r.name.toLowerCase())
+            return {
+              name: r.name,
+              nameHi: mapped?.nameHi || r.name,
+              distance: mapped?.distance || "30 km",
+              status: r.status === "heavy" ? "heavy" : (r.status === "moderate" ? "moderate" : "smooth"),
+              eta: r.eta,
+              note: mapped?.note || "Usual traffic conditions",
+              noteHi: mapped?.noteHi || "सामान्य ट्रैफिक",
+              icon: r.status === "heavy" ? "AlertTriangle" : (r.status === "moderate" ? "TrafficCone" : "CarFront")
+            }
+          }))
+        }
+      })
+      .catch((err) => console.error("Failed to load traffic alerts", err))
+  }, [])
 
   return (
     <div className="space-y-5 pb-10">
@@ -102,11 +134,83 @@ export function TrafficScreen({ navigate }: { navigate: (s: any) => void }) {
         </div>
       </section>
 
+      {/* Real-time Traffic Map */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h3 className="font-heading text-sm font-bold text-foreground">Interactive Route Traffic Map</h3>
+          <button
+            onClick={() => setShowTrafficLayer(!showTrafficLayer)}
+            className={`rounded-xl px-3 py-1 text-[10px] font-bold border transition ${
+              showTrafficLayer 
+                ? "bg-red-50 text-red-700 border-red-200" 
+                : "bg-muted text-muted-foreground border-border"
+            }`}
+          >
+            ⛔ Live Traffic: {showTrafficLayer ? "ON" : "OFF"}
+          </button>
+        </div>
+
+        <TrafficMap
+          showTempleRoute={showTempleRoute}
+          showParkingRoute={showParkingRoute}
+          showAlternativeRoute={showAlternativeRoute}
+          showTrafficLayer={showTrafficLayer}
+          alerts={alerts.map((a: any) => ({
+            id: a.id,
+            alert_code: a.alert_code,
+            latitude: a.latitude,
+            longitude: a.longitude,
+            alert_type: a.alert_type,
+            message: a.message,
+            severity: a.severity
+          }))}
+        />
+
+        {/* Toggle Route Indicators */}
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            onClick={() => setShowTempleRoute(!showTempleRoute)}
+            className={`rounded-2xl border p-2.5 text-center text-xs font-bold transition flex flex-col items-center gap-1.5 ${
+              showTempleRoute 
+                ? "bg-amber-50 border-amber-300 text-amber-850" 
+                : "bg-card border-border text-muted-foreground"
+            }`}
+          >
+            <span className="size-3 rounded-full bg-[#F59E0B]" />
+            Temple Route
+          </button>
+
+          <button
+            onClick={() => setShowParkingRoute(!showParkingRoute)}
+            className={`rounded-2xl border p-2.5 text-center text-xs font-bold transition flex flex-col items-center gap-1.5 ${
+              showParkingRoute 
+                ? "bg-amber-50 border-amber-300 text-amber-850" 
+                : "bg-card border-border text-muted-foreground"
+            }`}
+          >
+            <span className="size-3 rounded-full bg-[#D97706]" />
+            Parking Route
+          </button>
+
+          <button
+            onClick={() => setShowAlternativeRoute(!showAlternativeRoute)}
+            className={`rounded-2xl border p-2.5 text-center text-xs font-bold transition flex flex-col items-center gap-1.5 ${
+              showAlternativeRoute 
+                ? "bg-amber-50 border-amber-300 text-amber-850" 
+                : "bg-card border-border text-muted-foreground"
+            }`}
+          >
+            <span className="size-3 rounded-full bg-[#10B981]" />
+            Bypass Route
+          </button>
+        </div>
+      </section>
+
       {/* Route Status */}
       <section>
         <SectionTitle title="Major Routes" hindi="प्रमुख मार्ग" />
         <div className="space-y-3">
-          {routes.map((route) => {
+          {routesList.map((route) => {
             const cfg = statusConfig[route.status]
             return (
               <div key={route.name} className={`rounded-2xl border p-4 shadow-sm ${cfg.bg}`}>

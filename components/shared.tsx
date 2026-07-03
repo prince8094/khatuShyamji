@@ -3,6 +3,8 @@
 import * as Icons from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { useEffect, useState } from "react"
+import QRCode from "qrcode"
 
 export function Icon({ name, className }: { name: string; className?: string }) {
   const Cmp = (Icons as Record<string, any>)[name] ?? Icons.Circle
@@ -88,45 +90,34 @@ export function SectionTitle({ title, hindi, action }: { title: string; hindi?: 
   )
 }
 
-/* Deterministic decorative QR (visual only) */
+/* Cryptographically scannable real QR code generator component */
 export function QrMock({ size = 220, seed = "KSJ" }: { size?: number; seed?: string }) {
-  const grid = 21
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0
-  const cell = (r: number, c: number) => {
-    const v = (Math.sin((r + 1) * (c + 3) * (h % 97) * 12.9898) * 43758.5453) % 1
-    return Math.abs(v) > 0.5
-  }
-  const isFinder = (r: number, c: number) =>
-    (r < 7 && c < 7) || (r < 7 && c >= grid - 7) || (r >= grid - 7 && c < 7)
+  const [qrUrl, setQrUrl] = useState<string>("")
 
-  const cells: React.ReactNode[] = []
-  for (let r = 0; r < grid; r++) {
-    for (let c = 0; c < grid; c++) {
-      if (isFinder(r, c)) continue
-      if (cell(r, c)) {
-        cells.push(
-          <rect key={`${r}-${c}`} x={c} y={r} width={1} height={1} rx={0.22} fill="#2C2C2C" />,
-        )
-      }
-    }
-  }
+  useEffect(() => {
+    QRCode.toDataURL(seed, { margin: 1, width: size })
+      .then((url) => setQrUrl(url))
+      .catch((err) => console.error("Failed to generate real QR code", err))
+  }, [seed, size])
 
-  const Finder = ({ x, y }: { x: number; y: number }) => (
-    <g transform={`translate(${x},${y})`}>
-      <rect width={7} height={7} rx={1.6} fill="#FF8C00" />
-      <rect x={1} y={1} width={5} height={5} rx={1.1} fill="#fff" />
-      <rect x={2} y={2} width={3} height={3} rx={0.7} fill="#FF8C00" />
-    </g>
-  )
+  if (!qrUrl) {
+    return (
+      <div 
+        style={{ width: size, height: size }} 
+        className="bg-muted animate-pulse rounded-2xl flex items-center justify-center text-[10px] text-muted-foreground/60"
+      >
+        Generating QR...
+      </div>
+    )
+  }
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${grid} ${grid}`} role="img" aria-label="Darshan QR code">
-      <rect width={grid} height={grid} fill="#fff" />
-      {cells}
-      <Finder x={0} y={0} />
-      <Finder x={grid - 7} y={0} />
-      <Finder x={0} y={grid - 7} />
-    </svg>
+    <img
+      src={qrUrl}
+      alt="Scannable secure QR code"
+      width={size}
+      height={size}
+      className="object-contain"
+    />
   )
 }

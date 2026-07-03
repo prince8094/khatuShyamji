@@ -1,63 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 import { useHistoryState } from "@/lib/hooks/useHistoryState"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
-
-const eateries = [
-  {
-    id: 1,
-    name: "Shyam Rasoi (Trust Bhandara)",
-    nameHi: "श्याम रसोई (ट्रस्ट भंडारा)",
-    type: "bhandara",
-    price: "Free (Donation-based)",
-    rating: 4.9,
-    img: "https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=300&auto=format&fit=crop&q=60",
-    speciality: "Desi Ghee Churma, Dal Bati, Kadhi",
-    specialityHi: "देसी घी का चूरमा, दाल बाटी, कढ़ी",
-    hours: "11:00 AM – 4:00 PM, 7:00 PM – 10:00 PM",
-  },
-  {
-    id: 2,
-    name: "Radhey Haveli Restaurant",
-    nameHi: "राधे हवेली रेस्तरां",
-    type: "premium",
-    price: "₹350/person approx",
-    rating: 4.8,
-    img: "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=300&auto=format&fit=crop&q=60",
-    speciality: "Royal Rajasthani Thali (Unlimited)",
-    specialityHi: "शाही राजस्थानी थाली (असीमित)",
-    hours: "8:00 AM – 11:00 PM",
-  },
-  {
-    id: 3,
-    name: "Baba Shyam Bhojanalaya",
-    nameHi: "बाबा श्याम भोजनालय",
-    type: "dhaba",
-    price: "₹120/person approx",
-    rating: 4.5,
-    img: "https://images.unsplash.com/photo-1626777552726-4a6b54c97e46?w=300&auto=format&fit=crop&q=60",
-    speciality: "Tandoori Roti, Shahi Paneer, Dal Fry",
-    specialityHi: "तंदूरी रोटी, शाही पनीर, दाल फ्राई",
-    hours: "9:00 AM – 11:30 PM",
-  },
-  {
-    id: 4,
-    name: "Krishna Dairy & Sweets",
-    nameHi: "कृष्णा डेयरी एंड स्वीट्स",
-    type: "cafe",
-    price: "₹80/person approx",
-    rating: 4.6,
-    img: "https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=300&auto=format&fit=crop&q=60",
-    speciality: "Kesar Peda, Rabdi, Lassi, Samosa",
-    specialityHi: "केसर पेड़ा, रबड़ी, लस्सी, समोसा",
-    hours: "6:00 AM – 10:30 PM",
-  },
-]
+import { devoteeApi } from "@/lib/api-client"
 
 export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
   const { goBack } = useNavigation();
@@ -72,14 +22,82 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
   })
   const [confirmed, setConfirmed] = useState(false)
 
-  const handleReservation = (e: React.FormEvent) => {
+  const [eateriesList, setEateriesList] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchEateries = async () => {
+      try {
+        const data = await devoteeApi.getRestaurants()
+
+        if (data && data.length > 0) {
+          setEateriesList(data.map((r: any) => ({
+            id: r.id,
+            dbId: String(r.id),
+            name: r.name,
+            nameHi: r.name,
+            type: r.reservations_required ? "premium" : "dhaba",
+            price: "₹150/person approx",
+            rating: Number(r.rating) || 4.5,
+            img: r.image_url || "https://images.unsplash.com/photo-1589301760014-d929f3979dbc?w=300&auto=format&fit=crop&q=60",
+            speciality: r.description || "Pure veg multi-cuisine thali",
+            specialityHi: r.description || "शुद्ध शाकाहारी भोजन",
+            hours: "8:00 AM – 11:00 PM"
+          })))
+        }
+      } catch (err) {
+        console.error("Failed to load restaurants", err)
+      }
+    }
+
+    fetchEateries()
+  }, [])
+
+  const handleReservation = async (e: React.FormEvent) => {
     e.preventDefault()
-    setConfirmed(true)
-    setTimeout(() => {
-      setConfirmed(false)
-      goBack()
-      setReserveForm({ name: "", phone: "", people: "4", date: "", time: "" })
-    }, 4000)
+
+    const activeUserStr = localStorage.getItem("current_user")
+    let profileId = null
+    if (activeUserStr) {
+      try {
+        profileId = JSON.parse(activeUserStr).id
+      } catch (err) {}
+    }
+
+    if (!profileId) {
+      profileId = "00000000-0000-0000-0000-000000000000"
+    }
+
+    const resDateVal = reserveForm.date || new Date().toISOString().split("T")[0]
+    const resTimeVal = reserveForm.time || "19:00:00"
+    let restaurantId = 1
+    if (selectedRest.dbId) {
+      restaurantId = parseInt(selectedRest.dbId) || 1
+    }
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await devoteeApi.bookRestaurant({
+          restaurant_id: restaurantId,
+          guest_name: reserveForm.name,
+          guest_phone: reserveForm.phone,
+          reservation_date: resDateVal,
+          reservation_time: resTimeVal,
+          people_count: parseInt(reserveForm.people) || 4
+        })
+      }
+
+      setConfirmed(true)
+      setTimeout(() => {
+        setConfirmed(false)
+        goBack()
+        setReserveForm({ name: "", phone: "", people: "4", date: "", time: "" })
+        setSelectedRest(null)
+      }, 4000)
+    } catch (err) {
+      console.error("Failed to save reservation", err)
+      alert("Failed to confirm table reservation. Please try again.")
+    }
   }
 
   return (
@@ -113,7 +131,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
           </div>
 
           <div className="space-y-4">
-            {eateries.map(r => (
+            {eateriesList.map(r => (
               <div key={r.id} className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm dark:bg-card dark:border-border/30 flex flex-col sm:flex-row">
                 <div className="relative w-full sm:w-40 h-36 bg-muted shrink-0">
                   <img src={r.img} alt={r.name} className="w-full h-full object-cover" />
@@ -161,7 +179,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
               <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.restaurant.tableReservation")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t(selectedRest.name, selectedRest.nameHi)}</p>
             </div>
-            <button onClick={goBack} className="text-xs font-bold text-primary hover:underline">
+            <button onClick={() => setSelectedRest(null)} className="text-xs font-bold text-primary hover:underline">
               {t("screens.services.restaurant.cancel")}
             </button>
           </div>
@@ -194,7 +212,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                       placeholder="Mohan Sharma"
                       value={reserveForm.name}
                       onChange={e => setReserveForm({ ...reserveForm, name: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                   <div>
@@ -205,7 +223,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                       placeholder="+91 XXXXX XXXXX"
                       value={reserveForm.phone}
                       onChange={e => setReserveForm({ ...reserveForm, phone: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                 </div>
@@ -218,7 +236,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                       required
                       value={reserveForm.date}
                       onChange={e => setReserveForm({ ...reserveForm, date: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                   <div>
@@ -226,7 +244,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                     <select
                       value={reserveForm.people}
                       onChange={e => setReserveForm({ ...reserveForm, people: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     >
                       {["1", "2", "3", "4", "5", "6", "8+", "10+"].map(n => (
                         <option key={n} value={n}>{n}</option>
@@ -242,7 +260,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                     required
                     value={reserveForm.time}
                     onChange={e => setReserveForm({ ...reserveForm, time: e.target.value })}
-                    className="dark:bg-muted dark:border-border/30"
+                    className="dark:bg-muted dark:border-border/30 w-full"
                   />
                 </div>
 

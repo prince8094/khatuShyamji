@@ -1,15 +1,16 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { AdminSectionTitle, LiveDot } from "@/components/admin/admin-shared"
-import { volunteerApplications as initialApplications, type AdminScreenKey } from "@/lib/admin-data"
-
-type Application = typeof initialApplications[0]
+import { type AdminScreenKey } from "@/lib/admin-data"
+import { adminApi, devoteeApi } from "@/lib/api-client"
 
 export function SevaManagementScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
-  const [applications, setApplications] = useState<Application[]>(initialApplications)
+  const [tab, setTab] = useState<"applications" | "opportunities">("applications")
+  const [opportunities, setOpportunities] = useState<any[]>([])
+  const [applications, setApplications] = useState<any[]>([])
   const [statusFilter, setStatusFilter] = useState<string>("all")
   const [roleFilter, setRoleFilter] = useState<string>("all")
   const [dateFilter, setDateFilter] = useState<string>("all")
@@ -23,8 +24,72 @@ export function SevaManagementScreen({ navigate }: { navigate: (s: AdminScreenKe
     setTimeout(() => setToastMsg(""), 3500)
   }
 
+  // Fetch live volunteer opportunities
+  useEffect(() => {
+    devoteeApi.getTempleInfo()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          const rec = res.find(r => r.section_key === "volunteer_opportunities")
+          if (rec && Array.isArray(rec.content)) {
+            setOpportunities(rec.content)
+          }
+        }
+      })
+      .catch((err) => console.error("Failed to load volunteer opportunities in admin", err))
+  }, [])
+
+  // Fetch live applications from Supabase
+  useEffect(() => {
+    const loadApplications = async () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (!supabaseUrl) return
+
+      try {
+        const data = await adminApi.getVolunteers()
+
+        if (data && data.length > 0) {
+          setApplications(data.map((app: any) => {
+            let displayDate = app.preferred_date
+            if (app.preferred_date) {
+              const [y, m, d] = app.preferred_date.split("-")
+              displayDate = `${d}/${m}/${y}`
+            }
+
+            return {
+              id: app.id,
+              fullName: app.full_name,
+              email: app.email,
+              mobile: app.mobile,
+              age: app.age,
+              gender: app.gender,
+              city: app.city,
+              preferredRole: app.preferred_role === "crowd" ? "Crowd Management Volunteer" :
+                             app.preferred_role === "devotee-assist" ? "Devotee Assistance Volunteer" :
+                             app.preferred_role === "prasad" ? "Prasad Distribution Volunteer" :
+                             app.preferred_role === "cleanliness" ? "Temple Cleanliness Volunteer" :
+                             app.preferred_role === "queue" ? "Queue Management Volunteer" :
+                             app.preferred_role === "medical" ? "Medical Assistance Volunteer" :
+                             app.preferred_role === "info-desk" ? "Information Desk Volunteer" : app.preferred_role,
+              preferredDate: displayDate,
+              preferredTimeSlot: app.preferred_time_slot.replace(/\b\w/g, (char: string) => char.toUpperCase()),
+              experience: app.experience,
+              reason: app.reason,
+              emergencyContact: app.emergency_contact,
+              status: app.status as "pending" | "approved" | "rejected",
+              createdAt: app.created_at || new Date().toISOString()
+            }
+          }))
+        }
+      } catch (err) {
+        console.error("Failed to load volunteer applications", err)
+      }
+    }
+
+    loadApplications()
+  }, [])
+
   // Handle application approval
-  const handleApprove = (appId: string) => {
+  const handleApprove = async (appId: string) => {
     setApplications((prev) =>
       prev.map((app) => (app.id === appId ? { ...app, status: "approved" as const } : app))
     )
@@ -32,16 +97,60 @@ export function SevaManagementScreen({ navigate }: { navigate: (s: AdminScreenKe
     if (app) {
       triggerToast(`Volunteer application for ${app.fullName} has been APPROVED.`)
     }
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await adminApi.actionVolunteer({
+          application_id: appId,
+          status: "approved"
+        })
+      }
+    } catch (err) {
+      console.error("Failed to update status in Supabase", err)
+    }
   }
 
   // Handle application rejection
-  const handleReject = (appId: string) => {
+  const handleReject = async (appId: string) => {
     setApplications((prev) =>
       prev.map((app) => (app.id === appId ? { ...app, status: "rejected" as const } : app))
     )
     const app = applications.find((a) => a.id === appId)
     if (app) {
       triggerToast(`Volunteer application for ${app.fullName} has been REJECTED.`)
+    }
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await adminApi.actionVolunteer({
+          application_id: appId,
+          status: "rejected"
+        })
+      }
+    } catch (err) {
+      console.error("Failed to update status in Supabase", err)
+    }
+  }
+
+  const toggleOpportunityStatus = async (oppId: string) => {
+    const nextOpp = opportunities.map(o => {
+      if (o.id === oppId) {
+        return { ...o, status: o.status === "Open" ? "Closed" : "Open" }
+      }
+      return o
+    })
+    setOpportunities(nextOpp)
+    try {
+      await adminApi.updateTempleInfo({
+        section_key: "volunteer_opportunities",
+        title: "Volunteer Opportunities",
+        content: nextOpp
+      })
+      triggerToast("Opportunity status updated successfully!")
+    } catch (err) {
+      console.error("Failed to update opportunity in database", err)
     }
   }
 
@@ -143,7 +252,29 @@ export function SevaManagementScreen({ navigate }: { navigate: (s: AdminScreenKe
         )}
       </AnimatePresence>
 
-      {/* Search & Filters */}
+      {/* Tabs */}
+      <div className="flex border-b border-border">
+        <button
+          onClick={() => setTab("applications")}
+          className={`px-4 py-2.5 text-xs font-bold transition border-b-2 -mb-px ${
+            tab === "applications" ? "border-pink-650 text-pink-650" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Applications Queue
+        </button>
+        <button
+          onClick={() => setTab("opportunities")}
+          className={`px-4 py-2.5 text-xs font-bold transition border-b-2 -mb-px ${
+            tab === "opportunities" ? "border-pink-650 text-pink-650" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Volunteering Opportunities
+        </button>
+      </div>
+
+      {tab === "applications" ? (
+        <>
+          {/* Search & Filters */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-card border border-border rounded-2xl p-4 shadow-sm">
         {/* Name / Mobile Search */}
         <div className="relative">
@@ -553,6 +684,40 @@ export function SevaManagementScreen({ navigate }: { navigate: (s: AdminScreenKe
           </div>
         )}
       </AnimatePresence>
+        </>
+      ) : (
+        <div className="space-y-4 bg-card border border-border rounded-2xl p-5 shadow-sm">
+          <AdminSectionTitle title="Configure Volunteering Opportunities" icon="Settings" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {opportunities.map((opp) => (
+              <div key={opp.id} className="rounded-xl border border-border p-4 bg-muted/20 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="flex items-center gap-2">
+                      <span className="grid size-8 place-items-center rounded-lg bg-pink-100 text-pink-650">
+                        <Icon name={opp.icon} className="size-4" />
+                      </span>
+                      <h4 className="font-bold text-sm text-foreground">{opp.role}</h4>
+                    </span>
+                    <button
+                      onClick={() => toggleOpportunityStatus(opp.id)}
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold transition border ${
+                        opp.status === "Open" 
+                          ? "bg-green-50 border-green-200 text-green-600" 
+                          : "bg-red-50 border-red-200 text-red-650"
+                      }`}
+                    >
+                      {opp.status === "Open" ? "Active (Open)" : "Inactive (Closed)"}
+                    </button>
+                  </div>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{opp.desc}</p>
+                  <p className="text-[11px] font-semibold text-foreground mt-2">Duration: {opp.duration}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

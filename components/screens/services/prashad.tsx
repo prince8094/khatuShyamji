@@ -1,53 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Icon } from "@/components/shared"
+import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
 import type { ScreenKey } from "@/lib/data"
 import { useHistoryState } from "@/lib/hooks/useHistoryState"
-
- 
-
-const prashadItems = [
-  {
-    id: 1,
-    name: "Desi Ghee Churma Prashad",
-    nameHi: "देसी घी चूरमा प्रसाद",
-    price: 320,
-    weight: "500g Box",
-    weightHi: "500 ग्राम डिब्बा",
-    desc: "Traditional, home-cooked sweet prasad prepared in pure desi ghee.",
-    descHi: "शुद्ध देसी घी में तैयार किया गया पारंपरिक और स्वादिष्ट मीठा प्रसाद।",
-    img: "https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=300&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 2,
-    name: "Makhan Mishri & dry fruits",
-    nameHi: "माखन मिश्री और सूखे मेवे",
-    price: 180,
-    weight: "250g Box",
-    weightHi: "250 ग्राम डिब्बा",
-    desc: "Shri Krishna's favorite makhan mishri combined with premium almonds & cashews.",
-    descHi: "श्री कृष्ण की पसंदीदा माखन मिश्री के साथ प्रीमियम बादाम और काजू।",
-    img: "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=300&auto=format&fit=crop&q=60",
-  },
-  {
-    id: 3,
-    name: "Baba Shyam Khazana (Silver coins + dry fruits)",
-    nameHi: "बाबा श्याम खजाना (चांदी का सिक्का + सूखे मेवे)",
-    price: 650,
-    weight: "Premium Gift Box",
-    weightHi: "प्रीमियम उपहार डिब्बा",
-    desc: "Blessed silver coin with Baba's relief work, dry fruits, and incense sticks.",
-    descHi: "बाबा के रिलीफ वर्क के साथ अभिमंत्रित चांदी का सिक्का, सूखे मेवे और धूपबत्ती।",
-    img: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=300&auto=format&fit=crop&q=60",
-  },
-]
+import { devoteeApi } from "@/lib/api-client"
 
 export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
- 
   const { t } = useLanguage()
   const { goBack } = useNavigation()
   const [quantities, setQuantities] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0 })
@@ -61,6 +23,34 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
   })
   const [ordered, setOrdered] = useState(false)
 
+  const [itemsList, setItemsList] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchPrashadItems = async () => {
+      try {
+        const data = await devoteeApi.getPrashadItems()
+
+        if (data && data.length > 0) {
+          setItemsList(data.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            nameHi: item.name,
+            price: item.price,
+            weight: item.weight_desc,
+            weightHi: item.weight_desc,
+            desc: item.description || "Divine sweet prasad bhog",
+            descHi: item.description || "दिव्य मीठा प्रसाद भोग",
+            img: item.image_url || "https://images.unsplash.com/photo-1546549032-9571cd6b27df?w=300&auto=format&fit=crop&q=60"
+          })))
+        }
+      } catch (err) {
+        console.error("Failed to load prashad items", err)
+      }
+    }
+
+    fetchPrashadItems()
+  }, [])
+
   const handleQtyChange = (id: number, type: "inc" | "dec") => {
     setQuantities(prev => {
       const current = prev[id] || 0
@@ -69,18 +59,61 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
     })
   }
 
-  const totalPrice = prashadItems.reduce((acc, item) => acc + item.price * (quantities[item.id] || 0), 0)
+  const totalPrice = itemsList.reduce((acc, item) => acc + item.price * (quantities[item.id] || 0), 0)
   const totalItemsCount = Object.values(quantities).reduce((acc, q) => acc + q, 0)
 
-  const handleOrder = (e: React.FormEvent) => {
+  const handleOrder = async (e: React.FormEvent) => {
     e.preventDefault()
-    setOrdered(true)
-    setTimeout(() => {
-      setOrdered(false)
-      goBack()
-      setQuantities({ 1: 0, 2: 0, 3: 0 })
-      setShippingForm({ name: "", phone: "", address: "", postalCode: "" })
-    }, 4000)
+
+    const activeUserStr = localStorage.getItem("current_user")
+    let profileId = null
+    if (activeUserStr) {
+      try {
+        profileId = JSON.parse(activeUserStr).id
+      } catch (err) {}
+    }
+
+    if (!profileId) {
+      profileId = "00000000-0000-0000-0000-000000000000"
+    }
+
+    const finalAmount = totalPrice + (deliveryType === "home" ? 50 : 0)
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        const orderItems = Object.entries(quantities)
+          .filter(([_, q]) => q > 0)
+          .map(([itemId, q]) => ({
+            prashad_id: parseInt(itemId),
+            quantity: q
+          }))
+
+        if (orderItems.length > 0) {
+          await devoteeApi.orderPrashad({
+            total_amount: finalAmount,
+            delivery_type: deliveryType,
+            recipient_name: shippingForm.name,
+            recipient_phone: shippingForm.phone,
+            shipping_address: deliveryType === "home" ? shippingForm.address : null,
+            postal_code: deliveryType === "home" ? shippingForm.postalCode : null,
+            items: orderItems
+          })
+        }
+      }
+
+      setOrdered(true)
+      setTimeout(() => {
+        setOrdered(false)
+        goBack()
+        setQuantities({ 1: 0, 2: 0, 3: 0 })
+        setShippingForm({ name: "", phone: "", address: "", postalCode: "" })
+        setCheckout(false)
+      }, 4000)
+    } catch (err) {
+      console.error("Failed to place prasad order", err)
+      alert("Failed to confirm order. Please try again.")
+    }
   }
 
   return (
@@ -90,7 +123,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
         <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
         <div className="relative flex items-center justify-between">
           <div>
-            <button onClick={() => navigate("services")} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
+            <button onClick={goBack} className="mb-2 flex items-center gap-1 text-xs font-bold text-white/90 hover:text-white">
               <Icon name="ArrowLeft" className="size-4" /> {t("screens.services.prashad.backToServices")}
             </button>
             <h1 className="font-heading text-xl font-bold">{t("screens.services.prashad.sacredPrashad")}</h1>
@@ -106,7 +139,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
         <div className="space-y-5">
           {/* Prashad items */}
           <div className="space-y-4">
-            {prashadItems.map(item => (
+            {itemsList.map(item => (
               <div key={item.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-border bg-card p-4 shadow-sm dark:bg-card dark:border-border/30">
                 <div className="flex items-center gap-4">
                   <span className="grid size-14 place-items-center rounded-2xl bg-secondary/30 text-primary dark:bg-muted shrink-0 overflow-hidden">
@@ -168,7 +201,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
               <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.prashad.bhogOrderCheckout")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t("screens.services.prashad.totalItemsLabel", { totalPrice, totalItemsCount })}</p>
             </div>
-            <button onClick={goBack} className="text-xs font-bold text-primary hover:underline">
+            <button onClick={() => setCheckout(false)} className="text-xs font-bold text-primary hover:underline">
               {t("screens.services.prashad.editCart")}
             </button>
           </div>
@@ -227,7 +260,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                       placeholder="Mohan Sharma"
                       value={shippingForm.name}
                       onChange={e => setShippingForm({ ...shippingForm, name: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                   <div>
@@ -238,7 +271,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                       placeholder="+91 XXXXX XXXXX"
                       value={shippingForm.phone}
                       onChange={e => setShippingForm({ ...shippingForm, phone: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                 </div>
@@ -253,7 +286,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                         placeholder="House No, Street, Landmark..."
                         value={shippingForm.address}
                         onChange={e => setShippingForm({ ...shippingForm, address: e.target.value })}
-                        className="dark:bg-muted dark:border-border/30 resize-none"
+                        className="dark:bg-muted dark:border-border/30 w-full resize-none"
                       />
                     </div>
                     <div>
@@ -264,7 +297,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
                         placeholder="302015"
                         value={shippingForm.postalCode}
                         onChange={e => setShippingForm({ ...shippingForm, postalCode: e.target.value })}
-                        className="dark:bg-muted dark:border-border/30"
+                        className="dark:bg-muted dark:border-border/30 w-full"
                       />
                     </div>
                   </>
@@ -292,4 +325,3 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
     </div>
   )
 }
- 

@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { AdminSectionTitle, LiveDot, ActivityItem } from "@/components/admin/admin-shared"
 import type { AdminScreenKey } from "@/lib/admin-data"
+import { adminApi } from "@/lib/api-client"
 
 type NotificationState = {
   id: string
@@ -34,7 +35,8 @@ const templates = [
 ]
 
 export function NotificationsAdminScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
-  const [notificationsList, setNotificationsList] = useState<NotificationState[]>(initialNotifications)
+  const [notificationsList, setNotificationsList] = useState<NotificationState[]>([])
+  const [loading, setLoading] = useState(true)
   const [composingStep, setComposingStep] = useState<number | null>(null) // null, 1: Template, 2: Message, 3: Audience, 4: Schedule, 5: Preview
   const [form, setForm] = useState({
     title: "",
@@ -50,7 +52,35 @@ export function NotificationsAdminScreen({ navigate }: { navigate: (s: AdminScre
 
   const [toastMsg, setToastMsg] = useState("")
 
-  const totalDelivered = notificationsList.reduce((a, n) => a + n.delivered, 0)
+  useEffect(() => {
+    const loadNotifications = async () => {
+      try {
+        const res = await adminApi.getNotifications()
+        if (Array.isArray(res)) {
+          const mapped = res.map((n: any) => ({
+            id: n.id,
+            title: n.title_en,
+            body: n.body_en,
+            department: n.type.toUpperCase(),
+            sentAt: new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            sentBy: "System DB",
+            delivered: 1250,
+            icon: n.icon || "Bell",
+            priority: (n.tone === "danger" ? "critical" : (n.tone === "warning" ? "high" : "medium")) as any
+          }))
+          setNotificationsList(mapped)
+        }
+      } catch (err) {
+        console.error("Failed to load DB broadcasts", err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadNotifications()
+  }, [])
+
+  const displayList = notificationsList.length > 0 ? notificationsList : (loading ? [] : initialNotifications)
+  const totalDelivered = displayList.reduce((a, n) => a + n.delivered, 0)
 
   const startComposer = () => {
     setComposingStep(1)
@@ -90,14 +120,15 @@ export function NotificationsAdminScreen({ navigate }: { navigate: (s: AdminScre
     setComposingStep(2)
   }
 
-  const handleSubmitBroadcast = () => {
+  const handleSubmitBroadcast = async () => {
+    const tone = form.priority === "critical" ? "danger" : (form.priority === "high" ? "warning" : "info")
     const newNotif: NotificationState = {
-      id: `NOT-0${notificationsList.length + 1}`,
+      id: crypto.randomUUID(),
       title: form.title,
       body: form.body,
       department: form.department,
       sentAt: form.isScheduled ? `Scheduled for ${form.scheduleTime}` : "Just now",
-      sentBy: "Nand Kumar",
+      sentBy: "System DB",
       delivered: form.isScheduled ? 0 : form.targetAudience === "All Pilgrims" ? 14200 : 340,
       icon: form.icon,
       priority: form.priority,
@@ -108,6 +139,20 @@ export function NotificationsAdminScreen({ navigate }: { navigate: (s: AdminScre
     setComposingStep(null)
     setToastMsg(form.isScheduled ? "Notification scheduled successfully!" : "Notification broadcasted successfully!")
     setTimeout(() => setToastMsg(""), 3500)
+
+    try {
+      await adminApi.broadcastNotification({
+        title_en: form.title,
+        title_hi: form.title,
+        body_en: form.body,
+        body_hi: form.body,
+        type: form.department.toLowerCase(),
+        icon: form.icon,
+        tone: tone
+      })
+    } catch (err) {
+      console.error("Failed to post notification broadcast", err)
+    }
   }
 
   const priorityColor = (p: string) => {
@@ -408,7 +453,7 @@ export function NotificationsAdminScreen({ navigate }: { navigate: (s: AdminScre
         </div>
         <div className="relative mt-4 grid grid-cols-3 gap-2">
           {[
-            { label: "Sent Today", value: notificationsList.length },
+            { label: "Sent Today", value: displayList.length },
             { label: "Delivered Devotees", value: `${(totalDelivered / 1000).toFixed(1)}K` },
             { label: "Active Templates", value: templates.length },
           ].map((s) => (
@@ -457,7 +502,7 @@ export function NotificationsAdminScreen({ navigate }: { navigate: (s: AdminScre
           }
         />
         <div className="space-y-3">
-          {notificationsList.map((notif) => (
+          {displayList.map((notif) => (
             <motion.div
               key={notif.id}
               initial={{ opacity: 0, y: 8 }}

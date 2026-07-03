@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { AdminSectionTitle, MetricCard, LiveDot, ActivityItem } from "@/components/admin/admin-shared"
 import { emergencyTypes, type AdminScreenKey } from "@/lib/admin-data"
+import { adminApi } from "@/lib/api-client"
 
 type DevoteeIncident = {
   id: string
@@ -45,15 +46,69 @@ export function EmergencyOpsScreen({ navigate }: { navigate: (s: AdminScreenKey)
   const [resolveNotes, setResolveNotes] = useState("")
   const [resolveSuccess, setResolveSuccess] = useState("")
 
+  // Load from Supabase on mount
+  useEffect(() => {
+    const loadEmergencyRequests = async () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (!supabaseUrl) return
+
+      try {
+        const data = await adminApi.getEmergencyRequests()
+
+        if (data && data.length > 0) {
+          setIncidents(data.map((item: any) => {
+            // Check if resolution details has dispatched team details
+            let assignedTeam = ""
+            let resolutionDetails = item.resolution_details || ""
+            if (item.status === "dispatched" && item.resolution_details?.startsWith("Dispatched Unit:")) {
+              assignedTeam = item.resolution_details.replace("Dispatched Unit: ", "")
+            }
+
+            return {
+              id: item.id,
+              devoteeName: item.profiles?.name || "Anonymous Pilgrim",
+              phone: item.profiles?.phone || "No phone linked",
+              incidentType: item.incident_type as "medical" | "fire" | "crowd" | "security",
+              locationText: item.location_text || "Temple Complex Hall",
+              severity: (item.incident_type === "fire" || item.incident_type === "security") ? "critical" : "high",
+              status: item.status as "pending" | "acknowledged" | "dispatched" | "resolved",
+              assignedTeam: assignedTeam,
+              details: `GPS Coordinates: [${item.location_latitude}, ${item.location_longitude}] · Devotee reported emergency`,
+              time: new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+              resolutionDetails: resolutionDetails
+            }
+          }))
+        }
+      } catch (err) {
+        console.error("Failed to load emergency requests from Supabase", err)
+      }
+    }
+
+    loadEmergencyRequests()
+  }, [])
+
   // Calculations
   const activeCount = incidents.filter(i => i.status !== "resolved").length
   const pendingCount = incidents.filter(i => i.status === "pending").length
   const criticalCount = incidents.filter(i => i.severity === "critical" && i.status !== "resolved").length
 
-  const handleAcknowledge = (id: string) => {
+  const handleAcknowledge = async (id: string) => {
     setIncidents(prev =>
       prev.map(inc => (inc.id === id ? { ...inc, status: "acknowledged" as const } : inc))
     )
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await adminApi.updateEmergencyStatus({
+          request_id: id,
+          status: "acknowledged"
+        })
+      }
+    } catch (e) {
+      console.error("Failed to acknowledge emergency request in DB", e)
+    }
+
     const now = new Date()
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
     setActivityLogs(prev => [
@@ -62,13 +117,26 @@ export function EmergencyOpsScreen({ navigate }: { navigate: (s: AdminScreenKey)
     ])
   }
 
-  const handleDispatchSubmit = (e: React.FormEvent) => {
+  const handleDispatchSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!dispatchId) return
 
     setIncidents(prev =>
       prev.map(inc => (inc.id === dispatchId ? { ...inc, status: "dispatched" as const, assignedTeam: selectedTeam } : inc))
     )
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await adminApi.updateEmergencyStatus({
+          request_id: dispatchId,
+          status: "dispatched",
+          resolution_details: `Dispatched Unit: ${selectedTeam}`
+        })
+      }
+    } catch (e) {
+      console.error("Failed to dispatch team in DB", e)
+    }
 
     const now = new Date()
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
@@ -80,11 +148,10 @@ export function EmergencyOpsScreen({ navigate }: { navigate: (s: AdminScreenKey)
     setDispatchId(null)
   }
 
-  const handleEscalateSubmit = (e: React.FormEvent) => {
+  const handleEscalateSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!escalateId) return
 
-    // Require supervisor auth code simulation
     if (escalateSupervisorCode !== "SUP-991") {
       alert("Invalid Shift Supervisor Authorization Code!")
       return
@@ -93,6 +160,20 @@ export function EmergencyOpsScreen({ navigate }: { navigate: (s: AdminScreenKey)
     setIncidents(prev =>
       prev.map(inc => (inc.id === escalateId ? { ...inc, severity: "critical" as const, details: `${inc.details} [ESCALATED: ${escalationNote}]` } : inc))
     )
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        const currentText = incidents.find(i => i.id === escalateId)?.locationText || ""
+        await adminApi.updateEmergencyStatus({
+          request_id: escalateId,
+          status: "escalated",
+          location_text: `${currentText} [ESCALATED: ${escalationNote}]`
+        })
+      }
+    } catch (e) {
+      console.error("Failed to escalate emergency request in DB", e)
+    }
 
     const now = new Date()
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
@@ -106,13 +187,26 @@ export function EmergencyOpsScreen({ navigate }: { navigate: (s: AdminScreenKey)
     setEscalateSupervisorCode("")
   }
 
-  const handleResolveSubmit = (e: React.FormEvent) => {
+  const handleResolveSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!resolveId) return
 
     setIncidents(prev =>
       prev.map(inc => (inc.id === resolveId ? { ...inc, status: "resolved" as const, resolutionDetails: resolveNotes } : inc))
     )
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await adminApi.updateEmergencyStatus({
+          request_id: resolveId,
+          status: "resolved",
+          resolution_details: resolveNotes
+        })
+      }
+    } catch (e) {
+      console.error("Failed to resolve emergency request in DB", e)
+    }
 
     const now = new Date()
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })

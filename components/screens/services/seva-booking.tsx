@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { Icon } from "@/components/shared"
 import { cn } from "@/lib/utils"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 import { motion, AnimatePresence } from "framer-motion"
+import { devoteeApi } from "@/lib/api-client"
 
 interface Opportunity {
   id: string
@@ -19,90 +20,24 @@ interface Opportunity {
   status: "Open" | "Closed"
 }
 
-const opportunities: Opportunity[] = [
-  {
-    id: "crowd",
-    role: "Crowd Management Volunteer",
-    roleHi: "भीड़ प्रबंधन स्वयंसेवक",
-    icon: "Users",
-    desc: "Assist in managing crowd flow in halls, ensuring orderly movement during peak darshan hours.",
-    descHi: "हॉल में भीड़ प्रवाह को प्रबंधित करने में सहायता करें, पीक दर्शन घंटों के दौरान सुचारू आवाजाही सुनिश्चित करें।",
-    duration: "4 Hours",
-    durationHi: "4 घंटे",
-    status: "Open",
-  },
-  {
-    id: "devotee-assist",
-    role: "Devotee Assistance Volunteer",
-    roleHi: "भक्त सहायता स्वयंसेवक",
-    icon: "HeartHandshake",
-    desc: "Help elderly pilgrims, physically challenged devotees, and families navigate the temple premises.",
-    descHi: "बुजुर्ग तीर्थयात्रियों, शारीरिक रूप से अक्षम भक्तों और परिवारों को मंदिर परिसर में सहायता करें।",
-    duration: "6 Hours",
-    durationHi: "6 घंटे",
-    status: "Open",
-  },
-  {
-    id: "prasad",
-    role: "Prasad Distribution Volunteer",
-    roleHi: "प्रसाद वितरण स्वयंसेवक",
-    icon: "ShoppingBag",
-    desc: "Contribute to the packing and systematic distribution of sacred Prasad to devotees at counters.",
-    descHi: "काउंटरों पर भक्तों को पवित्र प्रसाद की पैकिंग और व्यवस्थित वितरण में योगदान दें।",
-    duration: "4 Hours",
-    durationHi: "4 घंटे",
-    status: "Open",
-  },
-  {
-    id: "cleanliness",
-    role: "Temple Cleanliness Volunteer",
-    roleHi: "मंदिर स्वच्छता स्वयंसेवक",
-    icon: "Sparkles",
-    desc: "Support temple cleanliness drives, helping keep the parikrama marg and shrine area pristine.",
-    descHi: "मंदिर स्वच्छता अभियानों का समर्थन करें, परिक्रमा मार्ग और गर्भगृह क्षेत्र को स्वच्छ रखने में मदद करें।",
-    duration: "4 Hours",
-    durationHi: "4 घंटे",
-    status: "Open",
-  },
-  {
-    id: "queue",
-    role: "Queue Management Volunteer",
-    roleHi: "कतार प्रबंधन स्वयंसेवक",
-    icon: "AlignLeft",
-    desc: "Assist in entry gates, guiding devotees to follow direct queues and maintain decorum.",
-    descHi: "प्रवेश द्वारों पर सहायता करें, भक्तों को कतारों का पालन करने और मर्यादा बनाए रखने के लिए मार्गदर्शन करें।",
-    duration: "5 Hours",
-    durationHi: "5 घंटे",
-    status: "Open",
-  },
-  {
-    id: "medical",
-    role: "Medical Assistance Volunteer",
-    roleHi: "चिकित्सा सहायता स्वयंसेवक",
-    icon: "HeartPulse",
-    desc: "Provide basic first aid support at temple medical help desks (requires medical background).",
-    descHi: "मंदिर चिकित्सा सहायता डेस्क पर बुनियादी प्राथमिक चिकित्सा सहायता प्रदान करें (चिकित्सा पृष्ठभूमि आवश्यक)।",
-    duration: "6 Hours",
-    durationHi: "6 घंटे",
-    status: "Closed",
-  },
-  {
-    id: "info-desk",
-    role: "Information Desk Volunteer",
-    roleHi: "सूचना डेस्क स्वयंसेवक",
-    icon: "Info",
-    desc: "Guide devotees with timings, facilities, lost & found coordinates, and overall directions.",
-    descHi: "समय, सुविधाओं, खोया-पाया समन्वय और समग्र दिशा-निर्देशों के साथ भक्तों का मार्गदर्शन करें।",
-    duration: "5 Hours",
-    durationHi: "5 घंटे",
-    status: "Open",
-  },
-]
-
 export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
   const { lang, t } = useLanguage()
   const [showModal, setShowModal] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [opportunitiesList, setOpportunitiesList] = useState<Opportunity[]>([])
+
+  useEffect(() => {
+    devoteeApi.getTempleInfo()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          const rec = res.find(r => r.section_key === "volunteer_opportunities")
+          if (rec && Array.isArray(rec.content)) {
+            setOpportunitiesList(rec.content)
+          }
+        }
+      })
+      .catch((err) => console.error("Failed to load volunteer opportunities", err))
+  }, [])
 
   // Form State
   const [fullName, setFullName] = useState("")
@@ -211,21 +146,42 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
     
     if (validate()) {
       setIsSubmitting(true)
+
+      const activeUserStr = localStorage.getItem("current_user")
+      let profileId = null
+      if (activeUserStr) {
+        try {
+          profileId = JSON.parse(activeUserStr).id
+        } catch (err) {}
+      }
+
+      if (!profileId) {
+        profileId = "00000000-0000-0000-0000-000000000000"
+      }
+
+      const [day, month, year] = preferredDate.split("/")
+      const formattedDateDb = `${year}-${month}-${day}`
+
       try {
-        // Simulate API call to register volunteer
-        await new Promise((resolve, reject) => {
-          setTimeout(() => {
-            // 5% chance of mock API failure for demonstration purposes
-            if (Math.random() < 0.05) {
-              reject(new Error(lang === "hi" ? "सर्वर कनेक्शन विफल रहा। कृपया दोबारा प्रयास करें।" : "Server connection failed. Please try again."))
-            } else {
-              resolve(true)
-            }
-          }, 1500)
-        })
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+        if (supabaseUrl) {
+          await devoteeApi.applyVolunteer({
+            full_name: fullName,
+            email: email,
+            mobile: mobile,
+            age: parseInt(age) || 18,
+            gender: gender,
+            city: city,
+            preferred_role: preferredRole,
+            preferred_date: formattedDateDb,
+            preferred_time_slot: preferredTimeSlot,
+            experience: experience || null,
+            reason: reason,
+            emergency_contact: emergencyContact || null
+          })
+        }
 
         setSuccess(true)
-        // Clear all form values
         setFullName("")
         setEmail("")
         setMobile("")
@@ -239,7 +195,6 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
         setReason("")
         setEmergencyContact("")
         
-        // Auto-close modal after success message duration
         setTimeout(() => {
           setSuccess(false)
           setShowModal(false)
@@ -312,7 +267,7 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
 
       {/* Volunteer Opportunities Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {opportunities.map((opp) => {
+        {opportunitiesList.map((opp) => {
           const isOpen = opp.status === "Open"
           return (
             <div
@@ -560,7 +515,7 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
                       className={errors.preferredRole ? "!border-red-400" : ""}
                     >
                       <option value="">{lang === "hi" ? "चुनें" : "Select Opportunity"}</option>
-                      {opportunities
+                      {opportunitiesList
                         .filter((o) => o.status === "Open")
                         .map((opp) => (
                           <option key={opp.id} value={opp.id}>

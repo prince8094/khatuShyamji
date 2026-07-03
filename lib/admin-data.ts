@@ -19,6 +19,7 @@ export type AdminScreenKey =
   | "admin-management"
   | "approval-queue"
   | "pilgrim-registry"
+  | "commerce-management"
 
 // ─── Roles ──────────────────────────────────────────────────────────────────
 export type AdminRoleKey =
@@ -30,6 +31,7 @@ export type AdminRoleKey =
   | "temple-info"
   | "donation"
   | "emergency"
+  | "commerce"
 
 export type AdminRole = {
   key: AdminRoleKey
@@ -132,6 +134,17 @@ export const adminRoles: AdminRole[] = [
     liveLabel: "Active Incidents",
     notifications: 0,
   },
+  {
+    key: "commerce",
+    name: "Commerce Management",
+    description: "Manage transport, dining, prasad & offerings bookings",
+    icon: "Wallet",
+    screen: "commerce-management",
+    color: "from-[#D97706] to-[#D4AF37]",
+    liveCount: 0,
+    liveLabel: "Orders Today",
+    notifications: 0,
+  },
 ]
 
 // ─── Admin Users ────────────────────────────────────────────────────────────
@@ -153,7 +166,7 @@ export const adminUsers: AdminUser[] = [
     phone: "+91 98290 10001",
     email: "nand@khatushyamji.org",
     initials: "NK",
-    roles: ["super-admin", "accommodation", "parking", "traffic", "lost-found", "temple-info", "donation", "emergency"],
+    roles: ["super-admin", "accommodation", "parking", "traffic", "lost-found", "temple-info", "donation", "emergency", "commerce"],
     isActive: true,
     lastLogin: "29 Jun 2026, 11:45 AM",
   },
@@ -580,6 +593,7 @@ export const deptColors: Record<AdminRoleKey, { bg: string; text: string; border
   "temple-info": { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
   donation: { bg: "bg-orange-50", text: "text-orange-700", border: "border-orange-200" },
   emergency: { bg: "bg-red-50", text: "text-red-700", border: "border-red-200" },
+  commerce: { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" },
 }
 
 // ─── Lost & Found Status Steps ──────────────────────────────────────────────

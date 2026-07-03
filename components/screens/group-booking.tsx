@@ -7,12 +7,15 @@ import { Icon } from "@/components/shared"
 import type { ScreenKey } from "@/lib/data"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { devoteeApi } from "@/lib/api-client"
 
 type GroupMember = {
   id: number
   name: string
   age: string
   gender: string
+  identityProofType?: string
+  identityProofNumber?: string
 }
 
 const emptyMember = (id: number): GroupMember => ({
@@ -20,6 +23,8 @@ const emptyMember = (id: number): GroupMember => ({
   name: "",
   age: "",
   gender: "",
+  identityProofType: "",
+  identityProofNumber: "",
 })
 
 export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
@@ -89,15 +94,98 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) return
     setIsSubmitting(true)
-    setTimeout(() => {
-      setIsSubmitting(false)
-      
-      const newBookingId = `KSJ-GRP-${Math.floor(10000 + Math.random() * 90000)}`
+    setErrors({})
+
+    try {
+      const activeUserStr = localStorage.getItem("current_user")
+      const activeUser = activeUserStr ? JSON.parse(activeUserStr) : null
+      const profileId = activeUser?.id
+
+      const bookingNumber = `KSJ-GRP-${Math.floor(10000 + Math.random() * 90000)}`
+      const dateStr = new Date().toISOString().split("T")[0]
+      const visitorsCount = members.length
+      const dayName = new Date().toLocaleDateString('en-US', { weekday: 'long' })
+
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (!supabaseUrl || !profileId) {
+        // Fallback mock mode
+        const newBooking = {
+          id: bookingNumber,
+          date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+          day: dayName,
+          visitors: visitorsCount,
+          name: formData.groupName,
+          leaderName: formData.leaderName,
+          phone: formData.leaderPhone,
+          members: members,
+          status: "upcoming" as const
+        }
+        localStorage.setItem("latest_booking", JSON.stringify(newBooking))
+        localStorage.setItem("booking_devotees_count", String(visitorsCount))
+        
+        const stored = localStorage.getItem("khatu_bookings")
+        const currentList = stored ? JSON.parse(stored) : []
+        currentList.unshift(newBooking)
+        localStorage.setItem("khatu_bookings", JSON.stringify(currentList))
+        
+        setTimeout(() => {
+          setIsSubmitting(false)
+          navigate("booking-success" as any)
+        }, 1500)
+        return
+      }
+
+      // Call REST API
+      const bookingData = await devoteeApi.bookDarshan({
+        booking_type: "group",
+        booking_date: dateStr,
+        day_name: dayName,
+        visitor_count: visitorsCount,
+        group_name: formData.groupName,
+        members: members.map((m) => ({
+          name: m.name,
+          age: parseInt(m.age, 10),
+          gender: m.gender,
+          nationality: "India",
+          identity_proof_type: m.identityProofType || null,
+          identity_proof_number: m.identityProofNumber || null,
+          is_child: false
+        }))
+      })
+
       const newBooking = {
-        id: newBookingId,
+        id: bookingData.booking_number || bookingNumber,
+        date: new Date(dateStr).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
+        day: dayName,
+        visitors: visitorsCount,
+        name: formData.groupName,
+        leaderName: formData.leaderName,
+        phone: formData.leaderPhone,
+        members: members,
+        status: "upcoming" as const,
+        qrToken: bookingData.qr_token
+      }
+      localStorage.setItem("latest_booking", JSON.stringify(newBooking))
+      localStorage.setItem("active_booking_id", bookingData.booking_number || bookingNumber)
+      localStorage.setItem("booking_devotees_count", String(visitorsCount))
+
+      try {
+        const stored = localStorage.getItem("khatu_bookings")
+        const currentList = stored ? JSON.parse(stored) : []
+        currentList.unshift(newBooking)
+        localStorage.setItem("khatu_bookings", JSON.stringify(currentList))
+      } catch (e) {}
+
+      navigate("booking-success" as any)
+    } catch (err: any) {
+      console.error(err)
+      // Fallback local save on error
+      const bookingNumber = `KSJ-GRP-${Math.floor(10000 + Math.random() * 90000)}`
+      const newBooking = {
+        id: bookingNumber,
         date: new Date().toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }),
         day: new Date().toLocaleDateString('en-US', { weekday: 'long' }),
         visitors: members.length,
@@ -107,23 +195,20 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
         members: members,
         status: "upcoming" as const
       }
-      
-      // Save latest booking for immediate view
       localStorage.setItem("latest_booking", JSON.stringify(newBooking))
       localStorage.setItem("booking_devotees_count", String(members.length))
       
-      // Append to the list of bookings
       try {
         const stored = localStorage.getItem("khatu_bookings")
         const currentList = stored ? JSON.parse(stored) : []
         currentList.unshift(newBooking)
         localStorage.setItem("khatu_bookings", JSON.stringify(currentList))
-      } catch (e) {
-        console.error(e)
-      }
+      } catch (e) {}
 
       navigate("booking-success" as any)
-    }, 2000)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -312,6 +397,35 @@ export function GroupBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                       <option value="female">Female</option>
                       <option value="other">Other</option>
                     </select>
+                  </div>
+                </div>
+
+                {/* Identity Proof */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#6b5440] uppercase mb-1">ID Proof Type</label>
+                    <select
+                      value={m.identityProofType || ""}
+                      onChange={(e) => updateMember(m.id, "identityProofType", e.target.value)}
+                      className="w-full rounded-lg border border-[#E8D5B7] bg-white py-2 px-3 text-xs font-semibold text-[#1A120B] outline-none"
+                    >
+                      <option value="">Select ID Type</option>
+                      <option value="Aadhar Card">Aadhar Card</option>
+                      <option value="PAN Card">PAN Card</option>
+                      <option value="Voter ID">Voter ID</option>
+                      <option value="Passport">Passport</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-[#6b5440] uppercase mb-1">ID Proof Number</label>
+                    <input
+                      type="text"
+                      placeholder="ID Number"
+                      value={m.identityProofNumber || ""}
+                      onChange={(e) => updateMember(m.id, "identityProofNumber", e.target.value)}
+                      className="w-full rounded-lg border border-[#E8D5B7] bg-white py-2 px-3 text-xs font-semibold text-[#1A120B] outline-none"
+                    />
                   </div>
                 </div>
               </div>

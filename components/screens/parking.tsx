@@ -1,7 +1,8 @@
-"use client"
-
+import { useState, useEffect } from "react"
 import { Icon, StatusDot, SectionTitle } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { devoteeApi } from "@/lib/api-client"
+import { supabase } from "@/lib/supabase"
 
 const parkingLots = [
   {
@@ -67,16 +68,65 @@ const rules = [
 ]
 
 export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
-  const { t } = useLanguage()
+  const { t, lang } = useLanguage()
+  const [parkingLotsList, setParkingLotsList] = useState<any[]>(parkingLots)
 
-  const getStatusColor = (status: "full" | "available" | "limited") => {
-    if (status === "full") return "text-red-600 bg-red-50 border-red-200"
+  useEffect(() => {
+    const fetchBlocks = () => {
+      devoteeApi.getParkingBlocks()
+        .then((res: any) => {
+          if (Array.isArray(res) && res.length > 0) {
+            setParkingLotsList(res.map((item: any) => {
+              const cleanCode = item.block_code.replace("PKG-", "")
+              const mapped = parkingLots.find(p => p.name.toLowerCase() === item.name.toLowerCase() || p.id === cleanCode)
+              return {
+                id: cleanCode || mapped?.id || "A",
+                name: item.name,
+                nameHi: mapped?.nameHi || item.name,
+                location: mapped?.location || "Near Temple Gate",
+                locationHi: mapped?.locationHi || "मंदिर द्वार के पास",
+                capacity: item.total_capacity,
+                available: item.total_capacity - item.occupied,
+                status: item.status === "full" ? "full" : (item.status === "closed" ? "closed" : ((item.total_capacity - item.occupied) < 20 ? "limited" : "available")),
+                distance: mapped?.distance || "500m to gate",
+                fee: mapped?.fee || "Free",
+                shuttle: item.shuttle_active
+              }
+            }))
+          }
+        })
+        .catch((err) => console.error("Failed to load parking blocks", err))
+    }
+
+    fetchBlocks()
+
+    const channel = supabase
+      .channel("public:parking_blocks")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "parking_blocks" },
+        () => {
+          console.log("Realtime parking_blocks change detected!")
+          fetchBlocks()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  const getStatusColor = (status: "full" | "available" | "limited" | "closed") => {
+    if (status === "full") return "text-red-650 bg-red-50 border-red-205"
+    if (status === "closed") return "text-gray-600 bg-gray-50 border-gray-200"
     if (status === "limited") return "text-orange-600 bg-orange-50 border-orange-200"
     return "text-green-600 bg-green-50 border-green-200"
   }
 
-  const getStatusLabel = (status: "full" | "available" | "limited") => {
+  const getStatusLabel = (status: "full" | "available" | "limited" | "closed") => {
     if (status === "full") return { en: "Full", hi: "भरा हुआ" }
+    if (status === "closed") return { en: "Closed", hi: "बंद" }
     if (status === "limited") return { en: "Limited", hi: "सीमित" }
     return { en: "Available", hi: "उपलब्ध" }
   }
@@ -87,6 +137,10 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
     if (pct < 0.2) return "bg-orange-500"
     return "bg-green-500"
   }
+
+  const totalSpots = parkingLotsList.reduce((acc, p) => acc + p.capacity, 0)
+  const totalAvailable = parkingLotsList.reduce((acc, p) => acc + p.available, 0)
+  const totalOccupied = totalSpots - totalAvailable
 
   return (
     <div className="space-y-5 pb-10">
@@ -112,15 +166,15 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
         {/* Summary bar */}
         <div className="relative mt-4 grid grid-cols-3 gap-2 rounded-2xl bg-white/10 p-3 text-center">
           <div>
-            <p className="font-heading text-lg font-bold text-white">4,150</p>
+            <p className="font-heading text-lg font-bold text-white">{totalSpots.toLocaleString()}</p>
             <p className="text-[10px] text-white/70">{t("screens.parking.totalSpots")}</p>
           </div>
           <div>
-            <p className="font-heading text-lg font-bold text-green-400">1,782</p>
+            <p className="font-heading text-lg font-bold text-green-400">{totalAvailable.toLocaleString()}</p>
             <p className="text-[10px] text-white/70">{t("screens.parking.available")}</p>
           </div>
           <div>
-            <p className="font-heading text-lg font-bold text-red-400">2,368</p>
+            <p className="font-heading text-lg font-bold text-red-400">{totalOccupied.toLocaleString()}</p>
             <p className="text-[10px] text-white/70">{t("screens.parking.occupied")}</p>
           </div>
         </div>
@@ -130,7 +184,7 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
       <section>
         <SectionTitle title="Parking Lots" hindi="पार्किंग लॉट" />
         <div className="space-y-3">
-          {parkingLots.map((lot) => (
+          {parkingLotsList.map((lot) => (
             <div key={lot.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-start gap-3">
@@ -138,12 +192,12 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
                     {lot.id}
                   </span>
                   <div>
-                    <p className="font-heading font-bold text-foreground text-sm">{t(lot.name, lot.nameHi)}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t(lot.location, lot.locationHi)}</p>
+                    <p className="font-heading font-bold text-foreground text-sm">{lang === "hi" ? lot.nameHi : lot.name}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{lang === "hi" ? lot.locationHi : lot.location}</p>
                   </div>
                 </div>
                 <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold border ${getStatusColor(lot.status)}`}>
-                  {t(getStatusLabel(lot.status).en, getStatusLabel(lot.status).hi)}
+                  {lang === "hi" ? getStatusLabel(lot.status).hi : getStatusLabel(lot.status).en}
                 </span>
               </div>
 
@@ -164,7 +218,7 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
               <div className="flex items-center gap-4 text-[11px]">
                 <span className="flex items-center gap-1 text-muted-foreground">
                   <Icon name="Navigation" className="size-3" />
-                  {t(lot.distance, lot.distance)}
+                  {lot.distance}
                 </span>
                 <span className="flex items-center gap-1 text-muted-foreground">
                   <Icon name="IndianRupee" className="size-3" />
@@ -191,7 +245,7 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
               <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-[#D97706]/10 text-[#D97706]">
                 <Icon name={rule.icon} className="size-4" />
               </span>
-              <p className="text-sm text-foreground leading-snug">{t(rule.en, rule.hi)}</p>
+              <p className="text-sm text-foreground leading-snug">{lang === "hi" ? rule.hi : rule.en}</p>
             </div>
           ))}
         </div>

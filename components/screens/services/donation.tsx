@@ -6,6 +6,7 @@ import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
+import { devoteeApi } from "@/lib/api-client"
 
 const categories = [
   { id: "general", name: "General Fund", nameHi: "सामान्य कोष", desc: "Supports overall temple operations and maintenance.", descHi: "मंदिर के समग्र संचालन और रखरखाव में सहयोग।" },
@@ -27,14 +28,31 @@ export function DonationScreen({ navigate }: { navigate: (s: ScreenKey) => void 
   })
   const [donated, setDonated] = useState(false)
 
-  const handleDonation = (e: React.FormEvent) => {
+  const handleDonation = async (e: React.FormEvent) => {
     e.preventDefault()
-    setDonated(true)
-    setTimeout(() => {
-      setDonated(false)
-      setDonorForm({ name: "", phone: "", email: "", pan: "" })
-      setAmount("501")
-    }, 4000)
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await devoteeApi.donate({
+          donor_name: donorForm.name,
+          email: donorForm.email,
+          phone: donorForm.phone,
+          pan_number: donorForm.pan || null,
+          amount: parseInt(amount) || 100,
+          purpose: selectedCat.name,
+          payment_mode: "UPI"
+        })
+      }
+      setDonated(true)
+      setTimeout(() => {
+        setDonated(false)
+        setDonorForm({ name: "", phone: "", email: "", pan: "" })
+        setAmount("501")
+      }, 4000)
+    } catch (err) {
+      console.error("Donation failed", err)
+      alert("Donation record submission failed. Please try again.")
+    }
   }
 
   return (

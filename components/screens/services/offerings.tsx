@@ -1,33 +1,82 @@
-﻿"use client"
-import { useState } from "react"
+"use client"
+
+import { useState, useEffect } from "react"
 import { Icon } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
-
-const items = [
-  { id: 1, name: "Flower Garland", desc: "Fresh marigold garland for the deity", price: 50, icon: "Flower" },
-  { id: 2, name: "Coconut", desc: "Sacred coconut for offering", price: 30, icon: "Circle" },
-  { id: 3, name: "Incense Pack", desc: "Premium incense sticks (20 pcs)", price: 40, icon: "Wind" },
-  { id: 4, name: "Chunri (Red)", desc: "Auspicious red cloth offering", price: 150, icon: "Shirt" },
-  { id: 5, name: "Diyas (5 pcs)", desc: "Clay lamps for evening aarti", price: 25, icon: "Sun" },
-  { id: 6, name: "Puja Thali", desc: "Complete thali with all essentials", price: 200, icon: "LayoutGrid" },
-]
+import { devoteeApi } from "@/lib/api-client"
 
 export function OfferingsScreen({ navigate }: { navigate?: (s: ScreenKey) => void }) {
   const { t } = useLanguage()
   const [cart, setCart] = useState<number[]>([])
   const [ordered, setOrdered] = useState(false)
+  const [itemsList, setItemsList] = useState<any[]>([])
 
-  const total = cart.reduce((sum, id) => sum + (items.find((i) => i.id === id)?.price ?? 0), 0)
+  useEffect(() => {
+    const fetchOfferings = async () => {
+      try {
+        const data = await devoteeApi.getOfferingItems()
+
+        if (data && data.length > 0) {
+          setItemsList(data.map((item: any) => ({
+            id: Number(item.id),
+            dbId: item.id,
+            name: item.name,
+            desc: item.description || "Puja bhog items",
+            price: item.price,
+            icon: item.icon || "LayoutGrid"
+          })))
+        }
+      } catch (err) {
+        console.error("Failed to load offering items", err)
+      }
+    }
+
+    fetchOfferings()
+  }, [])
+
+  const total = cart.reduce((sum, id) => sum + (itemsList.find((i) => i.id === id)?.price ?? 0), 0)
 
   function toggle(id: number) {
     setCart((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id])
   }
 
-  function placeOrder() {
-    setCart([])
-    setOrdered(true)
-    setTimeout(() => setOrdered(false), 3000)
+  const placeOrder = async () => {
+    const activeUserStr = localStorage.getItem("current_user")
+    let profileId = null
+    if (activeUserStr) {
+      try {
+        profileId = JSON.parse(activeUserStr).id
+      } catch (err) {}
+    }
+
+    if (!profileId) {
+      profileId = "00000000-0000-0000-0000-000000000000"
+    }
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        const orderItems = cart.map(itemId => ({
+          offering_id: itemId,
+          quantity: 1
+        }))
+
+        if (orderItems.length > 0) {
+          await devoteeApi.orderOfferings({
+            total_amount: total,
+            items: orderItems
+          })
+        }
+      }
+
+      setCart([])
+      setOrdered(true)
+      setTimeout(() => setOrdered(false), 3000)
+    } catch (err) {
+      console.error("Failed to place offerings order", err)
+      alert("Failed to place order. Please try again.")
+    }
   }
 
   return (
@@ -44,7 +93,7 @@ export function OfferingsScreen({ navigate }: { navigate?: (s: ScreenKey) => voi
         </div>
       )}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {items.map((item) => {
+        {itemsList.map((item) => {
           const inCart = cart.includes(item.id)
           return (
             <button

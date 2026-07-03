@@ -13,6 +13,7 @@ import {
   ActivityItem,
 } from "@/components/admin/admin-shared"
 import { commandCenterData, activityFeed, type AdminScreenKey } from "@/lib/admin-data"
+import { devoteeApi, adminApi } from "@/lib/api-client"
 
 export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
   const [liveTime, setLiveTime] = useState("")
@@ -23,6 +24,69 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
   const [isGlobalAlarm, setIsGlobalAlarm] = useState(false)
   
   const [activityLogs, setActivityLogs] = useState<any[]>(activityFeed)
+  const [telemetry, setTelemetry] = useState<any>({
+    crowd_level: "Moderate",
+    crowd_count: 6420,
+    wait_time_minutes: 35,
+    darshan_status: "Open",
+    is_emergency_mode: false,
+    is_darshan_closed: false,
+    is_global_alarm: false,
+  })
+
+  const [summary, setSummary] = useState<any>({
+    total_profiles: 0,
+    today_devotees: 0,
+    parking: {
+      total: 0,
+      occupied: 0,
+      free: 0
+    },
+    active_volunteers: 0,
+    active_stays: 0,
+    pending_emergencies: 0,
+    telemetry: {
+      crowd_level: "Moderate",
+      crowd_count: 0,
+      wait_time_minutes: 0,
+      darshan_status: "Open",
+      is_emergency_mode: false,
+      is_darshan_closed: false,
+      is_global_alarm: false
+    }
+  })
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const res = await adminApi.getAnalyticsSummary()
+        if (res) {
+          setSummary(res)
+          setIsEmergencyMode(!!res.telemetry?.is_emergency_mode)
+          setIsDarshanClosed(!!res.telemetry?.is_darshan_closed)
+          setIsGlobalAlarm(!!res.telemetry?.is_global_alarm)
+          setTelemetry(res.telemetry || {})
+        }
+      } catch (err) {
+        console.error("Error loading dashboard summary stats", err)
+      }
+    }
+    fetchSummary()
+  }, [])
+
+  const updateTelemetryInDb = async (updatedFields: any) => {
+    const nextTelemetry = { ...telemetry, ...updatedFields }
+    setTelemetry(nextTelemetry)
+    try {
+      await adminApi.updateTempleInfo({
+        section_key: "live_telemetry",
+        title: "Live Operational Telemetry",
+        content: nextTelemetry
+      })
+    } catch (err) {
+      console.error("Failed to update database telemetry", err)
+    }
+  }
 
   useEffect(() => {
     const update = () => {
@@ -37,12 +101,13 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
   }, [])
 
   const d = commandCenterData
-  const parkingPct = Math.round((d.parking.occupied / d.parking.totalCapacity) * 100)
-  const hotelsPct = Math.round((d.hotels.occupied / d.hotels.totalRooms) * 100)
+  const parkingPct = Math.round((summary.parking.occupied / (summary.parking.total || 1)) * 100)
+  const hotelsPct = Math.round((summary.active_stays / 260) * 100) // assume total 260 rooms capacity
 
   const toggleEmergencyMode = () => {
     const nextState = !isEmergencyMode
     setIsEmergencyMode(nextState)
+    updateTelemetryInDb({ is_emergency_mode: nextState })
     
     // Log command override
     const now = new Date()
@@ -63,6 +128,7 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
   const toggleCloseDarshan = () => {
     const nextState = !isDarshanClosed
     setIsDarshanClosed(nextState)
+    updateTelemetryInDb({ is_darshan_closed: nextState })
 
     const now = new Date()
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
@@ -82,6 +148,7 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
   const toggleGlobalAlarm = () => {
     const nextState = !isGlobalAlarm
     setIsGlobalAlarm(nextState)
+    updateTelemetryInDb({ is_global_alarm: nextState })
 
     const now = new Date()
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
@@ -177,17 +244,17 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
           <StatusWidget
             icon="Users"
             label="Live Crowd Flow"
-            value={d.liveCrowd.value.toLocaleString()}
-            sub={`${d.liveCrowd.trend} vs yesterday`}
-            status={d.liveCrowd.status}
+            value={summary.telemetry.crowd_count.toLocaleString()}
+            sub={`${summary.telemetry.crowd_level} Density`}
+            status={summary.telemetry.crowd_count > 8000 ? "warning" : "normal"}
             onClick={() => navigate("command-center")}
           />
           <StatusWidget
             icon="Clock"
             label="Queue Wait Time"
-            value={`${d.waitTime.value} ${d.waitTime.unit}`}
-            sub={`${d.waitTime.trend} last hour`}
-            status={d.waitTime.status}
+            value={`${summary.telemetry.wait_time_minutes} Mins`}
+            sub="Active check-in wait time"
+            status={summary.telemetry.wait_time_minutes > 90 ? "critical" : summary.telemetry.wait_time_minutes > 45 ? "warning" : "normal"}
           />
           <StatusWidget
             icon="TrafficCone"
@@ -200,24 +267,24 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
           <StatusWidget
             icon="SquareParking"
             label="Parking Available"
-            value={`${d.parking.available} lots free`}
-            sub={`${parkingPct}% occupied of ${d.parking.totalCapacity}`}
+            value={`${summary.parking.free} lots free`}
+            sub={`${parkingPct}% occupied of ${summary.parking.total}`}
             status={parkingPct > 85 ? "warning" : "normal"}
             onClick={() => navigate("parking-management")}
           />
           <StatusWidget
             icon="BedDouble"
             label="Stays Occupancy"
-            value={`${d.hotels.available} stays free`}
-            sub={`${hotelsPct}% occupied of ${d.hotels.totalRooms}`}
+            value={`${260 - summary.active_stays} stays free`}
+            sub={`${hotelsPct}% occupied of 260 rooms`}
             status={hotelsPct > 85 ? "warning" : "normal"}
             onClick={() => navigate("accommodation")}
           />
           <StatusWidget
             icon="DoorOpen"
             label="Shrine Gates Status"
-            value={isDarshanClosed ? "CLOSED" : d.darshan.status}
-            sub={isDarshanClosed ? "Gates Offline" : `Queue: ${d.darshan.queueLength} devotees`}
+            value={isDarshanClosed ? "CLOSED" : (summary.telemetry.darshan_status || "Open")}
+            sub={isDarshanClosed ? "Gates Offline" : `Queue: Active flow`}
             status={isDarshanClosed ? "critical" : "normal"}
           />
         </div>

@@ -1,71 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 import { useHistoryState } from "@/lib/hooks/useHistoryState"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
-
-const hotels = [
-  {
-    id: 1,
-    name: "Shree Shyam Dharamshala",
-    nameHi: "श्री श्याम धर्मशाला",
-    category: "dharamshala",
-    price: "₹500/night",
-    distance: "100m to Temple Gate",
-    rating: 4.8,
-    img: "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=300&auto=format&fit=crop&q=60",
-    features: ["AC & Non-AC", "Geyser", "Pure Veg Kitchen", "Lift"],
-    featuresHi: ["एसी और नॉन-एसी", "गीजर", "शुद्ध शाकाहारी रसोई", "लिफ्ट"],
-    contactPhone: "+91 98290 11002",
-    address: "Opposite Shyam Kund, Main Walkway, Khatu Dham",
-  },
-  {
-    id: 2,
-    name: "Radhey Ki Haveli",
-    nameHi: "राधे की हवेली",
-    category: "luxury",
-    price: "₹4,500/night",
-    distance: "300m to Temple Gate",
-    rating: 4.9,
-    img: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=300&auto=format&fit=crop&q=60",
-    features: ["Heritage Ambience", "Fine Dining", "Lawn", "WiFi"],
-    featuresHi: ["हेरिटेज माहौल", "शानदार भोजन", "लॉन", "वाईफाई"],
-    contactPhone: "+91 98290 11001",
-    address: "Near North Gate 2, Main Bazaar Road, Khatu Dham",
-  },
-  {
-    id: 3,
-    name: "Hotel Lakhdatar",
-    nameHi: "होटल लखदातार",
-    category: "budget",
-    price: "₹1,500/night",
-    distance: "450m to Temple Gate",
-    rating: 4.5,
-    img: "https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=300&auto=format&fit=crop&q=60",
-    features: ["AC Rooms", "Room Service", "Parking", "Restaurant"],
-    featuresHi: ["एसी कमरे", "रूम सर्विस", "पार्किंग", "रेस्तरां"],
-    contactPhone: "+91 98290 11003",
-    address: "Gate 1 Exit Corridor, Near Prasad Counter, Khatu Dham",
-  },
-  {
-    id: 4,
-    name: "Shyam Ashram Trust",
-    nameHi: "श्याम आश्रम ट्रस्ट",
-    category: "dharamshala",
-    price: "₹350/night",
-    distance: "600m to Temple Gate",
-    rating: 4.6,
-    img: "https://images.unsplash.com/photo-1445019980597-93fa8acb246c?w=300&auto=format&fit=crop&q=60",
-    features: ["Free Food (Bhandara)", "Clean Rooms", "Water Cooler"],
-    featuresHi: ["मुफ्त भोजन (भंडारा)", "साफ कमरे", "वाटर कूलर"],
-    contactPhone: "+91 98290 11004",
-    address: "Ringas Road Bypass, Close to Lot C Parking, Khatu Dham",
-  },
-]
+import { devoteeApi } from "@/lib/api-client"
+import { supabase } from "@/lib/supabase"
 
 export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
   const { goBack } = useNavigation();
@@ -81,16 +24,100 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
   })
   const [booked, setBooked] = useState(false)
 
-  const filteredHotels = category === "all" ? hotels : hotels.filter(h => h.category === category)
+  const [hotelsList, setHotelsList] = useState<any[]>([])
 
-  const handleBooking = (e: React.FormEvent) => {
+  useEffect(() => {
+    const fetchHotels = async () => {
+      try {
+        const data = await devoteeApi.getHotels()
+
+        if (data && data.length > 0) {
+          setHotelsList(data.map((item: any, index: number) => {
+            const cat = item.type || (item.hotel_code?.includes("DHM") ? "dharamshala" : "budget")
+            return {
+              id: index + 1,
+              dbId: item.id,
+              name: item.name,
+              nameHi: item.name,
+              category: cat,
+              price: item.price_range || "₹800/night",
+              distance: "300m to Temple Gate",
+              rating: Number(item.rating) || 4.5,
+              img: item.photo_url || "https://images.unsplash.com/photo-1540555700478-4be289fbecef?w=300&auto=format&fit=crop&q=60",
+              features: ["Pure Veg Kitchen", "AC Rooms", "Room Service", "Parking"],
+              featuresHi: ["शुद्ध शाकाहारी रसोई", "एसी कमरे", "रूम सर्विस", "पार्किंग"],
+              contactPhone: item.phone || "+91 98290 11002",
+              address: item.address || "Main Walkway, Khatu Dham",
+            }
+          }))
+        }
+      } catch (err) {
+        console.error("Failed to load hotels from Supabase", err)
+      }
+    }
+
+    fetchHotels()
+
+    // Realtime subscription to hotels update/insert
+    const channel = supabase
+      .channel("public:hotels")
+      .on("postgres_changes", { event: "*", schema: "public", table: "hotels" }, () => {
+        fetchHotels()
+      })
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  const filteredHotels = category === "all" ? hotelsList : hotelsList.filter(h => h.category === category)
+
+  const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault()
-    setBooked(true)
-    setTimeout(() => {
-      setBooked(false)
-      goBack()
-      setBookingForm({ name: "", phone: "", checkIn: "", guests: "2", rooms: "1" })
-    }, 4000)
+
+    const activeUserStr = localStorage.getItem("current_user")
+    let profileId = null
+    if (activeUserStr) {
+      try {
+        profileId = JSON.parse(activeUserStr).id
+      } catch (err) {}
+    }
+
+    if (!profileId) {
+      profileId = "00000000-0000-0000-0000-000000000000"
+    }
+
+    const checkInDateVal = bookingForm.checkIn || new Date().toISOString().split("T")[0]
+    const nights = 2
+    const checkOutDateVal = new Date(new Date(checkInDateVal).getTime() + nights * 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl && selectedHotel.dbId) {
+        await devoteeApi.bookHotel({
+          hotel_id: selectedHotel.dbId,
+          guest_name: bookingForm.name,
+          guest_phone: bookingForm.phone,
+          check_in_date: checkInDateVal,
+          check_out_date: checkOutDateVal,
+          nights_count: nights,
+          guests_count: parseInt(bookingForm.guests) || 2,
+          rooms_count: parseInt(bookingForm.rooms) || 1
+        })
+      }
+      
+      setBooked(true)
+      setTimeout(() => {
+        setBooked(false)
+        goBack()
+        setBookingForm({ name: "", phone: "", checkIn: "", guests: "2", rooms: "1" })
+        setSelectedHotel(null)
+      }, 4000)
+    } catch (err) {
+      console.error("Failed to save hotel booking", err)
+      alert("Failed to confirm stay booking. Please try again.")
+    }
   }
 
   return (
@@ -162,7 +189,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                       {h.contactPhone}
                     </p>
                     <div className="flex flex-wrap gap-1.5 mt-3">
-                      {h.features.map((f, i) => (
+                      {h.features.map((f: string, i: number) => (
                         <span key={i} className="text-[10px] font-semibold text-muted-foreground bg-secondary/35 border border-primary/10 rounded px-2 py-0.5 dark:bg-muted/50 dark:border-border/30">
                           {t(f, h.featuresHi[i])}
                         </span>

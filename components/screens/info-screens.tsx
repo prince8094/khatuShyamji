@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Image from "next/image"
 import { Icon, Pill, SectionTitle, StatusDot } from "@/components/shared"
 import { notifications, offlineCenters, type ScreenKey } from "@/lib/data"
@@ -8,6 +9,7 @@ import { LostFoundScreen } from "@/components/screens/lost-found"
 import { ParkingScreen } from "@/components/screens/parking"
 import { TrafficScreen as TrafficFullScreen } from "@/components/screens/traffic"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { devoteeApi } from "@/lib/api-client"
 
 export function InfoScreens({
   screen,
@@ -16,13 +18,33 @@ export function InfoScreens({
   screen: ScreenKey
   navigate: (s: ScreenKey) => void
 }) {
+  const [templeInfo, setTempleInfo] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    devoteeApi.getTempleInfo()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          setTempleInfo(res)
+        }
+      })
+      .catch((err) => console.error("Error loading temple info", err))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const telemetryRecord = templeInfo.find((r) => r.section_key === "live_telemetry")
+  const telemetry = telemetryRecord ? telemetryRecord.content : null
+
+  const timingsRecord = templeInfo.find((r) => r.section_key === "darshan_timings")
+  const timings = timingsRecord ? timingsRecord.content : null
+
   if (screen === "khatu-path") return <KhatuPathScreen navigate={navigate} />
   if (screen === "lost-found") return <LostFoundScreen navigate={navigate} />
   if (screen === "parking") return <ParkingScreen navigate={navigate} />
   if (screen === "traffic") return <TrafficFullScreen navigate={navigate} />
-  if (screen === "crowd") return <CrowdScreen />
+  if (screen === "crowd") return <CrowdScreen telemetry={telemetry} />
   if (screen === "offline") return <OfflineScreen />
-  if (screen === "temple") return <TempleScreen />
+  if (screen === "temple") return <TempleScreen timings={timings} />
   if (screen === "emergency") return <EmergencyScreen />
   if (screen === "notifications") return <NotificationsScreen />
   if (screen === "announcements") return <NotificationsScreen />
@@ -44,16 +66,19 @@ function Bar({ label, value, tone }: { label: string; value: number; tone: "succ
   )
 }
 
-function CrowdScreen() {
+function CrowdScreen({ telemetry }: { telemetry?: any }) {
   const { t } = useLanguage()
+  const rushLabel = telemetry?.crowd_level || t("info.crowd.rushLevel")
+  const countLabel = telemetry ? `~ ${Number(telemetry.crowd_count).toLocaleString()} devotees` : t("info.crowd.devoteesCount")
+
   return (
     <div className="space-y-5">
       <section className="rounded-3xl border border-[#FFE0B2] bg-[#FFF8E7] p-5 text-center shadow-sm">
         <span className="mx-auto grid size-16 place-items-center rounded-full bg-[#FF8C00] text-white shadow">
           <Icon name="Users" className="size-8" />
         </span>
-        <p className="mt-3 font-heading text-2xl font-bold text-[#8a4b12]">{t("info.crowd.rushLevel")}</p>
-        <p className="text-sm text-[#8a5a22]">{t("info.crowd.devoteesCount")}</p>
+        <p className="mt-3 font-heading text-2xl font-bold text-[#8a4b12]">{rushLabel}</p>
+        <p className="text-sm text-[#8a5a22]">{countLabel}</p>
         <span className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-success">
           <StatusDot tone="success" /> {t("info.crowd.liveTracking")}
         </span>
@@ -189,9 +214,9 @@ function OfflineScreen() {
   )
 }
 
-function TempleScreen() {
+function TempleScreen({ timings }: { timings?: any[] }) {
   const { t, tObject } = useLanguage()
-  const darshanTimings: any[] = tObject("info.temple.darshanTimingsList") || []
+  const darshanTimings: any[] = timings && timings.length > 0 ? timings : (tObject("info.temple.darshanTimingsList") || [])
   return (
     <div className="space-y-5">
       <section className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
@@ -276,31 +301,94 @@ function EmergencyScreen() {
 }
 
 function NotificationsScreen() {
-  const { t, tObject } = useLanguage()
-  const notifications: any[] = tObject("screens.notifications.notificationsList") || []
+  const { t, tObject, lang } = useLanguage()
+  const [list, setList] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    devoteeApi.getNotifications()
+      .then((res) => {
+        if (Array.isArray(res)) {
+          setList(res)
+        }
+      })
+      .catch((err) => console.error("Error loading notifications", err))
+      .finally(() => setLoading(false))
+  }, [])
+
+  const handleMarkAsRead = async (id: string) => {
+    setList(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n))
+    try {
+      await devoteeApi.markNotificationRead({ notification_id: id })
+    } catch (err) {
+      console.error("Failed to mark notification read", err)
+    }
+  }
+
+  const fallbackMocks = tObject("screens.notifications.notificationsList") || []
+  const displayList = list.length > 0 ? list : (loading ? [] : fallbackMocks)
+
   return (
     <div className="space-y-3">
-      {notifications.map((n, i) => (
-        <article
-          key={i}
-          className="flex items-start gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm"
-        >
-          <span
-            className={`grid size-10 shrink-0 place-items-center rounded-2xl ${
-              n.tone === "success" ? "bg-[#e7f3ea] text-success" : "bg-[#FFF3E0] text-[#FF8C00]"
+      {loading && (
+        <div className="text-center py-8 text-xs font-bold text-muted-foreground flex flex-col items-center gap-2">
+          <Icon name="Loader" className="size-5 animate-spin text-[#D4AF37]" />
+          Loading notifications...
+        </div>
+      )}
+
+      {!loading && displayList.length === 0 && (
+        <div className="text-center py-8 text-xs font-bold text-muted-foreground">
+          No notifications available.
+        </div>
+      )}
+
+      {displayList.map((n: any, i: number) => {
+        const title = lang === "hi" ? (n.title_hi || n.title) : (n.title_en || n.title)
+        const body = lang === "hi" ? (n.body_hi || n.body) : (n.body_en || n.body)
+        const tone = n.tone || "success"
+        const icon = n.icon || "Bell"
+        const time = n.created_at 
+          ? new Date(n.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          : (n.time || "Just now")
+
+        const toneColors: Record<string, string> = {
+          success: "bg-green-50 text-green-700 border-green-200",
+          info: "bg-blue-50 text-blue-700 border-blue-200",
+          warning: "bg-amber-50 text-amber-700 border-amber-200",
+          danger: "bg-red-50 text-red-700 border-red-200"
+        }
+
+        return (
+          <article
+            key={n.id || i}
+            onClick={() => n.id && !n.is_read && handleMarkAsRead(n.id)}
+            className={`flex items-start gap-3 rounded-2xl border p-4 shadow-sm transition-all duration-200 cursor-pointer ${
+              n.is_read === false ? "bg-amber-50/20 border-amber-200/50" : "bg-card border-border"
             }`}
           >
-            <Icon name={n.icon} className="size-5" />
-          </span>
-          <div className="flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <p className="font-heading text-sm font-bold text-foreground">{n.title}</p>
-              <span className="shrink-0 text-[11px] text-muted-foreground">{n.time}</span>
+            <span
+              className={`grid size-10 shrink-0 place-items-center rounded-2xl border ${
+                toneColors[tone] || toneColors.success
+              }`}
+            >
+              <Icon name={icon} className="size-5" />
+            </span>
+            <div className="flex-1">
+              <div className="flex items-center justify-between gap-2">
+                <div className="font-heading text-sm font-bold text-foreground flex items-center gap-1.5">
+                  {title}
+                  {n.is_read === false && (
+                    <span className="size-1.5 rounded-full bg-blue-500 shrink-0" title="Unread" />
+                  )}
+                </div>
+                <span className="shrink-0 text-[11px] text-muted-foreground">{time}</span>
+              </div>
+              <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{body}</p>
             </div>
-            <p className="mt-0.5 text-sm leading-relaxed text-muted-foreground">{n.body}</p>
-          </div>
-        </article>
-      ))}
+          </article>
+        )
+      })}
     </div>
   )
 }

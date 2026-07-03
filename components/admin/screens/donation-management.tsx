@@ -1,12 +1,17 @@
-"use client"
-
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { AdminSectionTitle, MetricCard, LiveDot, ActivityItem } from "@/components/admin/admin-shared"
-import { recentDonations as initialDonations, type AdminScreenKey } from "@/lib/admin-data"
+import { type AdminScreenKey } from "@/lib/admin-data"
+import { adminApi } from "@/lib/api-client"
 
-type ExtendedDonation = typeof initialDonations[0] & {
+interface ExtendedDonation {
+  id: string
+  donorName: string
+  amount: number
+  date: string
+  purpose: string
+  receiptGenerated: boolean
   status: "successful" | "pending" | "failed"
   email: string
   phone: string
@@ -15,16 +20,31 @@ type ExtendedDonation = typeof initialDonations[0] & {
 }
 
 export function DonationManagementScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
-  const [donations, setDonations] = useState<ExtendedDonation[]>(() =>
-    initialDonations.map((d, index) => ({
-      ...d,
-      status: index === 2 ? "pending" : index === 4 ? "failed" : "successful",
-      email: d.donorName.toLowerCase().replace(/ /g, "") + "@example.com",
-      phone: "+91 98290 1" + (1000 + index),
-      panNumber: "ABCDE123" + index + "F",
-      txnId: "TXN-" + d.id + "00" + index,
-    }))
-  )
+  const [donations, setDonations] = useState<ExtendedDonation[]>([])
+
+  useEffect(() => {
+    adminApi.getDonations()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          setDonations(res.map((d: any, index: number) => ({
+            id: d.id || `DN-${index + 1}`,
+            donorName: d.donor_name || "Devotee Contribution",
+            amount: Number(d.amount),
+            date: new Date(d.created_at || d.donated_at).toLocaleDateString("en-IN"),
+            purpose: d.donation_type ? (d.donation_type.charAt(0).toUpperCase() + d.donation_type.slice(1)) : "General",
+            receiptGenerated: true,
+            status: d.status || "successful",
+            email: d.email || "devotee@example.com",
+            phone: d.phone || "+91 8094504520",
+            panNumber: d.pan_card || "PAN-NOT-PROVIDED",
+            txnId: d.transaction_id || `TXN-${d.id?.substring(0, 8) || "N/A"}`
+          })))
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load donations in admin", err)
+      })
+  }, [])
 
   const [selectedTxnId, setSelectedTxnId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<"all" | "successful" | "pending" | "failed">("all")

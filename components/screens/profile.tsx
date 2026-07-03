@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Icon, Om } from "@/components/shared"
 import { type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
+import { devoteeApi } from "@/lib/api-client"
 
 type ProfileUser = {
   name: string
@@ -161,7 +162,7 @@ export function ProfileScreen({
     return Object.keys(errs).length === 0
   }
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
 
@@ -183,13 +184,30 @@ export function ProfileScreen({
       gender: editGender,
     }
 
-    if (onUpdateUser) {
-      onUpdateUser(updatedUser)
-    }
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await devoteeApi.updateProfile({
+          name: editName,
+          email: editEmail,
+          address: editAddress,
+          dob: editDob || null,
+          gender: editGender || null,
+          photo_url: editPhoto || null
+        })
+      }
 
-    setIsEditing(false)
-    setShowToast(true)
-    setTimeout(() => setShowToast(false), 3000)
+      if (onUpdateUser) {
+        onUpdateUser(updatedUser)
+      }
+
+      setIsEditing(false)
+      setShowToast(true)
+      setTimeout(() => setShowToast(false), 3000)
+    } catch (err: any) {
+      console.error("Failed to update profile in database", err)
+      alert("Failed to save changes: " + (err.message || err))
+    }
   }
 
   const handleCancel = () => {

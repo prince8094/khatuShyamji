@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
     phone VARCHAR(20) UNIQUE NOT NULL,
     email VARCHAR(255) NULL,
     address TEXT NULL,
+    city VARCHAR(100) NULL,
     dob DATE NULL,
     gender VARCHAR(20) NULL,
     photo_url TEXT NULL,
@@ -131,6 +132,8 @@ CREATE TABLE IF NOT EXISTS public.hotel_bookings (
     guest_name VARCHAR(100) NOT NULL,
     guest_phone VARCHAR(20) NOT NULL,
     check_in_date DATE NOT NULL,
+    check_out_date DATE NULL,
+    nights_count INT DEFAULT 1 NOT NULL,
     guests_count INT NOT NULL CHECK (guests_count > 0),
     rooms_count INT NOT NULL CHECK (rooms_count > 0),
     status booking_status_type DEFAULT 'upcoming' NOT NULL,
@@ -221,6 +224,26 @@ CREATE TABLE IF NOT EXISTS public.seva_bookings (
     contact_phone VARCHAR(20) NOT NULL,
     amount INT NOT NULL,
     status booking_status_type DEFAULT 'confirmed' NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
+);
+
+-- volunteer_applications table
+CREATE TABLE IF NOT EXISTS public.volunteer_applications (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    mobile VARCHAR(20) NOT NULL,
+    age INT NOT NULL CHECK (age >= 16),
+    gender VARCHAR(20) NOT NULL,
+    city VARCHAR(100) NOT NULL,
+    preferred_role VARCHAR(100) NOT NULL,
+    preferred_date DATE NOT NULL,
+    preferred_time_slot VARCHAR(50) NOT NULL,
+    experience TEXT NULL,
+    reason TEXT NOT NULL,
+    emergency_contact VARCHAR(100) NULL,
+    status VARCHAR(20) DEFAULT 'pending' NOT NULL, -- pending, approved, rejected
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
@@ -389,6 +412,7 @@ CREATE TABLE IF NOT EXISTS public.found_items (
     status lost_found_status_type DEFAULT 'registered' NOT NULL,
     category_icon VARCHAR(50) DEFAULT 'PackageSearch' NOT NULL,
     item_color VARCHAR(50) NOT NULL,
+    image_url TEXT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
 
@@ -406,6 +430,7 @@ CREATE TABLE IF NOT EXISTS public.lost_items (
     status lost_found_status_type DEFAULT 'registered' NOT NULL,
     assigned_admin_id UUID NULL REFERENCES public.admins(id) ON DELETE SET NULL,
     matched_found_item_id BIGINT NULL REFERENCES public.found_items(id) ON DELETE SET NULL,
+    image_url TEXT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
@@ -612,3 +637,32 @@ CREATE INDEX IF NOT EXISTS idx_device_tokens_profile ON public.device_tokens(pro
 CREATE INDEX IF NOT EXISTS idx_notification_recipients_profile ON public.notification_recipients(profile_id);
 CREATE INDEX IF NOT EXISTS idx_notification_recipients_admin ON public.notification_recipients(admin_id);
 CREATE INDEX IF NOT EXISTS idx_qr_scans_booking ON public.qr_scans(darshan_booking_id);
+
+-- ────────────────────────────────────────────────────────────────────────────
+-- 11. Custom Auth Helpers
+-- ────────────────────────────────────────────────────────────────────────────
+
+CREATE OR REPLACE FUNCTION public.create_pilgrim_user(p_name text, p_phone text, p_city text)
+RETURNS uuid AS $$
+DECLARE
+    v_user_id uuid;
+BEGIN
+    -- Check if user already exists
+    SELECT id INTO v_user_id FROM public.profiles WHERE phone = p_phone;
+    IF v_user_id IS NOT NULL THEN
+        RETURN v_user_id;
+    END IF;
+
+    -- Create user in mock auth.users table
+    INSERT INTO auth.users (phone)
+    VALUES (p_phone)
+    RETURNING id INTO v_user_id;
+
+    -- Create profile
+    INSERT INTO public.profiles (id, name, phone, city)
+    VALUES (v_user_id, p_name, p_phone, p_city);
+
+    RETURN v_user_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+

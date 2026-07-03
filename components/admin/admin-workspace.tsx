@@ -27,6 +27,7 @@ import { NotificationsAdminScreen } from "@/components/admin/screens/notificatio
 import { AdminManagementScreen } from "@/components/admin/screens/admin-management"
 import { ApprovalQueueScreen } from "@/components/admin/screens/approval-queue"
 import { PilgrimRegistryScreen } from "@/components/admin/screens/pilgrim-registry"
+import { CommerceManagementScreen } from "@/components/admin/screens/commerce-management"
 
 // Screen titles
 const screenTitles: Record<Exclude<AdminScreenKey, "admin-login">, string> = {
@@ -44,6 +45,7 @@ const screenTitles: Record<Exclude<AdminScreenKey, "admin-login">, string> = {
   "admin-management": "Admin Management",
   "approval-queue": "Approval Queue",
   "pilgrim-registry": "Pilgrim Registry",
+  "commerce-management": "Commerce Management",
 }
 
 // Sidebar menu items
@@ -56,6 +58,7 @@ const sidebarItems: { key: AdminScreenKey; icon: string; label: string; group: s
   { key: "seva-management", icon: "Heart", label: "Seva", group: "Services" },
   { key: "temple-info-admin", icon: "Landmark", label: "Temple Info", group: "Services" },
   { key: "donation-management", icon: "HandCoins", label: "Donations", group: "Services" },
+  { key: "commerce-management", icon: "Wallet", label: "Commerce & Ledger", group: "Services" },
   { key: "notifications-admin", icon: "Bell", label: "Notifications", group: "Communication" },
   { key: "lost-found-admin", icon: "PackageSearch", label: "Lost & Found", group: "Communication" },
   { key: "admin-management", icon: "Users", label: "Admin Users", group: "System" },
@@ -354,6 +357,7 @@ export function AdminWorkspace({
           {screen === "admin-management" && <AdminManagementScreen navigate={navigate} />}
           {screen === "approval-queue" && <ApprovalQueueScreen navigate={navigate} />}
           {screen === "pilgrim-registry" && <PilgrimRegistryScreen navigate={navigate} />}
+          {screen === "commerce-management" && <CommerceManagementScreen navigate={navigate} />}
         </main>
       </div>
 

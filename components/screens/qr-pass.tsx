@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils"
 import { user, type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
+import QRCode from "qrcode"
 
 const instructionsEn = [
   "Show this unified E-Pass at the main entry gate.",
@@ -28,13 +29,24 @@ export function QrPassScreen({ navigate }: { navigate?: (s: ScreenKey) => void }
   const { lang, t } = useLanguage()
   const [downloadFeedback, setDownloadFeedback] = useState(false)
   const [shareFeedback, setShareFeedback] = useState(false)
+  const [qrCodeDataUrl, setQrCodeDataUrl] = useState("")
   const [booking, setBooking] = useState<{
     id: string
     name: string
     date: string
     visitors: number | string
     status: string
+    qrToken?: string
   } | null>(null)
+
+  useEffect(() => {
+    if (booking?.id) {
+      const token = booking.qrToken || booking.id
+      QRCode.toDataURL(token, { width: 200, margin: 1 })
+        .then((url) => setQrCodeDataUrl(url))
+        .catch((err) => console.error(err))
+    }
+  }, [booking])
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -178,7 +190,11 @@ Shri Khatu Shyam Ji Mandir`
             <div className={`relative rounded-[2rem] border-4 bg-white p-6 shadow-xl ${
               booking?.status === "cancelled" ? "border-red-400" : "border-[#D4AF37]"
             }`}>
-              <QrMock size={200} seed={booking?.id || "KSJ-2026-08841"} />
+              {qrCodeDataUrl ? (
+                <img src={qrCodeDataUrl} alt="E-Pass QR Code" className="size-[200px] object-contain" />
+              ) : (
+                <QrMock size={200} seed={booking?.qrToken || booking?.id || "KSJ-2026-08841"} />
+              )}
               {/* Corner Accents */}
               <div className="absolute top-2 left-2 size-4 border-t-2 border-l-2 border-[#D4AF37]" />
               <div className="absolute top-2 right-2 size-4 border-t-2 border-r-2 border-[#D4AF37]" />

@@ -1,48 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 import { useHistoryState } from "@/lib/hooks/useHistoryState"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
-
-const travelVehicles = [
-  {
-    id: "sedan",
-    name: "Sedan Cab (AC)",
-    nameHi: "सेडान कैब (एसी)",
-    desc: "Comfortable 4-seater cab. Perfect for small families.",
-    descHi: "आरामदायक 4-सीटर कैब। छोटे परिवारों के लिए आदर्श।",
-    fare: "₹1,800 approx",
-    time: "~1h 45m from Jaipur",
-    icon: "Car",
-    capacity: "4 Devotees",
-  },
-  {
-    id: "suv",
-    name: "SUV (AC) - Innova / Ertiga",
-    nameHi: "एसयूवी (एसी) - इनोवा / अर्टिगा",
-    desc: "Spacious 6-7 seater. Best for larger groups & luggage.",
-    descHi: "विशाल 6-7 सीटर। बड़े समूहों और सामान के लिए सर्वश्रेष्ठ।",
-    fare: "₹2,600 approx",
-    time: "~1h 45m from Jaipur",
-    icon: "CarFront",
-    capacity: "6-7 Devotees",
-  },
-  {
-    id: "auto",
-    name: "E-Rickshaw / Auto",
-    nameHi: "ई-रिक्शा / ऑटो",
-    desc: "Available for local shuttle from Ringas Junction to Khatu Dham.",
-    descHi: "रींगस जंक्शन से खाटू धाम तक स्थानीय शटल के लिए उपलब्ध।",
-    fare: "₹50/seat or ₹300 full",
-    time: "~35m from Ringas",
-    icon: "Shuffle",
-    capacity: "3-5 Devotees",
-  },
-]
+import { devoteeApi } from "@/lib/api-client"
 
 export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
   const { goBack } = useNavigation();
@@ -58,14 +23,82 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
   })
   const [booked, setBooked] = useState(false)
 
-  const handleBooking = (e: React.FormEvent) => {
+  const [vehiclesList, setVehiclesList] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchVehicles = async () => {
+      try {
+        const data = await devoteeApi.getTransportVehicles()
+
+        if (data && data.length > 0) {
+          setVehiclesList(data.map((v: any) => ({
+            id: String(v.id),
+            dbId: String(v.id),
+            name: v.name,
+            nameHi: v.name,
+            desc: v.description || "Divine shuttle vehicle",
+            descHi: v.description || "दिव्य शटल वाहन",
+            fare: v.estimated_fare,
+            time: "~1h 45m from Jaipur",
+            icon: v.icon || "Car",
+            capacity: `${v.capacity} Devotees`
+          })))
+        }
+      } catch (err) {
+        console.error("Failed to load vehicles", err)
+      }
+    }
+
+    fetchVehicles()
+  }, [])
+
+  const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault()
-    setBooked(true)
-    setTimeout(() => {
-      setBooked(false)
-      goBack()
-      setBookingForm({ name: "", phone: "", pickup: "jaipur-airport", customPickup: "", date: "", time: "" })
-    }, 4000)
+
+    const activeUserStr = localStorage.getItem("current_user")
+    let profileId = null
+    if (activeUserStr) {
+      try {
+        profileId = JSON.parse(activeUserStr).id
+      } catch (err) {}
+    }
+
+    if (!profileId) {
+      profileId = "00000000-0000-0000-0000-000000000000"
+    }
+
+    const pickupDateVal = bookingForm.date || new Date().toISOString().split("T")[0]
+    const pickupTimeVal = bookingForm.time || "10:00:00"
+    let vehicleId = 1
+    if (selectedVehicle.dbId) {
+      vehicleId = parseInt(selectedVehicle.dbId) || 1
+    }
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await devoteeApi.bookTransport({
+          vehicle_id: vehicleId,
+          devotee_name: bookingForm.name,
+          contact_phone: bookingForm.phone,
+          pickup_point: bookingForm.pickup,
+          custom_pickup_address: bookingForm.customPickup || null,
+          pickup_date: pickupDateVal,
+          pickup_time: pickupTimeVal
+        })
+      }
+
+      setBooked(true)
+      setTimeout(() => {
+        setBooked(false)
+        goBack()
+        setBookingForm({ name: "", phone: "", pickup: "jaipur-airport", customPickup: "", date: "", time: "" })
+        setSelectedVehicle(null)
+      }, 4000)
+    } catch (err) {
+      console.error("Failed to book cab", err)
+      alert("Failed to confirm booking. Please try again.")
+    }
   }
 
   return (
@@ -97,7 +130,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
           </div>
 
           <div className="space-y-4">
-            {travelVehicles.map(v => (
+            {vehiclesList.map(v => (
               <div key={v.id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30">
                 <div className="flex items-center gap-4">
                   <span className="grid size-14 place-items-center rounded-2xl bg-secondary/35 text-primary dark:bg-muted dark:text-secondary shrink-0">
@@ -136,7 +169,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
               <h2 className="font-heading text-lg font-bold text-foreground">{t("screens.services.transport.confirmRideDetails")}</h2>
               <p className="text-xs text-muted-foreground mt-0.5">{t(selectedVehicle.name, selectedVehicle.nameHi)}</p>
             </div>
-            <button onClick={goBack} className="text-xs font-bold text-primary hover:underline">
+            <button onClick={() => setSelectedVehicle(null)} className="text-xs font-bold text-primary hover:underline">
               {t("screens.services.transport.changeRide")}
             </button>
           </div>
@@ -155,7 +188,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                   {t("screens.services.transport.rideBookedSuccessfully")}
                 </h3>
                 <p className="text-xs text-muted-foreground leading-relaxed max-w-sm">
-                  {t("screens.services.transport.driverDetailsOtpWillBeSentViaSms30MinsP")}
+                  {t("screens.services.transport.aConfirmationSmsHasBeenSentWithDriverDetailsCo")}
                 </p>
               </motion.div>
             ) : (
@@ -166,10 +199,10 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                     <input
                       type="text"
                       required
-                      placeholder="Mohan Sharma"
+                      placeholder="Devotee name"
                       value={bookingForm.name}
                       onChange={e => setBookingForm({ ...bookingForm, name: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                   <div>
@@ -180,7 +213,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                       placeholder="+91 XXXXX XXXXX"
                       value={bookingForm.phone}
                       onChange={e => setBookingForm({ ...bookingForm, phone: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                 </div>
@@ -190,39 +223,39 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                   <select
                     value={bookingForm.pickup}
                     onChange={e => setBookingForm({ ...bookingForm, pickup: e.target.value })}
-                    className="dark:bg-muted dark:border-border/30"
+                    className="dark:bg-muted dark:border-border/30 w-full"
                   >
-                    <option value="jaipur-airport">{t("screens.services.transport.jaipurAirportJai")}</option>
-                    <option value="jaipur-railway">{t("screens.services.transport.jaipurRailwayStationJp")}</option>
-                    <option value="ringas-junction">{t("screens.services.transport.ringasJunctionRailwayStationRgs")}</option>
-                    <option value="sikar-railway">{t("screens.services.transport.sikarRailwayStationSikr")}</option>
-                    <option value="other">{t("screens.services.transport.otherSpecifyBelow")}</option>
+                    <option value="jaipur-airport">{t("screens.services.transport.jaipurAirportJap")}</option>
+                    <option value="jaipur-junction">{t("screens.services.transport.jaipurJunctionJp")}</option>
+                    <option value="ringas-junction">{t("screens.services.transport.ringasJunctionRgs")}</option>
+                    <option value="delhi-ncr">{t("screens.services.transport.delhiNcr")}</option>
+                    <option value="custom">{t("screens.services.transport.otherCustomAddress")}</option>
                   </select>
                 </div>
 
-                {bookingForm.pickup === "other" && (
+                {bookingForm.pickup === "custom" && (
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.enterPickupLocation")}</label>
-                    <input
-                      type="text"
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.customPickupAddress")}</label>
+                    <textarea
                       required
-                      placeholder="e.g. Hotel Marriott, Jaipur"
+                      rows={2}
+                      placeholder="Enter exact address..."
                       value={bookingForm.customPickup}
                       onChange={e => setBookingForm({ ...bookingForm, customPickup: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full resize-none"
                     />
                   </div>
                 )}
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.pickupDate")}</label>
+                    <label className="block text-xs font-bold text-foreground mb-1.5">{t("screens.services.transport.dateOfJourney")}</label>
                     <input
                       type="date"
                       required
                       value={bookingForm.date}
                       onChange={e => setBookingForm({ ...bookingForm, date: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                   <div>
@@ -232,7 +265,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
                       required
                       value={bookingForm.time}
                       onChange={e => setBookingForm({ ...bookingForm, time: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                 </div>

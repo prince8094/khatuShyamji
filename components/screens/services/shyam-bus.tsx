@@ -1,45 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 import { useHistoryState } from "@/lib/hooks/useHistoryState"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
-
-const routes = [
-  {
-    id: 1,
-    from: "Jaipur Sindhi Camp",
-    fromHi: "जयपुर सिंधी कैंप",
-    to: "Khatu Dham Gate 3",
-    toHi: "खाटू धाम गेट 3",
-    timings: ["6:00 AM", "8:30 AM", "11:00 AM", "2:00 PM", "5:30 PM"],
-    fare: "₹120",
-    duration: "2h 00m",
-  },
-  {
-    id: 2,
-    from: "Ringas Junction Stn",
-    fromHi: "रींगस जंक्शन स्टेशन",
-    to: "Khatu Dham Gate 3",
-    toHi: "खाटू धाम गेट 3",
-    timings: ["Every 20 mins from 5:00 AM to 10:00 PM"],
-    fare: "₹30",
-    duration: "30m",
-  },
-  {
-    id: 3,
-    from: "Delhi Kashmiri Gate",
-    fromHi: "दिल्ली कश्मीरी गेट",
-    to: "Khatu Dham Gate 3",
-    toHi: "खाटू धाम गेट 3",
-    timings: ["8:00 PM (Overnight)", "10:30 PM (Overnight)"],
-    fare: "₹550 (AC Sleeper)",
-    duration: "6h 30m",
-  },
-]
+import { devoteeApi } from "@/lib/api-client"
 
 export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
   const { goBack } = useNavigation();
@@ -54,14 +22,78 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
   })
   const [booked, setBooked] = useState(false)
 
-  const handleBooking = (e: React.FormEvent) => {
+  const [routesList, setRoutesList] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchRoutes = async () => {
+      try {
+        const data = await devoteeApi.getBusRoutes()
+
+        if (data && data.length > 0) {
+          setRoutesList(data.map((r: any) => ({
+            id: r.id,
+            dbId: String(r.id),
+            from: r.from_city,
+            fromHi: r.from_city,
+            to: r.to_city,
+            toHi: r.to_city,
+            timings: [r.departure_time],
+            fare: `₹${r.fare}`,
+            duration: r.from_city.includes("Ringas") ? "30m" : "2h 00m"
+          })))
+        }
+      } catch (err) {
+        console.error("Failed to load routes", err)
+      }
+    }
+
+    fetchRoutes()
+  }, [])
+
+  const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault()
-    setBooked(true)
-    setTimeout(() => {
-      setBooked(false)
-      goBack()
-      setBookingForm({ name: "", phone: "", timing: "", seatCount: "1", date: "" })
-    }, 4000)
+
+    const activeUserStr = localStorage.getItem("current_user")
+    let profileId = null
+    if (activeUserStr) {
+      try {
+        profileId = JSON.parse(activeUserStr).id
+      } catch (err) {}
+    }
+
+    if (!profileId) {
+      profileId = "00000000-0000-0000-0000-000000000000"
+    }
+
+    const travelDateVal = bookingForm.date || new Date().toISOString().split("T")[0]
+    let busRouteId = 1
+    if (selectedRoute.dbId) {
+      busRouteId = parseInt(selectedRoute.dbId) || 1
+    }
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await devoteeApi.bookBus({
+          bus_route_id: busRouteId,
+          devotee_name: bookingForm.name,
+          contact_phone: bookingForm.phone,
+          travel_date: travelDateVal,
+          seat_count: parseInt(bookingForm.seatCount) || 1
+        })
+      }
+
+      setBooked(true)
+      setTimeout(() => {
+        setBooked(false)
+        goBack()
+        setBookingForm({ name: "", phone: "", timing: "", seatCount: "1", date: "" })
+        setSelectedRoute(null)
+      }, 4000)
+    } catch (err) {
+      console.error("Failed to book bus ticket", err)
+      alert("Failed to confirm booking. Please try again.")
+    }
   }
 
   return (
@@ -95,7 +127,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
           </div>
 
           <div className="space-y-4">
-            {routes.map(r => (
+            {routesList.map(r => (
               <div key={r.id} className="rounded-3xl border border-border bg-card p-5 shadow-sm dark:bg-card dark:border-border/30 space-y-4">
                 <div className="flex justify-between items-start">
                   <div>
@@ -114,7 +146,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                 <div className="border-t border-dashed border-border/50 dark:border-border/20 pt-3">
                   <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider mb-2">{t("screens.services.shyamBus.availableDepartures")}</p>
                   <div className="flex flex-wrap gap-2">
-                    {r.timings.map((time, idx) => (
+                    {r.timings.map((time: string, idx: number) => (
                       <span key={idx} className="text-xs font-semibold text-foreground bg-secondary/25 border border-primary/10 rounded-lg px-2.5 py-1 dark:bg-muted dark:border-border/20">
                         {time}
                       </span>
@@ -146,7 +178,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                 {t(selectedRoute.from, selectedRoute.fromHi)} → {t(selectedRoute.to, selectedRoute.toHi)}
               </p>
             </div>
-            <button onClick={goBack} className="text-xs font-bold text-primary hover:underline">
+            <button onClick={() => setSelectedRoute(null)} className="text-xs font-bold text-primary hover:underline">
               {t("screens.services.shyamBus.cancel")}
             </button>
           </div>
@@ -179,7 +211,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                       placeholder="Mohan Sharma"
                       value={bookingForm.name}
                       onChange={e => setBookingForm({ ...bookingForm, name: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                   <div>
@@ -190,7 +222,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                       placeholder="+91 XXXXX XXXXX"
                       value={bookingForm.phone}
                       onChange={e => setBookingForm({ ...bookingForm, phone: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                 </div>
@@ -203,7 +235,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                       required
                       value={bookingForm.date}
                       onChange={e => setBookingForm({ ...bookingForm, date: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     />
                   </div>
                   <div>
@@ -211,7 +243,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                     <select
                       value={bookingForm.seatCount}
                       onChange={e => setBookingForm({ ...bookingForm, seatCount: e.target.value })}
-                      className="dark:bg-muted dark:border-border/30"
+                      className="dark:bg-muted dark:border-border/30 w-full"
                     >
                       {["1", "2", "3", "4", "5", "6+"].map(n => (
                         <option key={n} value={n}>{n}</option>
@@ -225,7 +257,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
                   <select
                     value={bookingForm.timing}
                     onChange={e => setBookingForm({ ...bookingForm, timing: e.target.value })}
-                    className="dark:bg-muted dark:border-border/30"
+                    className="dark:bg-muted dark:border-border/30 w-full"
                   >
                     {selectedRoute.timings.map((time: string, idx: number) => (
                       <option key={idx} value={time}>{time}</option>

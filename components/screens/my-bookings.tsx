@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { Icon, Pill, QrMock } from "@/components/shared"
 import { bookings, type Booking, type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
+import QRCode from "qrcode"
 
 const tabs: { key: Booking["status"]; label: string; labelHi: string }[] = [
   { key: "upcoming", label: "Upcoming", labelHi: "आगामी" },
@@ -21,7 +22,42 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
   const { t } = useLanguage()
   const [tab, setTab] = useState<Booking["status"]>("upcoming")
   const [cancelId, setCancelId] = useState<string | null>(null)
-  const list = bookings.filter((b) => b.status === tab)
+  const [userBookings, setUserBookings] = useState<Booking[]>([])
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("khatu_bookings")
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored)
+          // Merge stored bookings with unique mock bookings
+          const merged = [...parsed]
+          bookings.forEach((mb) => {
+            if (!merged.some((b) => b.id === mb.id)) {
+              merged.push(mb)
+            }
+          })
+          setUserBookings(merged)
+        } catch (e) {
+          setUserBookings(bookings)
+        }
+      } else {
+        setUserBookings(bookings)
+        localStorage.setItem("khatu_bookings", JSON.stringify(bookings))
+      }
+    }
+  }, [])
+
+  const handleCancelBooking = (id: string) => {
+    setUserBookings((prev) => {
+      const updated = prev.map((b) => b.id === id ? { ...b, status: "cancelled" as const } : b)
+      localStorage.setItem("khatu_bookings", JSON.stringify(updated))
+      return updated
+    })
+    setCancelId(null)
+  }
+
+  const list = userBookings.filter((b) => b.status === tab)
 
   return (
     <div className="space-y-5 pb-8">
@@ -92,7 +128,7 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
 
               <div className="flex items-center gap-4 p-5">
                 <div className="grid size-20 shrink-0 place-items-center overflow-hidden rounded-2xl border-2 border-primary/20 bg-white p-1 shadow-inner">
-                  <QrMock size={72} seed={b.id} />
+                  <RealMiniQr seed={(b as any).qrToken || b.id} />
                 </div>
                 <div className="min-w-0 flex-1 space-y-1.5">
                   <div className="flex items-center gap-2 text-sm">
@@ -130,7 +166,7 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
                             {t("screens.myBookings.keep")}
                           </button>
                           <button
-                            onClick={() => setCancelId(null)}
+                            onClick={() => handleCancelBooking(b.id)}
                             className="flex-1 flex items-center justify-center py-3.5 text-xs font-bold text-red-600 hover:bg-red-50 border-l border-border"
                           >
                             {t("screens.myBookings.yesCancel")}
@@ -166,4 +202,19 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
       )}
     </div>
   )
+}
+
+function RealMiniQr({ seed }: { seed: string }) {
+  const [url, setUrl] = useState("")
+
+  useEffect(() => {
+    QRCode.toDataURL(seed, { width: 72, margin: 1 })
+      .then((res) => setUrl(res))
+      .catch((err) => console.error(err))
+  }, [seed])
+
+  if (url) {
+    return <img src={url} alt="Mini QR" className="size-[72px] object-contain" />
+  }
+  return <QrMock size={72} seed={seed} />
 }

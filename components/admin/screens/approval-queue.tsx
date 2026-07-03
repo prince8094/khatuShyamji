@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { AdminSectionTitle, ApprovalBadge, LiveDot } from "@/components/admin/admin-shared"
 import { approvalQueue as initialQueue, deptColors, type AdminScreenKey } from "@/lib/admin-data"
+import { adminApi } from "@/lib/api-client"
 
 type ExtendedApprovalItem = typeof initialQueue[0] & {
   versionNumber: number
@@ -97,9 +98,46 @@ const initialItems: ExtendedApprovalItem[] = [
 ]
 
 export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
-  const [queue, setQueue] = useState<ExtendedApprovalItem[]>(initialItems)
+  const [queue, setQueue] = useState<any[]>(initialItems)
   const [reviewId, setReviewId] = useState<string | null>(null)
   const [reviewNotesInput, setReviewNotesInput] = useState("")
+
+  // Load from Supabase on mount
+  useEffect(() => {
+    const loadQueue = async () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (!supabaseUrl) return
+
+      try {
+        const data = await adminApi.getApprovals()
+
+        if (data && data.length > 0) {
+          setQueue(data.map((item: any) => {
+            return {
+              id: `APR-0${item.id.slice(0, 2).toUpperCase()}`,
+              dbId: item.id,
+              type: item.type,
+              title: item.title,
+              submittedBy: "Rajesh Kumar",
+              submittedAt: new Date(item.submitted_at).toLocaleString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' }),
+              status: item.status as "pending" | "approved" | "rejected",
+              department: item.department || "super-admin",
+              description: item.description || "Proposal config updates",
+              versionNumber: item.version_number || 1,
+              draftPayload: item.draft_payload || { oldValues: {}, newValues: {} },
+              reviewNotes: item.review_notes || item.rejection_reason || undefined,
+              actionedBy: item.approved_by_admin_id ? "Nand Kumar" : undefined,
+              actionedAt: item.approved_at ? new Date(item.approved_at).toLocaleString() : undefined
+            }
+          }))
+        }
+      } catch (err) {
+        console.error("Failed to load approval queue", err)
+      }
+    }
+
+    loadQueue()
+  }, [])
 
   const pending = queue.filter((a) => a.status === "pending").length
   const approved = queue.filter((a) => a.status === "approved").length
@@ -113,36 +151,83 @@ export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey
     "parking-info": "SquareParking",
   }
 
-  const handleApprove = (id: string) => {
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) + ", Today"
-    
+  const handleApprove = async (id: string) => {
+    const nowStr = new Date().toISOString()
+    const currentAdminStr = localStorage.getItem("current_admin")
+    let adminId = "00000000-0000-0000-0000-000000000000"
+    if (currentAdminStr) {
+      try {
+        adminId = JSON.parse(currentAdminStr).id
+      } catch (err) {}
+    }
+
     setQueue(prev =>
       prev.map(item =>
         item.id === id
-          ? { ...item, status: "approved" as const, reviewNotes: reviewNotesInput, actionedBy: "Nand Kumar", actionedAt: timeStr }
+          ? { ...item, status: "approved" as const, reviewNotes: reviewNotesInput, actionedBy: "Nand Kumar", actionedAt: "Today" }
           : item
       )
     )
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        const selected = queue.find(item => item.id === id)
+        if (selected) {
+          await adminApi.actionApproval({
+            proposal_id: selected.dbId,
+            status: "approved",
+            review_notes: reviewNotesInput
+          })
+        }
+      }
+    } catch (err) {
+      console.error("Failed to approve proposal in DB", err)
+    }
+
     setReviewId(null)
     setReviewNotesInput("")
   }
 
-  const handleReject = (id: string) => {
+  const handleReject = async (id: string) => {
     if (!reviewNotesInput.trim()) {
       alert("A brief rejection remark is required to guide resubmissions.")
       return
     }
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true }) + ", Today"
+    const nowStr = new Date().toISOString()
+    const currentAdminStr = localStorage.getItem("current_admin")
+    let adminId = "00000000-0000-0000-0000-000000000000"
+    if (currentAdminStr) {
+      try {
+        adminId = JSON.parse(currentAdminStr).id
+      } catch (err) {}
+    }
 
     setQueue(prev =>
       prev.map(item =>
         item.id === id
-          ? { ...item, status: "rejected" as const, reviewNotes: reviewNotesInput, actionedBy: "Nand Kumar", actionedAt: timeStr }
+          ? { ...item, status: "rejected" as const, reviewNotes: reviewNotesInput, actionedBy: "Nand Kumar", actionedAt: "Today" }
           : item
       )
     )
+
+    try {
+      const selected = queue.find(item => item.id === id)
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        if (selected) {
+          await adminApi.actionApproval({
+            proposal_id: selected.dbId,
+            status: "rejected",
+            rejection_reason: reviewNotesInput,
+            review_notes: reviewNotesInput
+          })
+        }
+      }
+    } catch (err) {
+      console.error("Failed to reject proposal in DB", err)
+    }
+
     setReviewId(null)
     setReviewNotesInput("")
   }
@@ -151,7 +236,7 @@ export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey
 
   const renderReviewModal = () => {
     if (!selectedItem) return null
-    const dc = deptColors[selectedItem.department]
+    const dc = (deptColors as any)[selectedItem.department]
     const diff = selectedItem.draftPayload
 
     return (
@@ -301,7 +386,7 @@ export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey
           {queue
             .filter(item => item.status === "pending")
             .map((item) => {
-              const dc = deptColors[item.department]
+              const dc = (deptColors as any)[item.department]
               return (
                 <motion.div
                   key={item.id}
@@ -356,7 +441,7 @@ export function ApprovalQueueScreen({ navigate }: { navigate: (s: AdminScreenKey
           {queue
             .filter(item => item.status !== "pending")
             .map((item) => {
-              const dc = deptColors[item.department]
+              const dc = (deptColors as any)[item.department]
               return (
                 <div key={item.id} className="rounded-2xl border border-border bg-card p-4 shadow-sm">
                   <div className="flex items-start justify-between">

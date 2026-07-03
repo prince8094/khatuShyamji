@@ -1,10 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { AdminSectionTitle, MetricCard, LiveDot, QuickAction, ActivityItem } from "@/components/admin/admin-shared"
 import { trafficAlerts, type AdminScreenKey } from "@/lib/admin-data"
+import { adminApi } from "@/lib/api-client"
+import TrafficMap from "@/components/shared/TrafficMap"
 
 const routes = [
   { name: "NH-148D (Jaipur → Khatu)", status: "moderate", icon: "ArrowRight", eta: "1h 45m" },
@@ -15,8 +17,51 @@ const routes = [
 
 export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
   const [composing, setComposing] = useState(false)
-  const [alertForm, setAlertForm] = useState({ route: "", severity: "low", message: "" })
-  const activeAlerts = trafficAlerts.filter((a) => a.isActive)
+  const [alertForm, setAlertForm] = useState({ 
+    route: "", 
+    severity: "low", 
+    message: "",
+    latitude: "" as string | number,
+    longitude: "" as string | number,
+    alert_type: "closure"
+  })
+  const [alerts, setAlerts] = useState<any[]>(trafficAlerts)
+  const [routesList, setRoutesList] = useState<any[]>(routes)
+
+  // Map settings
+  const [showTempleRoute, setShowTempleRoute] = useState(true)
+  const [showParkingRoute, setShowParkingRoute] = useState(true)
+  const [showAlternativeRoute, setShowAlternativeRoute] = useState(true)
+  const [showTrafficLayer, setShowTrafficLayer] = useState(true)
+
+  useEffect(() => {
+    const loadTrafficAlerts = async () => {
+      try {
+        const data = await adminApi.getTraffic()
+        if (data.routes) {
+          setRoutesList(data.routes)
+        }
+        if (data.alerts) {
+          setAlerts(data.alerts.map((a: any) => ({
+            id: a.id,
+            route: data.routes?.find((r: any) => r.id === a.route_id)?.name || a.route_id,
+            severity: a.severity as "low" | "medium" | "high" | "critical",
+            message: a.message,
+            source: a.source,
+            publishedAt: new Date(a.published_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            publishedBy: a.published_by_admin_id || "Traffic Ops",
+            isActive: a.is_active
+          })))
+        }
+      } catch (e) {
+        console.error("Failed to load traffic alerts", e)
+      }
+    }
+
+    loadTrafficAlerts()
+  }, [])
+
+  const activeAlerts = alerts.filter((a) => a.isActive)
 
   const severityColors = {
     low: { bg: "bg-green-50", text: "text-green-700", border: "border-green-200", badge: "bg-green-500" },
@@ -30,6 +75,63 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
     light: "text-green-600 bg-green-50 border-green-200",
     moderate: "text-amber-600 bg-amber-50 border-amber-200",
     heavy: "text-red-600 bg-red-50 border-red-200",
+  }
+
+  const handlePublishAlert = async () => {
+    if (!alertForm.route || !alertForm.message.trim()) return
+
+    const newAlert = {
+      id: crypto.randomUUID(),
+      route: alertForm.route,
+      severity: alertForm.severity as "low" | "medium" | "high" | "critical",
+      message: alertForm.message,
+      source: "Manual",
+      publishedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      publishedBy: "Prince G.",
+      isActive: true
+    }
+
+    setAlerts(prev => [newAlert, ...prev])
+    setComposing(false)
+    const latVal = alertForm.latitude
+    const lngVal = alertForm.longitude
+    const alertType = alertForm.alert_type
+    setAlertForm({ route: "", severity: "low", message: "", latitude: "", longitude: "", alert_type: "closure" })
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        const targetRoute = routesList.find(r => r.name === alertForm.route)
+        const routeId = targetRoute ? targetRoute.id : 1
+
+        await adminApi.publishTrafficAlert({
+          route_id: routeId,
+          severity: alertForm.severity,
+          message: alertForm.message,
+          source: "Manual",
+          latitude: latVal ? Number(latVal) : null,
+          longitude: lngVal ? Number(lngVal) : null,
+          alert_type: alertType
+        })
+      }
+    } catch (err) {
+      console.error("Failed to insert alert", err)
+    }
+  }
+
+  const handleUnpublishAlert = async (alertId: string) => {
+    setAlerts(prev => prev.map(a => a.id === alertId ? { ...a, isActive: false } : a))
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await adminApi.resolveTrafficAlert({
+          alert_id: alertId
+        })
+      }
+    } catch (err) {
+      console.error("Failed to resolve alert", err)
+    }
   }
 
   return (
@@ -122,27 +224,65 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
               <select
                 value={alertForm.route}
                 onChange={(e) => setAlertForm({ ...alertForm, route: e.target.value })}
+                className="w-full rounded-xl border border-border bg-card p-2 text-xs"
               >
                 <option value="">Select route…</option>
                 {routes.map((r) => <option key={r.name} value={r.name}>{r.name}</option>)}
               </select>
-              <select
-                value={alertForm.severity}
-                onChange={(e) => setAlertForm({ ...alertForm, severity: e.target.value })}
-              >
-                <option value="low">Low Severity</option>
-                <option value="medium">Medium Severity</option>
-                <option value="high">High Severity</option>
-                <option value="critical">Critical Severity</option>
-              </select>
+
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={alertForm.severity}
+                  onChange={(e) => setAlertForm({ ...alertForm, severity: e.target.value })}
+                  className="rounded-xl border border-border bg-card p-2 text-xs"
+                >
+                  <option value="low">Low Severity</option>
+                  <option value="medium">Medium Severity</option>
+                  <option value="high">High Severity</option>
+                  <option value="critical">Critical Severity</option>
+                </select>
+
+                <select
+                  value={alertForm.alert_type}
+                  onChange={(e) => setAlertForm({ ...alertForm, alert_type: e.target.value })}
+                  className="rounded-xl border border-border bg-card p-2 text-xs"
+                >
+                  <option value="closure">Road Closure ⛔</option>
+                  <option value="diversion">Diversion ⚠️</option>
+                  <option value="congestion">Congestion 🚗</option>
+                  <option value="accident">Accident 💥</option>
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <input
+                  type="text"
+                  placeholder="Latitude (Click Map to set)"
+                  value={alertForm.latitude}
+                  onChange={(e) => setAlertForm({ ...alertForm, latitude: e.target.value })}
+                  className="rounded-xl border border-border bg-card p-2 text-xs"
+                />
+                <input
+                  type="text"
+                  placeholder="Longitude (Click Map to set)"
+                  value={alertForm.longitude}
+                  onChange={(e) => setAlertForm({ ...alertForm, longitude: e.target.value })}
+                  className="rounded-xl border border-border bg-card p-2 text-xs"
+                />
+              </div>
+
               <textarea
                 rows={2}
                 placeholder="Alert message…"
                 value={alertForm.message}
                 onChange={(e) => setAlertForm({ ...alertForm, message: e.target.value })}
-                className="resize-none"
+                className="w-full rounded-xl border border-border bg-card p-2 text-xs resize-none"
               />
-              <button className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] py-3 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]">
+              <button
+                type="button"
+                onClick={handlePublishAlert}
+                className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] py-3 font-heading text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98]"
+              >
                 <Icon name="Send" className="size-4" />
                 Publish Alert
               </button>
@@ -150,6 +290,34 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
           </motion.section>
         )}
       </AnimatePresence>
+
+      {/* Live Operations Traffic Map */}
+      <section className="space-y-3">
+        <AdminSectionTitle title="Live Operations Traffic Map" icon="Map" />
+        <TrafficMap
+          adminMode={composing}
+          showTempleRoute={showTempleRoute}
+          showParkingRoute={showParkingRoute}
+          showAlternativeRoute={showAlternativeRoute}
+          showTrafficLayer={showTrafficLayer}
+          onMapClick={(lat, lng) => {
+            setAlertForm(prev => ({
+              ...prev,
+              latitude: lat.toFixed(6),
+              longitude: lng.toFixed(6)
+            }))
+          }}
+          alerts={alerts.map((a: any) => ({
+            id: a.id,
+            alert_code: a.alert_code || a.id,
+            latitude: a.latitude,
+            longitude: a.longitude,
+            alert_type: a.alert_type || "closure",
+            message: a.message,
+            severity: a.severity
+          }))}
+        />
+      </section>
 
       {/* Active Alerts */}
       <section>
@@ -159,8 +327,8 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
           action={<span className="text-[11px] font-semibold text-muted-foreground">{activeAlerts.length} active</span>}
         />
         <div className="space-y-2">
-          {trafficAlerts.map((alert) => {
-            const c = severityColors[alert.severity]
+          {alerts.map((alert) => {
+            const c = severityColors[alert.severity as "low" | "medium" | "high" | "critical"] || severityColors.low
             return (
               <div key={alert.id} className={`rounded-2xl border p-4 ${c.bg} ${c.border} ${!alert.isActive ? "opacity-50" : ""}`}>
                 <div className="flex items-start justify-between">
@@ -171,7 +339,10 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
                   </div>
                   <div className="flex items-center gap-1">
                     {alert.isActive && (
-                      <button className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-100 transition">
+                      <button
+                        onClick={() => handleUnpublishAlert(alert.id)}
+                        className="text-[10px] font-bold text-red-600 bg-red-50 border border-red-200 rounded-full px-2 py-0.5 hover:bg-red-100 transition"
+                      >
                         Unpublish
                       </button>
                     )}

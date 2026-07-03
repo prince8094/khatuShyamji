@@ -5,13 +5,22 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { Icon } from "@/components/shared"
 import { adminUsers, type AdminUser, type AdminScreenKey } from "@/lib/admin-data"
+import { supabase } from "@/lib/supabase"
+
+const demoPasswords: Record<string, string> = {
+  "ADM-001": "admin123",
+  "ADM-002": "hotel123",
+  "ADM-003": "park123",
+  "ADM-004": "traffic123",
+  "ADM-005": "lost123",
+}
 
 const demoAccounts = [
-  { label: "Super Admin", id: "ADM-001", password: "admin123" },
-  { label: "Hotel Admin", id: "ADM-002", password: "hotel123" },
-  { label: "Parking Admin", id: "ADM-003", password: "park123" },
-  { label: "Traffic Admin", id: "ADM-004", password: "traffic123" },
-  { label: "Lost & Found", id: "ADM-005", password: "lost123" },
+  { label: "Super Admin", id: "ADM-001" },
+  { label: "Hotel Admin", id: "ADM-002" },
+  { label: "Parking Admin", id: "ADM-003" },
+  { label: "Traffic Admin", id: "ADM-004" },
+  { label: "Lost & Found", id: "ADM-005" },
 ]
 
 export function AdminLoginScreen({
@@ -25,31 +34,159 @@ export function AdminLoginScreen({
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
     setLoading(true)
 
-    setTimeout(() => {
-      const found = adminUsers.find(
-        (u) => u.id.toLowerCase() === adminId.toLowerCase() && u.isActive,
-      )
-      if (found) {
-        onLogin(found)
-      } else {
-        setError("Invalid Admin ID or account is disabled")
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (!supabaseUrl) {
+        // Fallback to local mock mode
+        setTimeout(() => {
+          const found = adminUsers.find(
+            (u) => u.id.toLowerCase() === adminId.toLowerCase() && u.isActive,
+          )
+          if (found) {
+            onLogin(found)
+          } else {
+            setError("Invalid Admin ID or account is disabled")
+          }
+          setLoading(false)
+        }, 800)
+        return
       }
+
+      // 1. Initialize auth on the server (queries db and signs up/links auth.users securely)
+      const res = await fetch("/api/admin/auth-init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ admin_code: adminId, password })
+      })
+      const initResult = await res.json()
+      if (!initResult.success) {
+        setError(initResult.error || "Invalid Admin ID or account is disabled")
+        setLoading(false)
+        return
+      }
+
+      const { email, adminRecord } = initResult.data
+
+      // 2. Authenticate with Supabase password on client
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: password,
+      })
+
+      if (signInError) throw signInError
+
+      // 3. Update last login timestamp in background
+      await supabase
+        .from("admins")
+        .update({ last_login: new Date().toISOString() })
+        .eq("id", adminRecord.id)
+
+      const roles = adminRecord.admin_roles_bridge 
+        ? adminRecord.admin_roles_bridge.map((b: any) => b.role_key)
+        : []
+      
+      const authenticatedAdmin: AdminUser = {
+        id: adminRecord.id,
+        name: adminRecord.name,
+        phone: adminRecord.phone,
+        email: adminRecord.email,
+        initials: adminRecord.initials,
+        roles: roles,
+        isActive: adminRecord.is_active,
+        lastLogin: adminRecord.last_login 
+          ? new Date(adminRecord.last_login).toLocaleString() 
+          : "First time logging in"
+      }
+
+      onLogin(authenticatedAdmin)
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || "Invalid Admin ID or incorrect password")
+    } finally {
       setLoading(false)
-    }, 800)
+    }
   }
 
-  const handleQuickLogin = (id: string) => {
+  const handleQuickLogin = async (id: string) => {
+    const pw = demoPasswords[id] || "admin123"
     setAdminId(id)
-    setPassword("••••••••")
-    const found = adminUsers.find((u) => u.id === id)
-    if (found) {
-      setLoading(true)
-      setTimeout(() => onLogin(found), 600)
+    setPassword(pw)
+    setLoading(true)
+    setError("")
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (!supabaseUrl) {
+        const found = adminUsers.find((u) => u.id === id)
+        if (found) {
+          setTimeout(() => onLogin(found), 600)
+        } else {
+          setLoading(false)
+        }
+        return
+      }
+
+      // Initialize auth on the server
+      const res = await fetch("/api/admin/auth-init", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ admin_code: id, password: pw })
+      })
+      const initResult = await res.json()
+      if (!initResult.success) {
+        // Fallback to local admin
+        const found = adminUsers.find((u) => u.id === id)
+        if (found) {
+          setTimeout(() => onLogin(found), 600)
+        } else {
+          setError("Quick Login failed. Admin account not synced.")
+          setLoading(false)
+        }
+        return
+      }
+
+      const { email, adminRecord } = initResult.data
+
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: email,
+        password: pw,
+      })
+
+      if (signInError) throw signInError
+
+      await supabase
+        .from("admins")
+        .update({ last_login: new Date().toISOString() })
+        .eq("id", adminRecord.id)
+
+      const roles = adminRecord.admin_roles_bridge 
+        ? adminRecord.admin_roles_bridge.map((b: any) => b.role_key)
+        : []
+      
+      const authenticatedAdmin: AdminUser = {
+        id: adminRecord.id,
+        name: adminRecord.name,
+        phone: adminRecord.phone,
+        email: adminRecord.email,
+        initials: adminRecord.initials,
+        roles: roles,
+        isActive: adminRecord.is_active,
+        lastLogin: adminRecord.last_login 
+          ? new Date(adminRecord.last_login).toLocaleString() 
+          : "First time logging in"
+      }
+
+      onLogin(authenticatedAdmin)
+    } catch (err: any) {
+      console.error(err)
+      setError(err.message || "Quick Login failed. Admin account not synced.")
+    } finally {
+      setLoading(false)
     }
   }
 

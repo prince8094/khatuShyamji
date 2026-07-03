@@ -9,18 +9,61 @@ import { useAudio } from "@/lib/contexts/AudioContext"
 import { LanguageToggle } from "@/components/ui/language-toggle"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
 
+import { supabase } from "@/lib/supabase"
+
 export function LoginScreen({ navigate }: { navigate: (s: any) => void }) {
   const { goBack } = useNavigation();
   const { t } = useLanguage()
   const { playTempleBell } = useAudio()
   const [phone, setPhone] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     if (phone.length === 10) {
-      playTempleBell('single')
-      localStorage.setItem("temp_login_phone", `+91 ${phone}`)
-      navigate("otp")
+      setError("")
+      setLoading(true)
+      try {
+        const unspacedPhone = `+91${phone}`
+        
+        // Check profile first (and bootstrap if dev mode)
+        const checkRes = await fetch("/api/devotee/auth-init", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ phone: unspacedPhone, signup: false })
+        })
+        const checkResult = await checkRes.json()
+        if (!checkResult.success) {
+          setError(checkResult.error || "Profile not found. Please sign up first.")
+          setLoading(false)
+          return
+        }
+
+        // Development Mode bypass for any phone number
+        if (process.env.NEXT_PUBLIC_DEV_MODE === "true") {
+          playTempleBell('single')
+          localStorage.setItem("temp_login_phone", unspacedPhone)
+          navigate("otp")
+          setLoading(false)
+          return
+        }
+
+        // Trigger OTP (Real flow)
+        const { error: authError } = await supabase.auth.signInWithOtp({
+          phone: unspacedPhone,
+        })
+        if (authError) throw authError
+
+        playTempleBell('single')
+        localStorage.setItem("temp_login_phone", unspacedPhone)
+        navigate("otp")
+      } catch (err: any) {
+        console.error(err)
+        setError(err.message || "Failed to send OTP. Please check connection.")
+      } finally {
+        setLoading(false)
+      }
     }
   }
 
@@ -159,19 +202,38 @@ export function LoginScreen({ navigate }: { navigate: (s: any) => void }) {
                     value={phone}
                     onChange={(e) => setPhone(e.target.value.replace(/\D/g, ''))}
                     maxLength={10}
-                    className="w-full rounded-2xl border border-amber-200 bg-white py-4 pl-28 pr-4 text-sm font-semibold text-[#1A120B] shadow-inner outline-none transition duration-300 focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 placeholder-amber-900/25"
+                    disabled={loading}
+                    className="w-full rounded-2xl border border-amber-200 bg-white py-4 pl-28 pr-4 text-sm font-semibold text-[#1A120B] shadow-inner outline-none transition duration-300 focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 placeholder-amber-900/25 disabled:opacity-55"
                   />
                 </div>
               </div>
 
+              {error && (
+                <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 text-xs font-semibold text-red-600">
+                  <Icon name="TriangleAlert" className="size-4 shrink-0" />
+                  {error}
+                </div>
+              )}
+
               <button
                 type="submit"
-                disabled={phone.length !== 10}
+                disabled={phone.length !== 10 || loading}
                 className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#800000] to-[#E25822] py-4 text-base font-bold text-white shadow-[0_6px_20px_rgba(128,0,0,0.25)] transition duration-300 hover:shadow-[0_8px_25px_rgba(128,0,0,0.35)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                {t("auth.login.button")}
-                <Icon name="ArrowRight" className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                {loading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Icon name="Loader2" className="size-5" />
+                  </motion.div>
+                ) : (
+                  <>
+                    <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    {t("auth.login.button")}
+                    <Icon name="ArrowRight" className="size-5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </>
+                )}
               </button>
             </form>
 

@@ -1,13 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { Icon } from "@/components/shared"
 import { AdminSectionTitle, MetricCard, ProgressBar, LiveDot, ActivityItem } from "@/components/admin/admin-shared"
 import { parkingBlocks as initialBlocks, type AdminScreenKey, type AdminUser } from "@/lib/admin-data"
+import { adminApi } from "@/lib/api-client"
+import { supabase } from "@/lib/supabase"
 
 type ParkingBlockState = typeof initialBlocks[0] & {
+  dbId?: string
   todayEntries: number
   todayExits: number
   lastUpdated: string
@@ -41,6 +44,59 @@ export function ParkingManagementScreen({
       lastUpdated: "Just now",
     }))
   )
+
+  useEffect(() => {
+    const loadParkingBlocks = async () => {
+      try {
+        const data = await adminApi.getParkingBlocks()
+
+        if (data && data.length > 0) {
+          setBlocks(data.map((b: any) => ({
+            id: b.block_code,
+            dbId: b.id,
+            name: b.name,
+            totalCapacity: b.total_capacity,
+            occupied: b.occupied,
+            available: b.total_capacity - b.occupied,
+            status: b.status as "open" | "full" | "closed",
+            assignedAdmin: b.assigned_admin || "Vikram Singh",
+            vehicleTypes: b.vehicle_types,
+            revenueToday: b.revenue_today,
+            shuttleActive: b.shuttle_active,
+            locationInfo: "Corridor Near Entry",
+            totalWorkers: 12,
+            todayEntries: b.occupied,
+            todayExits: 0,
+            vehicleEntries: b.occupied,
+            vehicleExits: 0,
+            distribution: { cars: Math.floor(b.occupied * 0.7), bikes: Math.floor(b.occupied * 0.3), others: 0 },
+            revenueHistory: ["Mon: ₹30k", "Tue: ₹35k", "Wed: ₹40k"],
+            lastUpdated: new Date(b.updated_at).toLocaleTimeString()
+          })))
+        }
+      } catch (e) {
+        console.error("Failed to load parking blocks", e)
+      }
+    }
+
+    loadParkingBlocks()
+
+    const channel = supabase
+      .channel("admin:parking_blocks")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "parking_blocks" },
+        () => {
+          console.log("Admin realtime parking_blocks update detected!")
+          loadParkingBlocks()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   // Local state for audit logs
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([
@@ -82,7 +138,7 @@ export function ParkingManagementScreen({
   const totalRevenue = visibleBlocks.reduce((a, b) => a + b.revenueToday, 0)
 
   // Close block execution
-  const handleCloseBlockSubmit = (e: React.FormEvent) => {
+  const handleCloseBlockSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!modalBlockId) return
 
@@ -99,6 +155,21 @@ export function ParkingManagementScreen({
         return b
       })
     )
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        const targetBlock = blocks.find(b => b.id === modalBlockId)
+        if (targetBlock?.dbId) {
+          await adminApi.updateParkingOccupancy({
+            block_id: targetBlock.dbId,
+            status: "closed"
+          })
+        }
+      }
+    } catch (err) {
+      console.error("Failed to close block in DB", err)
+    }
 
     // Add entry to audit log
     const now = new Date()
@@ -121,7 +192,7 @@ export function ParkingManagementScreen({
   }
 
   // Reopen block execution
-  const handleReopenBlock = (blockId: string) => {
+  const handleReopenBlock = async (blockId: string) => {
     setBlocks(prev =>
       prev.map(b => {
         if (b.id === blockId) {
@@ -134,6 +205,21 @@ export function ParkingManagementScreen({
         return b
       })
     )
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        const targetBlock = blocks.find(b => b.id === blockId)
+        if (targetBlock?.dbId) {
+          await adminApi.updateParkingOccupancy({
+            block_id: targetBlock.dbId,
+            status: "open"
+          })
+        }
+      }
+    } catch (err) {
+      console.error("Failed to reopen block in DB", err)
+    }
 
     const now = new Date()
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
@@ -151,7 +237,7 @@ export function ParkingManagementScreen({
   }
 
   // Update occupancy count
-  const handleOccupancySubmit = (e: React.FormEvent) => {
+  const handleOccupancySubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!occupancyBlockId) return
 
@@ -177,6 +263,20 @@ export function ParkingManagementScreen({
       })
     )
 
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        if (targetBlock?.dbId) {
+          await adminApi.updateParkingOccupancy({
+            block_id: targetBlock.dbId,
+            occupied: newOccupancy
+          })
+        }
+      }
+    } catch (err) {
+      console.error("Failed to update block occupancy in DB", err)
+    }
+
     const now = new Date()
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
     setActivityLogs(prev => [
@@ -196,11 +296,61 @@ export function ParkingManagementScreen({
     setOccupancyError("")
   }
 
-  const toggleShuttle = (blockId: string) => {
+  // Helper occupancy updates from UI click
+  const updateBlockOccupancy = async (blockId: string, newCount: number) => {
+    const targetBlock = blocks.find(b => b.id === blockId)
+    if (!targetBlock) return
+
+    if (newCount < 0 || newCount > targetBlock.totalCapacity) return
+
     setBlocks(prev =>
       prev.map(b => {
         if (b.id === blockId) {
-          const newState = !b.shuttleActive
+          return {
+            ...b,
+            occupied: newCount,
+            available: b.totalCapacity - newCount,
+            lastUpdated: "Just now",
+          }
+        }
+        return b
+      })
+    )
+
+    try {
+      if (targetBlock?.dbId) {
+        const primaryVehicleType = targetBlock.vehicleTypes[0] || "Car"
+        await adminApi.updateParkingOccupancy({
+          block_id: targetBlock.dbId,
+          occupied: newCount,
+          vehicle_type: primaryVehicleType === "Two-Wheeler" ? "Two-Wheeler" : "Car"
+        })
+      }
+    } catch (err) {
+      console.error("Failed to update block counter in DB", err)
+    }
+
+    const now = new Date()
+    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
+    setActivityLogs(prev => [
+      {
+        id: `L-${Date.now()}`,
+        blockId: blockId,
+        time: timeStr,
+        user: activeUser,
+        action: `Occupancy set to ${newCount}`,
+        reason: "Attendant button counter",
+      },
+      ...prev,
+    ])
+  }
+
+  const toggleShuttle = async (blockId: string) => {
+    let newState = false
+    setBlocks(prev =>
+      prev.map(b => {
+        if (b.id === blockId) {
+          newState = !b.shuttleActive
           const now = new Date()
           const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
           
@@ -225,6 +375,19 @@ export function ParkingManagementScreen({
         return b
       })
     )
+
+    try {
+      const { error } = await supabase
+        .from("parking_blocks")
+        .update({
+          shuttle_active: newState,
+          updated_at: new Date().toISOString()
+        })
+        .eq("block_code", blockId)
+      if (error) throw error
+    } catch (err) {
+      console.error("Failed to toggle shuttle in DB", err)
+    }
   }
 
   // Active block details for the Manage Screen view
@@ -350,20 +513,14 @@ export function ParkingManagementScreen({
               <div className="flex gap-2">
                 <button
                   disabled={activeBlock.occupied <= 0}
-                  onClick={() => {
-                    const newCount = activeBlock.occupied - 1
-                    setBlocks(prev => prev.map(b => b.id === activeBlock.id ? { ...b, occupied: newCount, available: b.totalCapacity - newCount } : b))
-                  }}
+                  onClick={() => updateBlockOccupancy(activeBlock.id, activeBlock.occupied - 1)}
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2 text-xs font-bold hover:bg-muted/50 disabled:opacity-50 transition"
                 >
                   <Icon name="Minus" className="size-3.5" /> Devotee Left (-1)
                 </button>
                 <button
                   disabled={activeBlock.occupied >= activeBlock.totalCapacity}
-                  onClick={() => {
-                    const newCount = activeBlock.occupied + 1
-                    setBlocks(prev => prev.map(b => b.id === activeBlock.id ? { ...b, occupied: newCount, available: b.totalCapacity - newCount } : b))
-                  }}
+                  onClick={() => updateBlockOccupancy(activeBlock.id, activeBlock.occupied + 1)}
                   className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2 text-xs font-bold hover:bg-muted/50 disabled:opacity-50 transition"
                 >
                   <Icon name="Plus" className="size-3.5" /> Vehicle Entered (+1)

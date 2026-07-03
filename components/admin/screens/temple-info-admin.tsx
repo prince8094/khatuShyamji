@@ -1,10 +1,5 @@
-"use client"
-
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Icon } from "@/components/shared"
-import { AdminSectionTitle, MetricCard, LiveDot, ActivityItem } from "@/components/admin/admin-shared"
-import type { AdminScreenKey, AdminUser } from "@/lib/admin-data"
+import { useEffect } from "react"
+import { devoteeApi, adminApi } from "@/lib/api-client"
 
 type TempleContentState = {
   id: string
@@ -57,6 +52,54 @@ export function TempleInfoAdminScreen({
     { id: "L-2", time: "09:00 AM", action: "Submitted Monsoon Timings draft for approval", actor: "Rajesh K." },
   ])
 
+  useEffect(() => {
+    devoteeApi.getTempleInfo()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          // 1. Timings
+          const timingsRecord = res.find(r => r.section_key === "darshan_timings")
+          if (timingsRecord && Array.isArray(timingsRecord.content)) {
+            setAartiTimings(timingsRecord.content.map((t: any, i: number) => ({
+              id: t.id || `AT-${i + 1}`,
+              name: t.name,
+              time: t.time,
+              isEditing: false
+            })))
+          }
+
+          // 2. Guides
+          setContentList(prev => prev.map(c => {
+            let key = ""
+            if (c.id === "TC-01" || c.title.includes("Darshan Timings")) key = "darshan_timings"
+            else if (c.id === "TC-03" || c.title.includes("Guidelines")) key = "temple_guidelines"
+
+            if (key) {
+              const rec = res.find(r => r.section_key === key)
+              if (rec) {
+                let text = ""
+                if (Array.isArray(rec.content)) {
+                  if (key === "darshan_timings") {
+                    text = rec.content.map((t: any) => `${t.name}: ${t.time}`).join(" | ")
+                  } else {
+                    text = rec.content.join(" ")
+                  }
+                } else if (typeof rec.content === "string") {
+                  text = rec.content
+                }
+                return {
+                  ...c,
+                  content: text,
+                  lastUpdated: new Date(rec.updated_at).toLocaleTimeString()
+                }
+              }
+            }
+            return c
+          }))
+        }
+      })
+      .catch((err) => console.error("Error loading temple info in admin", err))
+  }, [])
+
   // Modals state
   const [editingItemId, setEditingItemId] = useState<string | null>(null)
   const [editingTitle, setEditingTitle] = useState("")
@@ -79,7 +122,7 @@ export function TempleInfoAdminScreen({
     setScheduleDate("")
   }
 
-  const handleSaveContent = (e: React.FormEvent) => {
+  const handleSaveContent = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!editingItemId) return
 
@@ -95,6 +138,40 @@ export function TempleInfoAdminScreen({
         { id: `L-${Date.now()}`, time: timeStr, action: `Directly published changes to: ${editingTitle}`, actor: activeUser },
         ...prev,
       ])
+
+      let key = ""
+      let title = ""
+      if (editingItemId === "TC-01" || editingTitle.includes("Darshan Timings")) {
+        key = "darshan_timings"
+        title = "Darshan Timings"
+      } else if (editingItemId === "TC-03" || editingTitle.includes("Guidelines")) {
+        key = "temple_guidelines"
+        title = "Temple Guidelines"
+      }
+
+      if (key) {
+        let contentVal: any = editingContent
+        if (key === "temple_guidelines") {
+          contentVal = editingContent.split(/[.\n]/).map(s => s.trim()).filter(Boolean)
+        } else if (key === "darshan_timings") {
+          contentVal = editingContent.split("|").map(p => {
+            const parts = p.split(":")
+            return {
+              name: parts[0]?.trim() || "Aarti",
+              time: parts.slice(1).join(":")?.trim() || "4:30 AM"
+            }
+          })
+        }
+        try {
+          await adminApi.updateTempleInfo({
+            section_key: key,
+            title: title,
+            content: contentVal
+          })
+        } catch (err) {
+          console.error("Failed to save content to database", err)
+        }
+      }
     } else {
       // Route to approval queue / pending
       setContentList(prev =>
@@ -145,7 +222,7 @@ export function TempleInfoAdminScreen({
     setTempTimes(prev => ({ ...prev, [id]: currentTime }))
   }
 
-  const handleSaveTiming = (id: string) => {
+  const handleSaveTiming = async (id: string) => {
     const newTime = tempTimes[id]
     if (!newTime) return
 
@@ -156,11 +233,22 @@ export function TempleInfoAdminScreen({
     const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
 
     if (isTrusted) {
-      setAartiTimings(prev => prev.map(t => (t.id === id ? { ...t, time: newTime, isEditing: false } : t)))
+      const nextTimings = aartiTimings.map(t => (t.id === id ? { ...t, time: newTime, isEditing: false } : t))
+      setAartiTimings(nextTimings)
       setActivityLogs(prev => [
         { id: `L-${Date.now()}`, time: timeStr, action: `Aarti timing direct update: ${target.name} to ${newTime}`, actor: activeUser },
         ...prev,
       ])
+
+      try {
+        await adminApi.updateTempleInfo({
+          section_key: "darshan_timings",
+          title: "Darshan Timings",
+          content: nextTimings.map(t => ({ id: t.id, name: t.name, time: t.time }))
+        })
+      } catch (err) {
+        console.error("Failed to save timings to database", err)
+      }
     } else {
       setAartiTimings(prev => prev.map(t => (t.id === id ? { ...t, isEditing: false } : t)))
       setActivityLogs(prev => [

@@ -9,12 +9,14 @@ import { useAudio } from "@/lib/contexts/AudioContext"
 import { LanguageToggle } from "@/components/ui/language-toggle"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
 
+import { supabase } from "@/lib/supabase"
+
 export function OtpScreen({ 
   navigate,
   onLoginSuccess 
 }: { 
   navigate: (s: any) => void
-  onLoginSuccess: (user: { name: string; phone: string; initials: string }) => void
+  onLoginSuccess: (user: { name: string; phone: string; initials: string; id?: string; city?: string }) => void
 }) {
   const { goBack } = useNavigation();
   const { t } = useLanguage()
@@ -22,10 +24,12 @@ export function OtpScreen({
   const [otp, setOtp] = useState("")
   const [timer, setTimer] = useState(30)
   const [phone, setPhone] = useState("")
+  const [error, setError] = useState("")
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (typeof window !== "undefined") {
-      const savedPhone = localStorage.getItem("temp_login_phone") || "+91 98290 12345"
+      const savedPhone = localStorage.getItem("temp_login_phone") || "+919782877412"
       setPhone(savedPhone)
     }
 
@@ -35,20 +39,79 @@ export function OtpScreen({
     return () => clearInterval(interval)
   }, [])
 
-  const handleVerify = (e: React.FormEvent) => {
+  const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
     if (otp.length === 6) {
-      playTempleBell("triple")
-      
-      const tempUser = localStorage.getItem("temp_signup_user")
-      const loggedUser = tempUser ? JSON.parse(tempUser) : {
-        name: "Mohan Sharma",
-        phone: phone,
-        initials: "MS"
+      setError("")
+      setLoading(true)
+      try {
+        const phoneDigits = phone.replace("+91", "").replace(/\s+/g, "")
+        
+        let authData = null
+        if (process.env.NEXT_PUBLIC_DEV_MODE === "true") {
+          if (otp !== "123456") {
+            throw new Error("Invalid OTP code. Please try again.")
+          }
+          
+          // Log in devotee via email/password under the hood to acquire a valid Supabase JWT
+          const { data, error: authError } = await supabase.auth.signInWithPassword({
+            email: `${phoneDigits}@devotee.com`,
+            password: "devotee_dev_bypass_123"
+          })
+          if (authError) throw authError
+          authData = data
+        } else {
+          const { data, error: authError } = await supabase.auth.verifyOtp({
+            phone: phone,
+            token: otp,
+            type: "sms",
+          })
+          if (authError) throw authError
+          authData = data
+        }
+
+        if (authData?.user) {
+          let profile = null
+          // Retry logic to allow database trigger profile creation
+          for (let attempt = 0; attempt < 3; attempt++) {
+            const { data: p } = await supabase
+              .from("profiles")
+              .select("id, name, phone, city")
+              .eq("id", authData.user.id)
+              .maybeSingle()
+            if (p) {
+              profile = p
+              break
+            }
+            await new Promise((resolve) => setTimeout(resolve, 500))
+          }
+
+          const tempUser = localStorage.getItem("temp_signup_user")
+          const parsedTemp = tempUser ? JSON.parse(tempUser) : null
+
+          const finalUser = {
+            id: authData.user.id,
+            name: profile?.name || parsedTemp?.name || "Pilgrim",
+            phone: phone,
+            city: profile?.city || parsedTemp?.city || "",
+            initials: (profile?.name || parsedTemp?.name || "Pilgrim")
+              .split(" ")
+              .map((n: string) => n[0])
+              .join("")
+              .toUpperCase()
+              .slice(0, 2)
+          }
+
+          playTempleBell("triple")
+          onLoginSuccess(finalUser)
+          navigate("home")
+        }
+      } catch (err: any) {
+        console.error(err)
+        setError(err.message || "Invalid OTP code. Please try again.")
+      } finally {
+        setLoading(false)
       }
-      
-      onLoginSuccess(loggedUser)
-      navigate("home")
     }
   }
 
@@ -177,18 +240,37 @@ export function OtpScreen({
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
                   maxLength={6}
-                  className="w-full text-center text-2xl tracking-[0.35em] font-extrabold rounded-2xl border border-amber-200 bg-white py-4 px-4 text-[#1A120B] shadow-inner outline-none transition duration-300 focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 placeholder-amber-900/25"
+                  disabled={loading}
+                  className="w-full text-center text-2xl tracking-[0.35em] font-extrabold rounded-2xl border border-amber-200 bg-white py-4 px-4 text-[#1A120B] shadow-inner outline-none transition duration-300 focus:border-[#800000] focus:ring-4 focus:ring-[#800000]/10 placeholder-amber-900/25 disabled:opacity-55"
                 />
               </div>
 
+              {error && (
+                <div className="flex items-center gap-2 rounded-xl bg-red-50 border border-red-200 px-4 py-2.5 text-xs font-semibold text-red-600">
+                  <Icon name="TriangleAlert" className="size-4 shrink-0" />
+                  {error}
+                </div>
+              )}
+
               <button
                 type="submit"
-                disabled={otp.length !== 6}
+                disabled={otp.length !== 6 || loading}
                 className="group relative flex w-full items-center justify-center gap-2 overflow-hidden rounded-2xl bg-gradient-to-r from-[#800000] to-[#E25822] py-4 text-base font-bold text-white shadow-[0_6px_20px_rgba(128,0,0,0.25)] transition duration-300 hover:shadow-[0_8px_25px_rgba(128,0,0,0.35)] active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
               >
-                <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                {t("auth.otp.button")}
-                <Icon name="CheckCircle2" className="size-5" />
+                {loading ? (
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <Icon name="Loader2" className="size-5" />
+                  </motion.div>
+                ) : (
+                  <>
+                    <span className="absolute inset-0 bg-white/20 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                    {t("auth.otp.button")}
+                    <Icon name="CheckCircle2" className="size-5" />
+                  </>
+                )}
               </button>
             </form>
 

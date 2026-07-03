@@ -1,14 +1,16 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Icon, Ornament } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
+import { devoteeApi } from "@/lib/api-client"
 
 export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
   const { t, tObject } = useLanguage()
-  const foundItems: any[] = tObject("screens.lostFound.foundItemsList") || []
+  const initialFoundItems: any[] = tObject("screens.lostFound.foundItemsList") || []
+  
   const [activeTab, setActiveTab] = useState<"found" | "report">("found")
   const [submitted, setSubmitted] = useState(false)
   const [form, setForm] = useState({
@@ -21,6 +23,55 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
   })
 
   const [imagePreview, setImagePreview] = useState<string | null>(null)
+  
+  // Database states
+  const [foundList, setFoundList] = useState<any[]>(initialFoundItems)
+  const [loadingFound, setLoadingFound] = useState(false)
+  const [searchTerm, setSearchTerm] = useState("")
+
+  // Fetch live found items on mount
+  useEffect(() => {
+    const loadFoundItems = async () => {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (!supabaseUrl) return
+
+      setLoadingFound(true)
+      try {
+        const data = await devoteeApi.getFoundItems()
+
+        if (data && data.length > 0) {
+          setFoundList(data.map((item: any) => ({
+            id: String(item.id),
+            item: item.item_name,
+            desc: item.description,
+            location: item.location_found,
+            date: item.date_found,
+            color: item.item_color || "bg-amber-50 text-amber-500 border-amber-100",
+            icon: item.category_icon || "PackageSearch",
+            status: item.status,
+            imageUrl: item.image_url
+          })))
+        }
+      } catch (err) {
+        console.error("Failed to load found items", err)
+      } finally {
+        setLoadingFound(false)
+      }
+    }
+
+    loadFoundItems()
+  }, [])
+
+  // Filter list by search term
+  const filteredFound = foundList.filter(item => {
+    if (!searchTerm.trim()) return true
+    const term = searchTerm.toLowerCase()
+    return (
+      item.item.toLowerCase().includes(term) ||
+      item.desc.toLowerCase().includes(term) ||
+      item.location.toLowerCase().includes(term)
+    )
+  })
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -30,12 +81,47 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
     }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setSubmitted(true)
-    setForm({ itemName: "", description: "", date: "", location: "", phone: "", imageName: "" })
-    setImagePreview(null)
-    setTimeout(() => setSubmitted(false), 5000)
+
+    const activeUserStr = localStorage.getItem("current_user")
+    let profileId = null
+    if (activeUserStr) {
+      try {
+        profileId = JSON.parse(activeUserStr).id
+      } catch (err) {}
+    }
+
+    // Default valid fallback profile ID if user is not signed in
+    if (!profileId) {
+      profileId = "00000000-0000-0000-0000-000000000000"
+    }
+
+    const caseNumber = `LF-2026-${Math.floor(Math.random() * 90000 + 10000)}`
+    const dateVal = form.date || new Date().toISOString().split("T")[0]
+    const photoUrl = imagePreview || ""
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl) {
+        await devoteeApi.reportLostItem({
+          item_name: form.itemName,
+          color_description: form.description,
+          location_lost: form.location || "Temple Complex",
+          date_lost: dateVal,
+          contact_phone: form.phone,
+          image_url: photoUrl
+        })
+      }
+
+      setSubmitted(true)
+      setForm({ itemName: "", description: "", date: "", location: "", phone: "", imageName: "" })
+      setImagePreview(null)
+      setTimeout(() => setSubmitted(false), 5000)
+    } catch (err) {
+      console.error("Failed to insert lost report", err)
+      alert("Failed to submit report. Please try again.")
+    }
   }
 
   return (
@@ -98,27 +184,47 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
             </p>
           </div>
 
-          {foundItems.map((item) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 5 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4 shadow-sm"
-            >
-              <span className={`grid size-12 shrink-0 place-items-center rounded-2xl ${item.color}`}>
-                <Icon name={item.icon} className="size-6" />
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="font-heading font-bold text-sm text-foreground truncate">{item.item}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
-                <div className="flex items-center gap-1 mt-1">
-                  <Icon name="MapPin" className="size-3 text-primary" />
-                  <span className="text-[10px] font-semibold text-primary">{item.location}</span>
+          {/* Real-time Search Box */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search found inventory..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+              className="w-full rounded-xl border border-border bg-card py-2.5 pl-9 pr-4 text-xs font-semibold focus:border-primary focus:outline-none"
+            />
+            <Icon name="Search" className="absolute left-3 top-3 size-4 text-muted-foreground" />
+          </div>
+
+          {loadingFound ? (
+            <p className="text-center text-xs text-muted-foreground py-6">Loading active found inventory...</p>
+          ) : filteredFound.length > 0 ? (
+            filteredFound.map((item) => (
+              <motion.div
+                key={item.id}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4 shadow-sm"
+              >
+                <span className={`grid size-12 shrink-0 place-items-center rounded-xl ${item.color}`}>
+                  <Icon name={item.icon} className="size-6" />
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="font-heading font-bold text-sm text-foreground truncate">{item.item}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
+                  <div className="flex items-center gap-1 mt-1">
+                    <Icon name="MapPin" className="size-3 text-primary" />
+                    <span className="text-[10px] font-semibold text-primary">{item.location}</span>
+                  </div>
                 </div>
-              </div>
-              <span className="text-[10px] font-bold text-muted-foreground bg-secondary rounded-lg px-2 py-1">{item.id}</span>
-            </motion.div>
-          ))}
+                <span className="text-[10px] font-bold text-muted-foreground bg-secondary rounded-lg px-2 py-1">{item.id}</span>
+              </motion.div>
+            ))
+          ) : (
+            <p className="text-center text-xs text-muted-foreground py-8 italic border border-dashed rounded-2xl">
+              No matching items found in the inventory ledger.
+            </p>
+          )}
 
           <Ornament />
 
