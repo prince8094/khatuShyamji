@@ -59,19 +59,22 @@ export function ParkingManagementScreen({
             occupied: b.occupied,
             available: b.total_capacity - b.occupied,
             status: b.status as "open" | "full" | "closed",
-            assignedAdmin: b.assigned_admin || "Vikram Singh",
-            vehicleTypes: b.vehicle_types,
-            revenueToday: b.revenue_today,
-            shuttleActive: b.shuttle_active,
-            locationInfo: "Corridor Near Entry",
+            assignedAdmin: b.manager_name || b.assigned_admin || "Vikram Singh",
+            vehicleTypes: b.vehicle_types || ["Car"],
+            revenueToday: b.revenue_today || 0,
+            shuttleActive: b.shuttle_active !== undefined ? b.shuttle_active : true,
+            latitude: b.latitude,
+            longitude: b.longitude,
+            googleMapsUrl: b.google_maps_url,
+            locationInfo: b.manager_name ? `Managed by ${b.manager_name}` : "Corridor Near Entry",
             totalWorkers: 12,
-            todayEntries: b.occupied,
+            todayEntries: b.occupied || 0,
             todayExits: 0,
-            vehicleEntries: b.occupied,
+            vehicleEntries: b.occupied || 0,
             vehicleExits: 0,
-            distribution: { cars: Math.floor(b.occupied * 0.7), bikes: Math.floor(b.occupied * 0.3), others: 0 },
+            distribution: { cars: Math.floor((b.occupied || 0) * 0.7), bikes: Math.floor((b.occupied || 0) * 0.3), others: 0 },
             revenueHistory: ["Mon: ₹30k", "Tue: ₹35k", "Wed: ₹40k"],
-            lastUpdated: new Date(b.updated_at).toLocaleTimeString()
+            lastUpdated: new Date(b.updated_at || new Date()).toLocaleTimeString()
           })))
         }
       } catch (e) {
@@ -120,6 +123,104 @@ export function ParkingManagementScreen({
   const [occupancyBlockId, setOccupancyBlockId] = useState<string | null>(null)
   const [newOccupancy, setNewOccupancy] = useState<number>(0)
   const [occupancyError, setOccupancyError] = useState("")
+
+  // Create / Edit Block form state
+  const [showCreateEditModal, setShowCreateEditModal] = useState(false)
+  const [createEditFormMode, setCreateEditFormMode] = useState<"create" | "edit">("create")
+  const [createEditForm, setCreateEditForm] = useState({
+    id: "",
+    block_code: "PKG-D",
+    name: "Parking Block D",
+    total_capacity: 500,
+    occupied: 0,
+    vehicle_types: "Car, SUV",
+    manager_name: "",
+    latitude: "27.3640",
+    longitude: "75.5100",
+    google_maps_url: "",
+    shuttle_active: true,
+    status: "open"
+  })
+
+  const handleCreateBlockClick = () => {
+    setCreateEditFormMode("create")
+    setCreateEditForm({
+      id: "",
+      block_code: "PKG-" + String.fromCharCode(65 + Math.floor(Math.random() * 22)),
+      name: "",
+      total_capacity: 100,
+      occupied: 0,
+      vehicle_types: "Car, SUV",
+      manager_name: activeUser,
+      latitude: "27.3640",
+      longitude: "75.5100",
+      google_maps_url: "",
+      shuttle_active: true,
+      status: "open"
+    })
+    setShowCreateEditModal(true)
+  }
+
+  const handleEditBlockClick = (block: any) => {
+    setCreateEditFormMode("edit")
+    setCreateEditForm({
+      id: block.dbId || "",
+      block_code: block.id,
+      name: block.name,
+      total_capacity: block.totalCapacity,
+      occupied: block.occupied,
+      vehicle_types: Array.isArray(block.vehicleTypes) ? block.vehicleTypes.join(", ") : String(block.vehicleTypes),
+      manager_name: block.assignedAdmin || "",
+      latitude: block.latitude ? String(block.latitude) : "27.3640",
+      longitude: block.longitude ? String(block.longitude) : "75.5100",
+      google_maps_url: block.googleMapsUrl || "",
+      shuttle_active: block.shuttleActive,
+      status: block.status
+    })
+    setShowCreateEditModal(true)
+  }
+
+  const handleDeleteBlock = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this parking block? This will permanently remove it from the system.")) return
+    try {
+      await adminApi.deleteParkingBlock({ id })
+      setBlocks(prev => prev.filter(b => b.dbId !== id && b.id !== id))
+      setActiveBlockId(null)
+    } catch (err) {
+      console.error("Failed to delete parking block", err)
+      alert("Failed to delete parking block.")
+    }
+  }
+
+  const handleCreateEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const payload = {
+      id: createEditForm.id,
+      block_code: createEditForm.block_code,
+      name: createEditForm.name,
+      total_capacity: Number(createEditForm.total_capacity),
+      occupied: Number(createEditForm.occupied),
+      status: createEditForm.status,
+      vehicle_types: createEditForm.vehicle_types.split(",").map(s => s.trim()).filter(Boolean),
+      manager_name: createEditForm.manager_name,
+      latitude: Number(createEditForm.latitude),
+      longitude: Number(createEditForm.longitude),
+      google_maps_url: createEditForm.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${createEditForm.latitude},${createEditForm.longitude}`,
+      shuttle_active: createEditForm.shuttle_active
+    }
+
+    try {
+      if (createEditFormMode === "create") {
+        await adminApi.addParkingBlock(payload)
+      } else {
+        await adminApi.editParkingBlock(payload)
+      }
+      setShowCreateEditModal(false)
+    } catch (err: any) {
+      console.error("Failed to save parking block", err)
+      alert(err.message || "Failed to save parking block.")
+    }
+  }
 
   // Filter blocks list based on permission
   const visibleBlocks = blocks.filter((b) => {
@@ -437,6 +538,22 @@ export function ParkingManagementScreen({
               </p>
             </div>
             <div className="flex items-center gap-3">
+              {isSuperAdmin && (
+                <>
+                  <button
+                    onClick={() => handleEditBlockClick(activeBlock)}
+                    className="rounded-xl border border-white/20 bg-white/10 px-3 py-2 text-xs font-bold text-white hover:bg-white/25 flex items-center gap-1"
+                  >
+                    <Icon name="Edit3" className="size-3.5" /> Edit
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBlock(activeBlock.dbId || activeBlock.id)}
+                    className="rounded-xl border border-red-500 bg-red-600/30 px-3 py-2 text-xs font-bold text-white hover:bg-red-700/50 flex items-center gap-1"
+                  >
+                    <Icon name="Trash2" className="size-3.5" /> Delete
+                  </button>
+                </>
+              )}
               <span className={`inline-flex items-center gap-1.5 rounded-full border border-white/25 px-3 py-1.5 text-xs font-bold bg-white/10`}>
                 <span className={cn("size-2 rounded-full", 
                   activeBlock.status === "open" ? "bg-green-400 animate-pulse" :
@@ -642,9 +759,20 @@ export function ParkingManagementScreen({
           title="Assigned Parking Blocks"
           icon="LayoutGrid"
           action={
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-green-600">
-              <LiveDot color="bg-green-500" /> Live
-            </span>
+            <div className="flex items-center gap-2">
+              {isSuperAdmin && (
+                <button
+                  onClick={() => handleCreateBlockClick()}
+                  className="flex items-center gap-1 rounded-xl bg-green-600 hover:bg-green-700 px-3 py-1.5 text-xs font-bold text-white shadow-sm transition"
+                >
+                  <Icon name="Plus" className="size-3.5" />
+                  Add Block
+                </button>
+              )}
+              <span className="flex items-center gap-1.5 text-[11px] font-semibold text-green-600">
+                <LiveDot color="bg-green-500" /> Live
+              </span>
+            </div>
           }
         />
         <div className="grid grid-cols-1 gap-4">
@@ -746,6 +874,15 @@ export function ParkingManagementScreen({
                   >
                     <Icon name="Settings" className="size-3.5 text-muted-foreground" /> Manage
                   </button>
+                  {isSuperAdmin && (
+                    <button
+                      onClick={() => handleDeleteBlock(block.dbId || block.id)}
+                      className="flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-xs font-bold text-red-650 hover:bg-red-100 transition active:scale-[0.98]"
+                      title="Delete Block"
+                    >
+                      <Icon name="Trash2" className="size-3.5" />
+                    </button>
+                  )}
                   <button
                     onClick={() => {
                       setOccupancyBlockId(block.id)
@@ -813,6 +950,7 @@ export function ParkingManagementScreen({
       {/* Modals Portals */}
       {renderCloseBlockModal()}
       {renderOccupancyModal()}
+      {renderCreateEditModal()}
     </div>
   )
 
@@ -964,6 +1102,180 @@ export function ParkingManagementScreen({
                 className="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-xs font-bold text-white shadow-sm"
               >
                 Update Count
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    )
+  }
+
+  function renderCreateEditModal() {
+    if (!showCreateEditModal) return null
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-lg rounded-2xl border border-border bg-card p-5 shadow-xl max-h-[90vh] overflow-y-auto"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-heading text-base font-bold text-foreground">
+              {createEditFormMode === "create" ? "Add New Parking Block" : "Edit Parking Block"}
+            </h3>
+            <button
+              onClick={() => setShowCreateEditModal(false)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Icon name="X" className="size-5" />
+            </button>
+          </div>
+          <form onSubmit={handleCreateEditSubmit} className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Block Code *</label>
+                <input
+                  type="text"
+                  value={createEditForm.block_code}
+                  onChange={(e) => setCreateEditForm({ ...createEditForm, block_code: e.target.value })}
+                  placeholder="e.g. PKG-D"
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Block Name *</label>
+                <input
+                  type="text"
+                  value={createEditForm.name}
+                  onChange={(e) => setCreateEditForm({ ...createEditForm, name: e.target.value })}
+                  placeholder="e.g. Parking Block D"
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Total Capacity *</label>
+                <input
+                  type="number"
+                  value={createEditForm.total_capacity}
+                  onChange={(e) => setCreateEditForm({ ...createEditForm, total_capacity: Number(e.target.value) })}
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                  required
+                  min={1}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Current Occupancy</label>
+                <input
+                  type="number"
+                  value={createEditForm.occupied}
+                  onChange={(e) => setCreateEditForm({ ...createEditForm, occupied: Number(e.target.value) })}
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                  min={0}
+                  max={createEditForm.total_capacity}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Vehicle Types (comma separated) *</label>
+              <input
+                type="text"
+                value={createEditForm.vehicle_types}
+                onChange={(e) => setCreateEditForm({ ...createEditForm, vehicle_types: e.target.value })}
+                placeholder="e.g. Car, SUV, Two-Wheeler"
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Manager Name</label>
+              <input
+                type="text"
+                value={createEditForm.manager_name}
+                onChange={(e) => setCreateEditForm({ ...createEditForm, manager_name: e.target.value })}
+                placeholder="e.g. Vikram Singh"
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none font-bold"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Latitude</label>
+                <input
+                  type="text"
+                  value={createEditForm.latitude}
+                  onChange={(e) => setCreateEditForm({ ...createEditForm, latitude: e.target.value })}
+                  placeholder="e.g. 27.3640"
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Longitude</label>
+                <input
+                  type="text"
+                  value={createEditForm.longitude}
+                  onChange={(e) => setCreateEditForm({ ...createEditForm, longitude: e.target.value })}
+                  placeholder="e.g. 75.5100"
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Google Maps URL</label>
+              <input
+                type="text"
+                value={createEditForm.google_maps_url}
+                onChange={(e) => setCreateEditForm({ ...createEditForm, google_maps_url: e.target.value })}
+                placeholder="e.g. https://www.google.com/maps/..."
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-6 py-2">
+              <label className="flex items-center gap-2 text-xs font-bold text-foreground cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={createEditForm.shuttle_active}
+                  onChange={(e) => setCreateEditForm({ ...createEditForm, shuttle_active: e.target.checked })}
+                  className="rounded text-green-600 focus:ring-green-600"
+                />
+                Shuttle Service Active
+              </label>
+
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1">Status</label>
+                <select
+                  value={createEditForm.status}
+                  onChange={(e) => setCreateEditForm({ ...createEditForm, status: e.target.value })}
+                  className="rounded-xl border border-border bg-muted/40 p-2 text-xs font-bold focus:border-green-600 focus:outline-none"
+                >
+                  <option value="open">Open</option>
+                  <option value="full">Full</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setShowCreateEditModal(false)}
+                className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold hover:bg-muted/50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-xs font-bold text-white shadow-sm"
+              >
+                Save Block
               </button>
             </div>
           </form>

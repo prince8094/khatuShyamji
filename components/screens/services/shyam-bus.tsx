@@ -13,12 +13,17 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
   const { goBack } = useNavigation();
   const { t } = useLanguage()
   const [selectedRoute, setSelectedRoute] = useHistoryState<any>("route", null)
+  const getTodayStr = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+  }
+
   const [bookingForm, setBookingForm] = useState({
     name: "",
     phone: "",
     timing: "",
     seatCount: "1",
-    date: "",
+    date: getTodayStr(),
   })
   const [booked, setBooked] = useState(false)
 
@@ -87,7 +92,7 @@ export function ShyamBusScreen({ navigate }: { navigate: (s: ScreenKey) => void 
       setTimeout(() => {
         setBooked(false)
         goBack()
-        setBookingForm({ name: "", phone: "", timing: "", seatCount: "1", date: "" })
+         setBookingForm({ name: "", phone: "", timing: "", seatCount: "1", date: getTodayStr() })
         setSelectedRoute(null)
       }, 4000)
     } catch (err) {

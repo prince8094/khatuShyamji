@@ -29,17 +29,19 @@ export function DonationManagementScreen({ navigate }: { navigate: (s: AdminScre
       .then((res: any) => {
         if (Array.isArray(res)) {
           setDonations(res.map((d: any, index: number) => ({
-            id: d.id || `DN-${index + 1}`,
+            id: d.donation_number || d.id || `DN-${index + 1}`,
             donorName: d.donor_name || "Devotee Contribution",
             amount: Number(d.amount),
-            date: new Date(d.created_at || d.donated_at).toLocaleDateString("en-IN"),
-            purpose: d.donation_type ? (d.donation_type.charAt(0).toUpperCase() + d.donation_type.slice(1)) : "General",
-            receiptGenerated: true,
-            status: d.status || "successful",
+            date: new Date(d.created_at).toLocaleDateString("en-IN"),
+            purpose: d.purpose || "General Fund",
+            category: d.purpose || "General Fund",
+            receiptGenerated: d.receipt_generated ?? true,
+            status: "successful",
             email: d.email || "devotee@example.com",
             phone: d.phone || "+91 8094504520",
-            panNumber: d.pan_card || "PAN-NOT-PROVIDED",
-            txnId: d.transaction_id || `TXN-${d.id?.substring(0, 8) || "N/A"}`
+            panNumber: d.pan_number || "PAN-NOT-PROVIDED",
+            txnId: d.donation_number || `TXN-${d.id?.substring(0, 8) || "N/A"}`,
+            mode: d.payment_mode || "UPI"
           })))
         }
       })
@@ -75,7 +77,42 @@ export function DonationManagementScreen({ navigate }: { navigate: (s: AdminScre
   // Simulated download trigger
   const handleDownloadReceipt = (donation: ExtendedDonation) => {
     setDownloadingId(donation.id)
+    
+    // Create text content for receipt
+    const receiptText = `-------------------------------------------
+          SHRI KHATU SHYAM JI TEMPLE
+               DONATION RECEIPT
+-------------------------------------------
+Receipt Number: ${donation.id}
+Date/Time: ${new Date(donation.date).toLocaleString()}
+Transaction ID: ${donation.txnId}
+Status: SUCCESSFUL
+-------------------------------------------
+Donor Details:
+Name: ${donation.donorName}
+Category: ${donation.purpose}
+Mode of Payment: ${donation.mode}
+-------------------------------------------
+Donation Amount: INR ${donation.amount.toLocaleString()}.00
+-------------------------------------------
+Thank you for your generous contribution.
+May Lord Shyam bless you with peace and prosperity.
+
+Official Digital Receipt - Shri Shyam Mandir Board
+-------------------------------------------`;
+
+    const blob = new Blob([receiptText], { type: "text/plain;charset=utf-8" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `receipt_${donation.id}.txt`
+    
     setTimeout(() => {
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      
       setDownloadingId(null)
       setToastMsg(`Receipt generated for ${donation.donorName} (${donation.id}) and saved to downloads!`)
       setTimeout(() => setToastMsg(""), 4000)

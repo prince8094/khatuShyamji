@@ -76,23 +76,87 @@ export function LoginScreen({
     }
   }
 
-  // Google Sign In handler placeholder for future integration
-  const handleGoogleLogin = () => {
+  const handleGoogleLogin = async () => {
     playTempleBell('single')
     
-    // TODO: Connect Supabase Google OAuth Authentication later
-    // Example:
-    // const { data, error } = await supabase.auth.signInWithOAuth({
-    //   provider: 'google',
-    //   options: { redirectTo: window.location.origin }
-    // })
+    if (process.env.NEXT_PUBLIC_DEV_MODE === "true") {
+      setLoading(true)
+      try {
+        const mockPhone = "+999999999999"
+        const email = "999999999999@devotee.com"
+        
+        // 1. Initialize auth on the server (makes sure user and profile exist)
+        const initRes = await fetch("/api/devotee/auth-init", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            phone: mockPhone, 
+            signup: false, 
+            name: "Mock Google Devotee",
+            city: "Shyam Dham"
+          })
+        })
+        
+        let initResult = await initRes.json()
+        if (!initResult.success) {
+          const signupRes = await fetch("/api/devotee/auth-init", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ 
+              phone: mockPhone, 
+              signup: true,
+              name: "Mock Google Devotee",
+              city: "Shyam Dham"
+            })
+          })
+          initResult = await signupRes.json()
+        }
+        
+        // 2. Sign in with password on client (dev bypass)
+        const { data, error: authError } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: "devotee_dev_bypass_123"
+        })
+        if (authError) throw authError
+        
+        if (data?.user) {
+          const finalUser = {
+            id: data.user.id,
+            name: "Mock Google Devotee",
+            phone: mockPhone,
+            city: "Shyam Dham",
+            initials: "GD"
+          }
+          if (onLoginSuccess) {
+            onLoginSuccess(finalUser)
+          }
+          navigate("home")
+        }
+      } catch (err: any) {
+        console.error("Mock Google login failed", err)
+        setGoogleMessage(err.message || "Mock Google login failed.")
+        setTimeout(() => setGoogleMessage(""), 3000)
+      } finally {
+        setLoading(false)
+      }
+      return
+    }
 
-    setGoogleMessage("Google Sign-In will be available after backend integration.")
-    
-    // Clear message after 3 seconds
-    setTimeout(() => {
-      setGoogleMessage("")
-    }, 3000)
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin
+        }
+      })
+      if (error) throw error
+    } catch (err: any) {
+      console.error("Google login failed", err)
+      setGoogleMessage(err.message || "Google Sign-In failed.")
+      setTimeout(() => {
+        setGoogleMessage("")
+      }, 3000)
+    }
   }
 
   return (

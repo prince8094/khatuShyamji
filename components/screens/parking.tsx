@@ -7,8 +7,8 @@ import { supabase } from "@/lib/supabase"
 const parkingLots = [
   {
     id: "A",
-    name: "Parking Lot A",
-    nameHi: "पार्किंग लॉट A",
+    name: "Parking Block A",
+    nameHi: "पार्किंग ब्लॉक A",
     location: "Near Main Temple Gate",
     locationHi: "मुख्य मंदिर द्वार के पास",
     capacity: 800,
@@ -20,8 +20,8 @@ const parkingLots = [
   },
   {
     id: "B",
-    name: "Parking Lot B",
-    nameHi: "पार्किंग लॉट B",
+    name: "Parking Block B",
+    nameHi: "पार्किंग ब्लॉक B",
     location: "Gate 3 – Near Shyam Kund",
     locationHi: "गेट 3 – श्याम कुंड के पास",
     capacity: 1200,
@@ -33,8 +33,8 @@ const parkingLots = [
   },
   {
     id: "C",
-    name: "Parking Lot C",
-    nameHi: "पार्किंग लॉट C",
+    name: "Parking Block C",
+    nameHi: "पार्किंग ब्लॉक C",
     location: "Ringas Road – Outer Zone",
     locationHi: "रिंगस रोड – बाहरी क्षेत्र",
     capacity: 2000,
@@ -70,6 +70,61 @@ const rules = [
 export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
   const { t, lang } = useLanguage()
   const [parkingLotsList, setParkingLotsList] = useState<any[]>(parkingLots)
+  const [rulesList, setRulesList] = useState<any[]>([])
+  const [shuttleSchedule, setShuttleSchedule] = useState<string[]>([
+    "Lot B to Gate: 4:00 AM – 10:30 PM, every 15 min",
+    "Lot C to Gate: 5:00 AM – 10:30 PM, every 20 min"
+  ])
+
+  useEffect(() => {
+    const fetchInfo = () => {
+      devoteeApi.getTempleInfo()
+        .then((res: any) => {
+          if (Array.isArray(res)) {
+            const rec = res.find(r => r.section_key === "parking_guidelines")
+            if (rec && Array.isArray(rec.content)) {
+              setRulesList(rec.content.map((text: string, i: number) => {
+                const iconMap = ["Clock", "Ban", "BusFront", "AlertTriangle", "Phone"]
+                return {
+                  icon: iconMap[i] || "Info",
+                  en: text,
+                  hi: text
+                }
+              }))
+            } else {
+              setRulesList(rules)
+            }
+
+            const shuttleRec = res.find(r => r.section_key === "shuttle_schedule")
+            if (shuttleRec && Array.isArray(shuttleRec.content)) {
+              setShuttleSchedule(shuttleRec.content)
+            }
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load parking info", err)
+          setRulesList(rules)
+        })
+    }
+
+    fetchInfo()
+
+    const channel = supabase
+      .channel("public:temple_info_parking")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "temple_information" },
+        () => {
+          console.log("Realtime temple_information change detected in parking!")
+          fetchInfo()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   useEffect(() => {
     const fetchBlocks = () => {
@@ -78,19 +133,21 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
           if (Array.isArray(res) && res.length > 0) {
             setParkingLotsList(res.map((item: any) => {
               const cleanCode = item.block_code.replace("PKG-", "")
-              const mapped = parkingLots.find(p => p.name.toLowerCase() === item.name.toLowerCase() || p.id === cleanCode)
+              const available = item.total_capacity - item.occupied
+              const statusMapped = item.status === "full" ? "full" : (item.status === "closed" ? "closed" : (available < 20 ? "limited" : "available"))
               return {
-                id: cleanCode || mapped?.id || "A",
+                id: cleanCode || item.block_code,
                 name: item.name,
-                nameHi: mapped?.nameHi || item.name,
-                location: mapped?.location || "Near Temple Gate",
-                locationHi: mapped?.locationHi || "मंदिर द्वार के पास",
+                nameHi: item.name,
+                location: item.manager_name ? `Manager: ${item.manager_name}` : "Khatu Zone",
+                locationHi: item.manager_name ? `प्रबंधक: ${item.manager_name}` : "खाटू क्षेत्र",
                 capacity: item.total_capacity,
-                available: item.total_capacity - item.occupied,
-                status: item.status === "full" ? "full" : (item.status === "closed" ? "closed" : ((item.total_capacity - item.occupied) < 20 ? "limited" : "available")),
-                distance: mapped?.distance || "500m to gate",
-                fee: mapped?.fee || "Free",
-                shuttle: item.shuttle_active
+                available: available,
+                status: statusMapped,
+                distance: item.latitude && item.longitude ? `${Number(item.latitude).toFixed(4)}, ${Number(item.longitude).toFixed(4)}` : "GPS Mapped",
+                fee: "Free",
+                shuttle: item.shuttle_active,
+                google_maps_url: item.google_maps_url
               }
             }))
           }
@@ -231,6 +288,15 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
                   </span>
                 )}
               </div>
+              {lot.google_maps_url && (
+                <button
+                  onClick={() => window.open(lot.google_maps_url, "_blank")}
+                  className="mt-3 flex w-full items-center justify-center gap-1.5 rounded-xl bg-muted/60 py-2 text-xs font-bold text-foreground transition-all hover:bg-[#FFF3E0] hover:text-[#D97706] border border-border"
+                >
+                  <Icon name="Navigation" className="size-3.5" />
+                  Navigate to {lot.name}
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -240,7 +306,7 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
       <section className="rounded-3xl border border-[#D4AF37]/40 bg-gradient-to-b from-[#FFF8F0] to-card p-5 shadow-sm">
         <SectionTitle title="Parking Guidelines" hindi="पार्किंग दिशानिर्देश" />
         <div className="space-y-3">
-          {rules.map((rule, i) => (
+          {rulesList.map((rule, i) => (
             <div key={i} className="flex items-start gap-3">
               <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-[#D97706]/10 text-[#D97706]">
                 <Icon name={rule.icon} className="size-4" />
@@ -258,7 +324,7 @@ export function ParkingScreen({ navigate }: { navigate: (s: any) => void }) {
           <h2 className="font-heading font-bold text-foreground">{t("screens.parking.freeShuttleService")}</h2>
         </div>
         <div className="space-y-2">
-          {["Lot B to Gate: 4:00 AM – 10:30 PM, every 15 min", "Lot C to Gate: 5:00 AM – 10:30 PM, every 20 min"].map((s, i) => (
+          {shuttleSchedule.map((s, i) => (
             <div key={i} className="flex items-center gap-3 rounded-xl bg-secondary/50 px-3 py-2.5">
               <Icon name="Clock" className="size-4 text-muted-foreground shrink-0" />
               <p className="text-sm font-medium text-foreground">{s}</p>

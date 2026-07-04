@@ -15,16 +15,72 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
   const { t } = useLanguage()
   const [category, setCategory] = useState<string>("all")
   const [selectedHotel, setSelectedHotel] = useHistoryState<any>("hotel", null)
+  const getTodayStr = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+  }
+
   const [bookingForm, setBookingForm] = useState({
     name: "",
     phone: "",
-    checkIn: "",
+    checkIn: getTodayStr(),
     guests: "2",
     rooms: "1",
   })
   const [booked, setBooked] = useState(false)
 
   const [hotelsList, setHotelsList] = useState<any[]>([])
+
+  // Owner Registration Modal states
+  const [showRegisterForm, setShowRegisterForm] = useState(false)
+  const [registerLoading, setRegisterLoading] = useState(false)
+  const [registerSuccess, setRegisterSuccess] = useState(false)
+  const [regForm, setRegForm] = useState({
+    name: "",
+    type: "hotel",
+    stars: "3",
+    totalRooms: "",
+    priceRange: "",
+    managerName: "",
+    contactPhone: "",
+    address: "",
+    mapsLink: ""
+  })
+
+  const handleRegisterProperty = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setRegisterLoading(true)
+    try {
+      await devoteeApi.registerHotelDevotee({
+        name: regForm.name,
+        type: regForm.type,
+        stars: parseInt(regForm.stars) || 3,
+        total_rooms: parseInt(regForm.totalRooms) || 10,
+        price_range: regForm.priceRange,
+        manager_name: regForm.managerName,
+        contact_phone: regForm.contactPhone,
+        address: regForm.address,
+        maps_link: regForm.mapsLink || null
+      })
+      setRegisterSuccess(true)
+      setRegForm({
+        name: "",
+        type: "hotel",
+        stars: "3",
+        totalRooms: "",
+        priceRange: "",
+        managerName: "",
+        contactPhone: "",
+        address: "",
+        mapsLink: ""
+      })
+    } catch (err: any) {
+      console.error("Failed to register property", err)
+      alert("Submission failed: " + (err.message || "Please try again."))
+    } finally {
+      setRegisterLoading(false)
+    }
+  }
 
   useEffect(() => {
     const fetchHotels = async () => {
@@ -111,7 +167,7 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
       setTimeout(() => {
         setBooked(false)
         goBack()
-        setBookingForm({ name: "", phone: "", checkIn: "", guests: "2", rooms: "1" })
+         setBookingForm({ name: "", phone: "", checkIn: getTodayStr(), guests: "2", rooms: "1" })
         setSelectedHotel(null)
       }, 4000)
     } catch (err) {
@@ -204,6 +260,18 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
                 </div>
               </div>
             ))}
+          </div>
+
+          {/* Owner Registration Trigger */}
+          <div className="mt-8 rounded-3xl border border-dashed border-[#D4AF37] bg-[#FFF8F0] p-6 text-center shadow-sm">
+            <h3 className="font-heading font-bold text-sm text-[#8a4b12] mb-1.5">Are you a Hotel or Dharamshala Owner?</h3>
+            <p className="text-xs text-[#8a5a22] mb-4">Submit your property configuration details to join our trusted stays inventory directory.</p>
+            <button
+              onClick={() => setShowRegisterForm(true)}
+              className="rounded-xl bg-[#D97706] hover:bg-[#B45309] text-white px-5 py-2.5 text-xs font-bold shadow-md transition-all active:scale-[0.98]"
+            >
+              💼 Register Your Property
+            </button>
           </div>
         </>
       ) : (
@@ -315,6 +383,167 @@ export function HotelBookingScreen({ navigate }: { navigate: (s: ScreenKey) => v
               </form>
             )}
           </AnimatePresence>
+        </div>
+      )}
+
+      {showRegisterForm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-lg rounded-3xl border border-border bg-card p-5 shadow-2xl overflow-y-auto max-h-[90vh]"
+          >
+            <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
+              <h3 className="font-heading text-lg font-bold text-foreground">Register Stay Property</h3>
+              <button onClick={() => setShowRegisterForm(false)} className="text-muted-foreground hover:text-foreground">
+                <Icon name="X" className="size-5" />
+              </button>
+            </div>
+
+            {registerSuccess ? (
+              <div className="text-center py-6 space-y-3">
+                <span className="mx-auto grid size-14 place-items-center rounded-full bg-green-50 text-green-600">
+                  <Icon name="CheckCircle" className="size-8" />
+                </span>
+                <h4 className="font-heading font-bold text-green-600">Application Submitted</h4>
+                <p className="text-xs text-muted-foreground max-w-xs mx-auto">
+                  Your listing proposal has been received. Our TOCC accommodation administrators will verify your credentials and activate booking status.
+                </p>
+                <button
+                  onClick={() => {
+                    setShowRegisterForm(false)
+                    setRegisterSuccess(false)
+                  }}
+                  className="mt-4 rounded-xl bg-primary text-white px-5 py-2 text-xs font-bold"
+                >
+                  Done
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleRegisterProperty} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1">Property Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={regForm.name}
+                    onChange={e => setRegForm({ ...regForm, name: e.target.value })}
+                    placeholder="e.g. Shyam Kripa Guest House"
+                    className="w-full text-xs rounded-xl border border-border bg-card p-2"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1">Type</label>
+                    <select
+                      value={regForm.type}
+                      onChange={e => setRegForm({ ...regForm, type: e.target.value })}
+                      className="w-full text-xs rounded-xl border border-border bg-card p-2"
+                    >
+                      <option value="hotel">Hotel</option>
+                      <option value="dharamshala">Dharamshala</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1">Star Rating (1-5)</label>
+                    <select
+                      value={regForm.stars}
+                      onChange={e => setRegForm({ ...regForm, stars: e.target.value })}
+                      className="w-full text-xs rounded-xl border border-border bg-card p-2"
+                    >
+                      {["1", "2", "3", "4", "5"].map(s => (
+                        <option key={s} value={s}>{s} Stars</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1">Total Rooms</label>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      value={regForm.totalRooms}
+                      onChange={e => setRegForm({ ...regForm, totalRooms: e.target.value })}
+                      placeholder="e.g. 24"
+                      className="w-full text-xs rounded-xl border border-border bg-card p-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1">Price Range</label>
+                    <input
+                      type="text"
+                      required
+                      value={regForm.priceRange}
+                      onChange={e => setRegForm({ ...regForm, priceRange: e.target.value })}
+                      placeholder="e.g. ₹1,200 – ₹3,000"
+                      className="w-full text-xs rounded-xl border border-border bg-card p-2"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1">Manager Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={regForm.managerName}
+                      onChange={e => setRegForm({ ...regForm, managerName: e.target.value })}
+                      placeholder="e.g. Vikram Singh"
+                      className="w-full text-xs rounded-xl border border-border bg-card p-2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1">Contact Phone</label>
+                    <input
+                      type="tel"
+                      required
+                      value={regForm.contactPhone}
+                      onChange={e => setRegForm({ ...regForm, contactPhone: e.target.value })}
+                      placeholder="e.g. +91 98290 XXXXX"
+                      className="w-full text-xs rounded-xl border border-border bg-card p-2"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1">Address Location</label>
+                  <textarea
+                    required
+                    rows={2}
+                    value={regForm.address}
+                    onChange={e => setRegForm({ ...regForm, address: e.target.value })}
+                    placeholder="e.g. Ringas Road, near bypass junction, Khatu Dham"
+                    className="w-full text-xs rounded-xl border border-border bg-card p-2 resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-foreground mb-1">Google Maps Link (Optional)</label>
+                  <input
+                    type="url"
+                    value={regForm.mapsLink}
+                    onChange={e => setRegForm({ ...regForm, mapsLink: e.target.value })}
+                    placeholder="https://maps.google.com/..."
+                    className="w-full text-xs rounded-xl border border-border bg-card p-2"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={registerLoading}
+                  className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-primary to-secondary py-3 text-xs font-bold text-white shadow-md transition hover:shadow-lg active:scale-[0.98] disabled:opacity-50"
+                >
+                  {registerLoading && <Icon name="Loader" className="size-4 animate-spin" />}
+                  Submit Proposal Listing
+                </button>
+              </form>
+            )}
+          </motion.div>
         </div>
       )}
     </div>

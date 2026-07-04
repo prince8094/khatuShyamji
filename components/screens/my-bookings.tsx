@@ -6,6 +6,7 @@ import { Icon, Pill, QrMock } from "@/components/shared"
 import { bookings, type Booking, type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
+import { devoteeApi } from "@/lib/api-client"
 import QRCode from "qrcode"
 
 const tabs: { key: Booking["status"]; label: string; labelHi: string }[] = [
@@ -23,37 +24,41 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
   const [tab, setTab] = useState<Booking["status"]>("upcoming")
   const [cancelId, setCancelId] = useState<string | null>(null)
   const [userBookings, setUserBookings] = useState<Booking[]>([])
+  const [loading, setLoading] = useState(false)
+
+  const fetchBookings = async () => {
+    setLoading(true)
+    try {
+      const data = await devoteeApi.getDevoteeBookings()
+      if (data && data.length > 0) {
+        setUserBookings(data)
+      } else {
+        const stored = localStorage.getItem("khatu_bookings")
+        if (stored) setUserBookings(JSON.parse(stored))
+      }
+    } catch (err) {
+      console.error("Failed to load user bookings", err)
+      const stored = localStorage.getItem("khatu_bookings")
+      if (stored) setUserBookings(JSON.parse(stored))
+    } finally {
+      setLoading(false)
+    }
+  }
 
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const stored = localStorage.getItem("khatu_bookings")
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored)
-          // Merge stored bookings with unique mock bookings
-          const merged = [...parsed]
-          bookings.forEach((mb) => {
-            if (!merged.some((b) => b.id === mb.id)) {
-              merged.push(mb)
-            }
-          })
-          setUserBookings(merged)
-        } catch (e) {
-          setUserBookings(bookings)
-        }
-      } else {
-        setUserBookings(bookings)
-        localStorage.setItem("khatu_bookings", JSON.stringify(bookings))
-      }
-    }
+    fetchBookings()
   }, [])
 
-  const handleCancelBooking = (id: string) => {
-    setUserBookings((prev) => {
-      const updated = prev.map((b) => b.id === id ? { ...b, status: "cancelled" as const } : b)
-      localStorage.setItem("khatu_bookings", JSON.stringify(updated))
-      return updated
-    })
+  const handleCancelBooking = async (id: string) => {
+    setUserBookings((prev) =>
+      prev.map((b) => b.id === id ? { ...b, status: "cancelled" as const } : b)
+    )
+    try {
+      await devoteeApi.cancelDevoteeBooking({ booking_number: id })
+      fetchBookings()
+    } catch (err) {
+      console.error("Failed to persist booking cancellation in database", err)
+    }
     setCancelId(null)
   }
 
@@ -88,7 +93,12 @@ export function MyBookingsScreen({ navigate }: { navigate: (s: ScreenKey) => voi
         ))}
       </div>
 
-      {list.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-12 flex flex-col items-center gap-2">
+          <Icon name="Loader" className="size-6 animate-spin text-primary" />
+          <p className="text-xs text-muted-foreground font-semibold">Loading bookings...</p>
+        </div>
+      ) : list.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border bg-card p-10 text-center">
           <span className="mx-auto grid size-16 place-items-center rounded-full bg-secondary text-muted-foreground">
             <Icon name="Ticket" className="size-8" />

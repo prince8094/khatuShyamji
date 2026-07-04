@@ -124,7 +124,10 @@ export function ActivityItem({
   actor: string
   icon: string
 }) {
-  const colors = deptColors[department]
+  const colors = (deptColors as any)[department] || 
+                 (deptColors as any)[String(department).toLowerCase()] || 
+                 (deptColors as any)[String(department).toLowerCase().replace("-", "")] || 
+                 { bg: "bg-slate-50", text: "text-slate-700", border: "border-slate-200" }
   return (
     <div className="flex items-start gap-3 py-3 border-b border-border/50 last:border-0">
       <span className={cn("mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl", colors.bg, colors.text)}>

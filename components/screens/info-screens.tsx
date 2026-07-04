@@ -10,6 +10,7 @@ import { ParkingScreen } from "@/components/screens/parking"
 import { TrafficScreen as TrafficFullScreen } from "@/components/screens/traffic"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { devoteeApi } from "@/lib/api-client"
+import { supabase } from "@/lib/supabase"
 
 export function InfoScreens({
   screen,
@@ -169,47 +170,145 @@ function TrafficScreen() {
 }
 
 function OfflineScreen() {
-  const { t, tObject } = useLanguage()
-  const offlineCentersList: any[] = tObject("info.offline.offlineCentersList") || []
+  const { t } = useLanguage()
+  const [centers, setCenters] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null)
+
+  const fetchCenters = () => {
+    devoteeApi.getBookingCenters()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          setCenters(res)
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load booking centers", err)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }
+
+  useEffect(() => {
+    fetchCenters()
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserCoords({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          })
+        },
+        (error) => {
+          console.warn("Geolocation permission denied or error:", error)
+        }
+      )
+    }
+
+    const channel = supabase
+      .channel("public:offline_booking_centers_devotee")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "offline_booking_centers" },
+        () => {
+          console.log("Realtime offline centers update detected!")
+          fetchCenters()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  const getDistance = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371
+    const dLat = ((lat2 - lat1) * Math.PI) / 180
+    const dLon = ((lon2 - lon1) * Math.PI) / 180
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((lat1 * Math.PI) / 180) *
+        Math.cos((lat2 * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2)
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+    return R * c
+  }
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">
       <section className="flex items-center gap-3 rounded-2xl border border-[#FFE0B2] bg-[#FFF8E7] p-4">
         <Icon name="Info" className="size-6 shrink-0 text-[#FF8C00]" />
         <p className="text-sm leading-relaxed text-[#8a5a22]">
-          {t("info.offline.infoText")}
+          {t("info.offline.infoText", "Offline Darshan passes and registration services can be obtained from the physical booking centers listed below. Carry valid ID proofs.")}
         </p>
       </section>
 
-      <SectionTitle title={t("info.offline.title")} />
-      <div className="space-y-3">
-        {offlineCentersList.map((c) => (
-          <article key={c.name} className="rounded-3xl border border-border bg-card p-4 shadow-sm">
-            <div className="flex items-start gap-3">
-              <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#FFF3E0] text-[#FF8C00]">
-                <Icon name="Building2" className="size-5" />
-              </span>
-              <div className="flex-1">
-                <p className="font-heading text-sm font-bold text-foreground">{c.name}</p>
-                <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Icon name="MapPin" className="size-3.5" />
-                  {c.area}
-                </p>
-                <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
-                  <Icon name="Clock" className="size-3.5" />
-                  {c.hours}
-                </p>
-              </div>
-            </div>
-            <a
-              href={`tel:${c.phone}`}
-              className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FF8C00] to-[#FFA726] py-2.5 text-sm font-bold text-white active:scale-[0.99]"
-            >
-              <Icon name="Phone" className="size-4" />
-              {c.phone}
-            </a>
-          </article>
-        ))}
-      </div>
+      <SectionTitle title={t("info.offline.title", "Offline Registration Centers")} />
+
+      {loading ? (
+        <div className="flex h-32 items-center justify-center">
+          <div className="size-6 animate-spin rounded-full border-2 border-[#FF8C00] border-t-transparent" />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {centers.map((c) => {
+            let distanceText = ""
+            if (userCoords) {
+              const d = getDistance(userCoords.latitude, userCoords.longitude, Number(c.latitude), Number(c.longitude))
+              distanceText = `${d.toFixed(1)} km away`
+            }
+
+            return (
+              <article key={c.id} className="rounded-3xl border border-border bg-card p-4 shadow-sm hover:shadow-md transition">
+                <div className="flex items-start gap-3">
+                  <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-[#FFF3E0] text-[#FF8C00]">
+                    <Icon name="Building2" className="size-5" />
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="font-heading text-sm font-bold text-foreground truncate">{c.name}</p>
+                      {distanceText && (
+                        <span className="inline-block text-[10px] font-bold px-2 py-0.5 rounded-full bg-orange-50 border border-orange-200 text-[#FF8C00] shrink-0">
+                          {distanceText}
+                        </span>
+                      )}
+                    </div>
+                    <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
+                      <Icon name="MapPin" className="size-3.5 shrink-0" />
+                      <span className="truncate">{c.address}, {c.district}, {c.state}</span>
+                    </p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Icon name="Clock" className="size-3.5 shrink-0" />
+                      <span>{c.working_hours}</span>
+                    </p>
+                    {c.description && (
+                      <p className="mt-2 text-xs text-muted-foreground leading-relaxed italic">
+                        {c.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <a
+                  href={c.google_maps_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-[#FF8C00] to-[#FFA726] py-2.5 text-sm font-bold text-white shadow-sm active:scale-[0.99] hover:opacity-95 transition"
+                >
+                  <Icon name="Navigation" className="size-4" />
+                  Navigate
+                </a>
+              </article>
+            )
+          })}
+          {centers.length === 0 && (
+            <p className="text-center text-xs text-muted-foreground py-8">No booking centers configured.</p>
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -306,14 +405,34 @@ function NotificationsScreen() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    devoteeApi.getNotifications()
-      .then((res) => {
-        if (Array.isArray(res)) {
-          setList(res)
+    const fetchNotifications = () => {
+      devoteeApi.getNotifications()
+        .then((res) => {
+          if (Array.isArray(res)) {
+            setList(res)
+          }
+        })
+        .catch((err) => console.error("Error loading notifications", err))
+        .finally(() => setLoading(false))
+    }
+
+    fetchNotifications()
+
+    const channel = supabase
+      .channel("public:notifications")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "notifications" },
+        () => {
+          console.log("Realtime notifications change detected!")
+          fetchNotifications()
         }
-      })
-      .catch((err) => console.error("Error loading notifications", err))
-      .finally(() => setLoading(false))
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const handleMarkAsRead = async (id: string) => {
@@ -325,8 +444,7 @@ function NotificationsScreen() {
     }
   }
 
-  const fallbackMocks = tObject("screens.notifications.notificationsList") || []
-  const displayList = list.length > 0 ? list : (loading ? [] : fallbackMocks)
+  const displayList = list
 
   return (
     <div className="space-y-3">

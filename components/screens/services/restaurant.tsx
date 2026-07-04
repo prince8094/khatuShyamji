@@ -13,11 +13,16 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
   const { goBack } = useNavigation();
   const { t } = useLanguage()
   const [selectedRest, setSelectedRest] = useHistoryState<any>("rest", null)
+  const getTodayStr = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+  }
+
   const [reserveForm, setReserveForm] = useState({
     name: "",
     phone: "",
     people: "4",
-    date: "",
+    date: getTodayStr(),
     time: "",
   })
   const [confirmed, setConfirmed] = useState(false)
@@ -91,7 +96,7 @@ export function RestaurantScreen({ navigate }: { navigate: (s: ScreenKey) => voi
       setTimeout(() => {
         setConfirmed(false)
         goBack()
-        setReserveForm({ name: "", phone: "", people: "4", date: "", time: "" })
+         setReserveForm({ name: "", phone: "", people: "4", date: getTodayStr(), time: "" })
         setSelectedRest(null)
       }, 4000)
     } catch (err) {

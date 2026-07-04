@@ -20,6 +20,8 @@ export type AdminScreenKey =
   | "approval-queue"
   | "pilgrim-registry"
   | "commerce-management"
+  | "reach-admin"
+  | "centers-admin"
 
 // ─── Roles ──────────────────────────────────────────────────────────────────
 export type AdminRoleKey =

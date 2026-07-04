@@ -28,6 +28,8 @@ import { AdminManagementScreen } from "@/components/admin/screens/admin-manageme
 import { ApprovalQueueScreen } from "@/components/admin/screens/approval-queue"
 import { PilgrimRegistryScreen } from "@/components/admin/screens/pilgrim-registry"
 import { CommerceManagementScreen } from "@/components/admin/screens/commerce-management"
+import { ReachAdminScreen } from "@/components/admin/screens/reach-admin"
+import { CentersAdminScreen } from "@/components/admin/screens/centers-admin"
 
 // Screen titles
 const screenTitles: Record<Exclude<AdminScreenKey, "admin-login">, string> = {
@@ -46,6 +48,8 @@ const screenTitles: Record<Exclude<AdminScreenKey, "admin-login">, string> = {
   "approval-queue": "Approval Queue",
   "pilgrim-registry": "Pilgrim Registry",
   "commerce-management": "Commerce Management",
+  "reach-admin": "How to Reach",
+  "centers-admin": "Offline Booking Centers",
 }
 
 // Sidebar menu items
@@ -59,6 +63,8 @@ const sidebarItems: { key: AdminScreenKey; icon: string; label: string; group: s
   { key: "temple-info-admin", icon: "Landmark", label: "Temple Info", group: "Services" },
   { key: "donation-management", icon: "HandCoins", label: "Donations", group: "Services" },
   { key: "commerce-management", icon: "Wallet", label: "Commerce & Ledger", group: "Services" },
+  { key: "reach-admin", icon: "MapPinned", label: "How to Reach", group: "Services" },
+  { key: "centers-admin", icon: "Building2", label: "Offline Centers", group: "Services" },
   { key: "notifications-admin", icon: "Bell", label: "Notifications", group: "Communication" },
   { key: "lost-found-admin", icon: "PackageSearch", label: "Lost & Found", group: "Communication" },
   { key: "admin-management", icon: "Users", label: "Admin Users", group: "System" },
@@ -347,7 +353,7 @@ export function AdminWorkspace({
           {screen === "command-center" && <CommandCenterScreen navigate={navigate} />}
           {screen === "accommodation" && <AccommodationScreen navigate={navigate} />}
           {screen === "parking-management" && <ParkingManagementScreen navigate={navigate} currentAdmin={currentAdmin} />}
-          {screen === "traffic-ops" && <TrafficOpsScreen navigate={navigate} />}
+          {screen === "traffic-ops" && <TrafficOpsScreen navigate={navigate} currentAdmin={currentAdmin} />}
           {screen === "lost-found-admin" && <LostFoundAdminScreen navigate={navigate} />}
           {screen === "seva-management" && <SevaManagementScreen navigate={navigate} />}
           {screen === "temple-info-admin" && <TempleInfoAdminScreen navigate={navigate} currentAdmin={currentAdmin} />}
@@ -358,6 +364,8 @@ export function AdminWorkspace({
           {screen === "approval-queue" && <ApprovalQueueScreen navigate={navigate} />}
           {screen === "pilgrim-registry" && <PilgrimRegistryScreen navigate={navigate} />}
           {screen === "commerce-management" && <CommerceManagementScreen navigate={navigate} />}
+          {screen === "reach-admin" && <ReachAdminScreen navigate={navigate} />}
+          {screen === "centers-admin" && <CentersAdminScreen navigate={navigate} />}
         </main>
       </div>
 

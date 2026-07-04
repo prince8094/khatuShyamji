@@ -26,12 +26,26 @@ export function BookDarshanScreen({
   const WEEKDAYS = tObject("booking.weekdays") || ["S", "M", "T", "W", "T", "F", "S"]
   const [bookingType, setBookingType] = useHistoryState<BookingType>("bookingType", null)
   
+  const now = new Date()
+  const todayYear = now.getFullYear()
+  const todayMonth = now.getMonth()
+  const todayDay = now.getDate()
+
   const [month, _setMonth] = useState<number>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("booking_month")
-      if (saved !== null) return Number(saved)
+      const savedDay = localStorage.getItem("booking_selected_day")
+      if (saved !== null && savedDay !== null) {
+        const m = Number(saved)
+        const d = Number(savedDay)
+        const savedDate = new Date(todayYear, m, d)
+        const todayDate = new Date(todayYear, todayMonth, todayDay)
+        if (savedDate >= todayDate) {
+          return m
+        }
+      }
     }
-    return 5
+    return new Date().getMonth()
   })
   const setMonth = (val: number | ((prev: number) => number)) => {
     if (typeof val === "function") {
@@ -48,10 +62,19 @@ export function BookDarshanScreen({
 
   const [selected, _setSelected] = useState<number | null>(() => {
     if (typeof window !== "undefined") {
-      const saved = localStorage.getItem("booking_selected_day")
-      if (saved !== null) return Number(saved)
+      const saved = localStorage.getItem("booking_month")
+      const savedDay = localStorage.getItem("booking_selected_day")
+      if (saved !== null && savedDay !== null) {
+        const m = Number(saved)
+        const d = Number(savedDay)
+        const savedDate = new Date(todayYear, m, d)
+        const todayDate = new Date(todayYear, todayMonth, todayDay)
+        if (savedDate >= todayDate) {
+          return d
+        }
+      }
     }
-    return 28
+    return new Date().getDate()
   })
   const setSelected = (val: number | null | ((prev: number | null) => number | null)) => {
     if (typeof val === "function") {
@@ -96,7 +119,7 @@ export function BookDarshanScreen({
     }
   }
 
-  const year = 2026
+  const year = todayYear
   const [bookedDates, setBookedDates] = useState<string[]>([])
 
   useEffect(() => {
@@ -131,7 +154,7 @@ export function BookDarshanScreen({
     return cells
   }, [month])
 
-  const today = 23
+  const today = todayDay
 
   const minDevotees = bookingType === "group" ? 7 : 1
   const maxDevotees = bookingType === "group" ? 100 : 6
@@ -300,71 +323,46 @@ export function BookDarshanScreen({
             <motion.section
               className="rounded-3xl border border-[#D4AF37]/30 bg-white p-6 shadow-md relative overflow-hidden"
             >
-              <div className="relative z-10 mb-6 flex items-center justify-between">
-                <div>
-                  <span className="inline-block rounded-full bg-[#D97706]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#D97706] mb-2">Step 3</span>
-                  <h3 className="font-heading text-xl font-bold text-[#1A120B]">
-                    {t("screens.bookDarshan.selectDate")}
-                  </h3>
-                </div>
-                {/* Month controls */}
-                <div className="flex items-center gap-3 rounded-full border border-[#E8D5B7] bg-[#FFF8F0] px-3 py-1.5 shadow-inner">
-                  <button
-                    onClick={() => setMonth((m) => Math.max(5, m - 1))}
-                    className="grid size-8 place-items-center rounded-full text-[#D97706] transition hover:bg-white disabled:opacity-30"
-                    disabled={month <= 5}
-                  >
-                    <Icon name="ChevronLeft" className="size-4" />
-                  </button>
-                  <span className="font-heading text-sm font-bold text-[#1A120B] w-24 text-center">
-                    {MONTHS[month]} {year}
-                  </span>
-                  <button
-                    onClick={() => setMonth((m) => Math.min(7, m + 1))}
-                    className="grid size-8 place-items-center rounded-full text-[#D97706] transition hover:bg-white disabled:opacity-30"
-                    disabled={month >= 7}
-                  >
-                    <Icon name="ChevronRight" className="size-4" />
-                  </button>
-                </div>
+              <div className="relative z-10 mb-4">
+                <span className="inline-block rounded-full bg-[#D97706]/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#D97706] mb-2">Step 3</span>
+                <h3 className="font-heading text-xl font-bold text-[#1A120B]">
+                  {t("screens.bookDarshan.selectDate")}
+                </h3>
               </div>
 
-              <div className="grid grid-cols-7 text-center mb-4 border-b border-[#E8D5B7] pb-2">
-                {(WEEKDAYS as string[]).map((d: string, i: number) => (
-                  <span key={i} className="text-[10px] font-bold text-[#6b5440] uppercase">
-                    {d}
+              <div className="relative z-10 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                <div className="relative flex-1">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[#D97706] pointer-events-none">
+                    <Icon name="Calendar" className="size-5" />
                   </span>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-7 gap-2">
-                {days.map((d, i) => {
-                  if (d === null) return <span key={i} />
-                  const isPast = d < today
-                  const dateStrDb = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`
-                  const isBooked = bookedDates.includes(dateStrDb)
-                  const disabled = isPast || isBooked
-                  const isSel = selected === d
-                  return (
-                    <button
-                      key={i}
-                      disabled={disabled}
-                      onClick={() => setSelected(d)}
-                      className={cn(
-                        "relative grid aspect-square place-items-center rounded-xl font-heading text-base font-bold transition-all duration-200",
-                        isSel && "bg-gradient-to-br from-[#D97706] to-[#D4AF37] text-white shadow-[0_4px_15px_rgba(212,175,55,0.4)] scale-110 z-10",
-                        !isSel && !disabled && "bg-transparent text-[#1A120B] border border-transparent hover:border-[#D4AF37]/40 hover:bg-[#FFF8F0]",
-                        isBooked && "text-[#6b5440]/40 line-through decoration-[#8B1E1E]/30",
-                        isPast && !isBooked && "text-[#6b5440]/30",
-                      )}
-                    >
-                      {d}
-                      {d === today && !isSel && (
-                        <span className="absolute bottom-1.5 size-1 rounded-full bg-[#D4AF37]" />
-                      )}
-                    </button>
-                  )
-                })}
+                  <input
+                    type="date"
+                    min={`${todayYear}-${String(todayMonth + 1).padStart(2, "0")}-${String(todayDay).padStart(2, "0")}`}
+                    value={`${year}-${String(month + 1).padStart(2, "0")}-${String(selected || todayDay).padStart(2, "0")}`}
+                    onChange={(e) => {
+                      if (!e.target.value) return
+                      const [y, m, d] = e.target.value.split("-").map(Number)
+                      const dateStr = `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`
+                      if (bookedDates.includes(dateStr)) {
+                        alert(lang === "hi" ? "यह तिथि पूरी तरह से बुक हो चुकी है। कृपया दूसरी तिथि चुनें।" : "This date is fully booked. Please select another date.")
+                        return
+                      }
+                      setMonth(m - 1)
+                      setSelected(d)
+                    }}
+                    className="w-full rounded-2xl border-2 border-[#E8D5B7] bg-white py-4.5 pl-12 pr-4 text-base font-bold text-[#1A120B] shadow-inner outline-none transition focus:border-[#D97706] focus:ring-4 focus:ring-[#D97706]/10"
+                  />
+                </div>
+                {selected !== null && (
+                  <div className="rounded-2xl bg-[#FFF8F0] border-2 border-[#E8D5B7] px-6 py-3.5 text-center flex flex-col justify-center min-w-[150px]">
+                    <span className="text-[10px] font-extrabold text-[#D97706] uppercase tracking-wider">
+                      {lang === "hi" ? "चयनित तिथि" : "Selected Date"}
+                    </span>
+                    <span className="font-heading text-sm font-bold text-[#1A120B] mt-0.5">
+                      {selected} {MONTHS[month]} {year}
+                    </span>
+                  </div>
+                )}
               </div>
             </motion.section>
           </motion.div>

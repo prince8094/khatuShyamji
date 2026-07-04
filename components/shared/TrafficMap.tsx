@@ -19,6 +19,8 @@ interface TrafficMapProps {
   }>
   adminMode?: boolean
   onMapClick?: (lat: number, lng: number) => void
+  routes?: any[]
+  parkingBlocks?: any[]
 }
 
 export default function TrafficMap({
@@ -29,6 +31,8 @@ export default function TrafficMap({
   alerts = [],
   adminMode = false,
   onMapClick,
+  routes = [],
+  parkingBlocks = [],
 }: TrafficMapProps) {
   const mapRef = useRef<HTMLDivElement>(null)
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false)
@@ -109,46 +113,134 @@ export default function TrafficMap({
 
       // 2. Render Routes
       const polylines: google.maps.Polyline[] = []
-
-      if (showTempleRoute) {
-        const templePath = new window.google.maps.Polyline({
-          path: ROUTE_COORDINATES.temple,
-          geodesic: true,
-          strokeColor: "#F59E0B", // Saffron
-          strokeOpacity: 0.85,
-          strokeWeight: 6
-        })
-        templePath.setMap(map)
-        polylines.push(templePath)
-      }
-
-      if (showParkingRoute) {
-        const parkingPath = new window.google.maps.Polyline({
-          path: ROUTE_COORDINATES.parking,
-          geodesic: true,
-          strokeColor: "#D97706", // Dark Amber
-          strokeOpacity: 0.8,
-          strokeWeight: 5
-        })
-        parkingPath.setMap(map)
-        polylines.push(parkingPath)
-      }
-
-      if (showAlternativeRoute) {
-        const altPath = new window.google.maps.Polyline({
-          path: ROUTE_COORDINATES.alternative,
-          geodesic: true,
-          strokeColor: "#10B981", // Emerald
-          strokeOpacity: 0.8,
-          strokeWeight: 5
-        })
-        altPath.setMap(map)
-        polylines.push(altPath)
-      }
-
-      // 3. Render Database Traffic Alert Markers
       const markers: google.maps.Marker[] = []
 
+      const getCongestionColor = (status: string) => {
+        const st = status?.toLowerCase()
+        if (st === "smooth" || st === "light") return "#10B981" // Emerald Green
+        if (st === "moderate") return "#F59E0B" // Amber
+        if (st === "heavy") return "#EA580C" // Orange
+        if (st === "congested" || st === "blocked") return "#EF4444" // Red
+        return "#3B82F6" // Default Blue
+      }
+
+      if (routes && routes.length > 0) {
+        routes.forEach((route) => {
+          if (route.coordinates && Array.isArray(route.coordinates)) {
+            const poly = new window.google.maps.Polyline({
+              path: route.coordinates,
+              geodesic: true,
+              strokeColor: getCongestionColor(route.status),
+              strokeOpacity: 0.85,
+              strokeWeight: 6
+            })
+            poly.setMap(map)
+            polylines.push(poly)
+
+            // Add a marker at the start of the route
+            if (route.coordinates.length > 0) {
+              const start = route.coordinates[0]
+              const routeMarker = new window.google.maps.Marker({
+                position: start,
+                map,
+                title: route.name,
+                label: {
+                  text: "🛣️",
+                  fontSize: "12px"
+                }
+              })
+              const routeInfo = new window.google.maps.InfoWindow({
+                content: `<div style="padding: 6px; font-family: sans-serif;"><p style="margin:0; font-weight:bold; font-size:12px;">${route.name}</p><p style="margin:4px 0 0 0; font-size:11px;">Status: <span style="font-weight:bold; color:${getCongestionColor(route.status)}">${route.status.toUpperCase()}</span></p><p style="margin:2px 0 0 0; font-size:11px;">ETA: ${route.eta}</p></div>`
+              })
+              routeMarker.addListener("click", () => {
+                routeInfo.open(map, routeMarker)
+              })
+              markers.push(routeMarker)
+            }
+          }
+        })
+      } else {
+        // Fallback static routes
+        if (showTempleRoute) {
+          const templePath = new window.google.maps.Polyline({
+            path: ROUTE_COORDINATES.temple,
+            geodesic: true,
+            strokeColor: "#F59E0B", // Saffron
+            strokeOpacity: 0.85,
+            strokeWeight: 6
+          })
+          templePath.setMap(map)
+          polylines.push(templePath)
+        }
+
+        if (showParkingRoute) {
+          const parkingPath = new window.google.maps.Polyline({
+            path: ROUTE_COORDINATES.parking,
+            geodesic: true,
+            strokeColor: "#D97706", // Dark Amber
+            strokeOpacity: 0.8,
+            strokeWeight: 5
+          })
+          parkingPath.setMap(map)
+          polylines.push(parkingPath)
+        }
+
+        if (showAlternativeRoute) {
+          const altPath = new window.google.maps.Polyline({
+            path: ROUTE_COORDINATES.alternative,
+            geodesic: true,
+            strokeColor: "#10B981", // Emerald
+            strokeOpacity: 0.8,
+            strokeWeight: 5
+          })
+          altPath.setMap(map)
+          polylines.push(altPath)
+        }
+      }
+
+      // 3. Render Temple Destination Marker
+      const templeMarker = new window.google.maps.Marker({
+        position: { lat: 27.36965159, lng: 75.39855581 },
+        map,
+        title: "Shree Khatu Shyam Ji Temple",
+        label: {
+          text: "🛕",
+          fontSize: "16px"
+        }
+      })
+      const templeInfo = new window.google.maps.InfoWindow({
+        content: `<div style="padding: 6px; font-family: sans-serif; font-weight: bold; font-size: 12px;">Shree Khatu Shyam Ji Temple</div>`
+      })
+      templeMarker.addListener("click", () => {
+        templeInfo.open(map, templeMarker)
+      })
+      markers.push(templeMarker)
+
+      // 4. Render Database Parking Block Markers
+      if (parkingBlocks && parkingBlocks.length > 0) {
+        parkingBlocks.forEach((block) => {
+          if (block.latitude && block.longitude) {
+            const parkingMarker = new window.google.maps.Marker({
+              position: { lat: Number(block.latitude), lng: Number(block.longitude) },
+              map,
+              title: block.name,
+              label: {
+                text: "🅿️",
+                fontSize: "12px"
+              }
+            })
+            const parkingInfo = new window.google.maps.InfoWindow({
+              content: `<div style="padding: 6px; font-family: sans-serif;"><p style="margin:0; font-weight:bold; font-size:12px;">${block.name} (${block.block_code})</p><p style="margin:4px 0 0 0; font-size:11px;">Occupancy: ${block.occupied} / ${block.total_capacity}</p><p style="margin:2px 0 0 0; font-size:11px;">Status: ${block.status.toUpperCase()}</p></div>`
+            })
+            parkingMarker.addListener("click", () => {
+              parkingInfo.open(map, parkingMarker)
+            })
+            markers.push(parkingMarker)
+          }
+        })
+      }
+
+      // 5. Render Database Traffic Alert Markers
       alerts.forEach((alert) => {
         if (alert.latitude && alert.longitude) {
           const isClosure = alert.alert_type === "closure"
@@ -184,7 +276,7 @@ export default function TrafficMap({
         }
       })
 
-      // 4. Admin Click-to-Pin handler
+      // 6. Admin Click-to-Pin handler
       let selectedMarker: google.maps.Marker | null = null
 
       if (adminMode && onMapClick) {
@@ -211,7 +303,7 @@ export default function TrafficMap({
                 strokeColor: "#ffffff",
                 strokeWeight: 2
               },
-              title: "Selected Incident Location"
+              title: "Selected Location"
             })
           }
         })
@@ -226,7 +318,7 @@ export default function TrafficMap({
       console.error("Map initialization failed", err)
       setApiError(true)
     }
-  }, [googleMapsLoaded, showTempleRoute, showParkingRoute, showAlternativeRoute, showTrafficLayer, alerts, adminMode])
+  }, [googleMapsLoaded, showTempleRoute, showParkingRoute, showAlternativeRoute, showTrafficLayer, alerts, adminMode, routes, parkingBlocks])
 
   // Fallback Premium SVG Vector Map
   if (!apiKey || apiError) {
@@ -244,7 +336,29 @@ export default function TrafficMap({
 
         {/* Vector SVG Roads representation */}
         <div className="relative flex-1 bg-white/70 rounded-2xl border border-amber-100 flex items-center justify-center p-4">
-          <svg className="w-full h-full max-h-[260px]" viewBox="0 0 400 240">
+          <svg 
+            className="w-full h-full max-h-[260px] cursor-crosshair" 
+            viewBox="0 0 400 240"
+            onClick={(e) => {
+              if (!adminMode || !onMapClick) return
+              const rect = e.currentTarget.getBoundingClientRect()
+              const x = e.clientX - rect.left
+              const y = e.clientY - rect.top
+              const pctX = x / rect.width
+              const pctY = y / rect.height
+
+              const minLng = 75.4500
+              const maxLng = 75.5800
+              const maxLat = 27.3800
+              const minLat = 27.3400
+
+              const clickLng = minLng + pctX * (maxLng - minLng)
+              const clickLat = maxLat - pctY * (maxLat - minLat)
+
+              setAdminPin({ lat: clickLat, lng: clickLng })
+              onMapClick(clickLat, clickLng)
+            }}
+          >
             {/* Background Grid */}
             <defs>
               <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -349,12 +463,20 @@ export default function TrafficMap({
             })}
 
             {/* Admin mode pointer simulator */}
-            {adminMode && adminPin && (
-              <g transform="translate(200, 100)">
-                <circle r="5" fill="#3B82F6" stroke="#ffffff" strokeWidth="1.5" />
-                <text x="10" y="4" fontSize="7" fontWeight="bold" fill="#3B82F6">Selected Point</text>
-              </g>
-            )}
+            {adminMode && adminPin && (() => {
+              const minLng = 75.4500
+              const maxLng = 75.5800
+              const maxLat = 27.3800
+              const minLat = 27.3400
+              const cx = ((adminPin.lng - minLng) / (maxLng - minLng)) * 400
+              const cy = ((maxLat - adminPin.lat) / (maxLat - minLat)) * 240
+              return (
+                <g transform={`translate(${cx}, ${cy})`}>
+                  <circle r="6" fill="#3B82F6" stroke="#ffffff" strokeWidth="1.5" className="animate-bounce" />
+                  <text x="10" y="4" fontSize="7" fontWeight="bold" fill="#3B82F6">Selected Alert</text>
+                </g>
+              )
+            })()}
           </svg>
         </div>
 

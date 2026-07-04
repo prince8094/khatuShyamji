@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils"
 import { user, type ScreenKey } from "@/lib/data"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
+import { devoteeApi } from "@/lib/api-client"
+import { supabase } from "@/lib/supabase"
 import QRCode from "qrcode"
 
 const instructionsEn = [
@@ -28,6 +30,42 @@ export function QrPassScreen({ navigate }: { navigate?: (s: ScreenKey) => void }
   const { goBack } = useNavigation()
   const { lang, t } = useLanguage()
   const [downloadFeedback, setDownloadFeedback] = useState(false)
+  const [instructions, setInstructions] = useState<string[]>([])
+
+  useEffect(() => {
+    const fetchGuidelines = () => {
+      devoteeApi.getDevoteeGuidelines()
+        .then((res: any) => {
+          if (Array.isArray(res) && res.length > 0) {
+            setInstructions(res.map((g: any) => lang === "hi" && g.content_hi ? g.content_hi : g.content))
+          } else {
+            setInstructions(lang === "hi" ? instructionsHi : instructionsEn)
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load guidelines from DB", err)
+          setInstructions(lang === "hi" ? instructionsHi : instructionsEn)
+        })
+    }
+
+    fetchGuidelines()
+
+    const channel = supabase
+      .channel("public:devotee_guidelines_qr")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "devotee_guidelines" },
+        () => {
+          console.log("Realtime devotee_guidelines change detected in qr-pass!")
+          fetchGuidelines()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [lang])
   const [shareFeedback, setShareFeedback] = useState(false)
   const [qrCodeDataUrl, setQrCodeDataUrl] = useState("")
   const [booking, setBooking] = useState<{
@@ -99,11 +137,150 @@ export function QrPassScreen({ navigate }: { navigate?: (s: ScreenKey) => void }
     { label: t("screens.qrPass.devoteesCount"), value: `${booking?.visitors || "4"} ${t("screens.qrPass.persons")}`, icon: "Users" },
   ]
 
-  const instructions = lang === "en" ? instructionsEn : instructionsHi
+  const handleDownload = async () => {
+    try {
+      const canvas = document.createElement("canvas")
+      canvas.width = 600
+      canvas.height = 850
+      const ctx = canvas.getContext("2d")
+      if (!ctx) throw new Error("Could not get canvas context")
 
-  const handleDownload = () => {
-    setDownloadFeedback(true)
-    setTimeout(() => setDownloadFeedback(false), 2500)
+      // 1. Fill background with premium gradient
+      const bgGrad = ctx.createLinearGradient(0, 0, 0, 850)
+      bgGrad.addColorStop(0, "#FFF8F0")
+      bgGrad.addColorStop(1, "#FFFFFF")
+      ctx.fillStyle = bgGrad
+      ctx.fillRect(0, 0, 600, 850)
+
+      // 2. Header background
+      ctx.fillStyle = "#1c110a"
+      ctx.fillRect(0, 0, 600, 150)
+
+      // Header gold border
+      ctx.fillStyle = "#D4AF37"
+      ctx.fillRect(0, 147, 600, 3)
+
+      // 3. Logo and Board info
+      ctx.fillStyle = "#D4AF37"
+      ctx.font = "bold 24px sans-serif"
+      ctx.fillText(t("screens.qrPass.officialPass") || "OFFICIAL PASS", 40, 65)
+
+      ctx.fillStyle = "#FFFFFF"
+      ctx.font = "bold 13px sans-serif"
+      ctx.fillText(t("screens.qrPass.shriShyamMandirBoard") || "SHRI SHYAM MANDIR BOARD", 40, 100)
+
+      // Verified status
+      const statusText = booking?.status === "cancelled" 
+        ? (t("screens.qrPass.cancelled") || "CANCELLED")
+        : (t("screens.qrPass.verified") || "VERIFIED")
+      ctx.fillStyle = booking?.status === "cancelled" ? "#EF4444" : "#22C55E"
+      ctx.font = "bold 14px sans-serif"
+      ctx.textAlign = "right"
+      ctx.fillText(statusText, 560, 80)
+      ctx.textAlign = "left" // Reset
+
+      // 4. Draw QR Code
+      if (qrCodeDataUrl) {
+        const qrImg = new window.Image()
+        qrImg.src = qrCodeDataUrl
+        await new Promise((resolve, reject) => {
+          qrImg.onload = resolve
+          qrImg.onerror = reject
+        })
+        ctx.drawImage(qrImg, 200, 190, 200, 200)
+      } else {
+        // Draw placeholder QR box
+        ctx.strokeStyle = "#D4AF37"
+        ctx.strokeRect(200, 190, 200, 200)
+        ctx.fillStyle = "#6b5440"
+        ctx.font = "12px sans-serif"
+        ctx.textAlign = "center"
+        ctx.fillText("QR Code", 300, 290)
+        ctx.textAlign = "left"
+      }
+
+      // Draw scanner label
+      ctx.fillStyle = "#D97706"
+      ctx.font = "bold 12px sans-serif"
+      ctx.textAlign = "center"
+      ctx.fillText(booking?.status === "cancelled" ? (t("screens.qrPass.invalidPass") || "INVALID PASS") : (t("screens.qrPass.scanAtToranDwar") || "SCAN AT TORAN DWAR"), 300, 420)
+      ctx.textAlign = "left"
+
+      // 5. Tear line
+      ctx.strokeStyle = "#D4AF37"
+      ctx.lineWidth = 2
+      ctx.setLineDash([6, 6])
+      ctx.beginPath()
+      ctx.moveTo(30, 450)
+      ctx.lineTo(570, 450)
+      ctx.stroke()
+      ctx.setLineDash([])
+
+      // 6. Draw Booking Details
+      let yPos = 510
+      const items = [
+        { label: t("screens.qrPass.bookingId") || "BOOKING ID", value: booking?.id || "KSJ-2026-08841" },
+        { label: t("screens.qrPass.devoteeGroupName") || "DEVOTEE / GROUP NAME", value: booking?.name || user.name },
+        { label: t("screens.qrPass.darshanDate") || "DARSHAN DATE", value: booking?.date || "28 Jun 2026" },
+        { label: t("screens.qrPass.devoteesCount") || "DEVOTEES COUNT", value: `${booking?.visitors || "4"} Persons` }
+      ]
+
+      items.forEach((item) => {
+        ctx.fillStyle = "#6b5440"
+        ctx.font = "bold 11px sans-serif"
+        ctx.fillText(item.label, 50, yPos)
+
+        ctx.fillStyle = "#1c110a"
+        ctx.font = "bold 16px sans-serif"
+        ctx.fillText(String(item.value), 50, yPos + 22)
+        yPos += 75
+      })
+
+      // 7. Save and trigger download
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const url = URL.createObjectURL(blob)
+          const link = document.createElement("a")
+          link.href = url
+          link.download = `darshan_pass_${booking?.id || "KSJ-2026-08841"}.png`
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
+          URL.revokeObjectURL(url)
+
+          setDownloadFeedback(true)
+          setTimeout(() => setDownloadFeedback(false), 2500)
+        }
+      }, "image/png")
+
+    } catch (err) {
+      console.error("Failed downloading pass as image: ", err)
+      // Graceful text file fallback
+      const textData = `-------------------------------------------
+          SHRI KHATU SHYAM JI MANDIR
+               DARSHAN E-PASS
+-------------------------------------------
+Official Pass: ${booking?.status === "cancelled" ? "CANCELLED" : "VERIFIED"}
+Booking ID: ${booking?.id || "KSJ-2026-08841"}
+Name: ${booking?.name || user.name}
+Date: ${booking?.date || "28 Jun 2026"}
+Visitors: ${booking?.visitors || "4"}
+-------------------------------------------
+Scan this pass at the Toran Dwar.
+-------------------------------------------`
+      const blob = new Blob([textData], { type: "text/plain;charset=utf-8" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `darshan_pass_${booking?.id || "KSJ-2026-08841"}.txt`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+
+      setDownloadFeedback(true)
+      setTimeout(() => setDownloadFeedback(false), 2500)
+    }
   }
 
   const handleShare = async () => {

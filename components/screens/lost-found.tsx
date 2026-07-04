@@ -11,12 +11,17 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
   const { t, tObject } = useLanguage()
   const initialFoundItems: any[] = tObject("screens.lostFound.foundItemsList") || []
   
-  const [activeTab, setActiveTab] = useState<"found" | "report">("found")
+  const [activeTab, setActiveTab] = useState<"found" | "report" | "my-reports">("found")
   const [submitted, setSubmitted] = useState(false)
+  const getTodayStr = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+  }
+
   const [form, setForm] = useState({
     itemName: "",
     description: "",
-    date: "",
+    date: getTodayStr(),
     location: "",
     phone: "",
     imageName: "",
@@ -28,6 +33,105 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
   const [foundList, setFoundList] = useState<any[]>(initialFoundItems)
   const [loadingFound, setLoadingFound] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
+
+  const [myReportsList, setMyReportsList] = useState<any[]>([])
+  const [loadingMyReports, setLoadingMyReports] = useState(false)
+
+  // Claim Request States
+  const [myClaims, setMyClaims] = useState<any[]>([])
+  const [claimingItem, setClaimingItem] = useState<any | null>(null)
+  const [claimForm, setClaimForm] = useState({
+    claimantName: "",
+    identityProofType: "Aadhaar Card",
+    identityProofNumber: "",
+    claimDescription: ""
+  })
+  const [submittingClaim, setSubmittingClaim] = useState(false)
+  const [claimFeedback, setClaimFeedback] = useState("")
+
+  const loadMyReports = async () => {
+    const activeUserStr = localStorage.getItem("current_user")
+    if (!activeUserStr) return
+
+    setLoadingMyReports(true)
+    try {
+      const data = await devoteeApi.getMyLostReports()
+      if (data) {
+        setMyReportsList(data)
+      }
+    } catch (err) {
+      console.error("Failed to load my lost reports", err)
+    } finally {
+      setLoadingMyReports(false)
+    }
+  }
+
+  const loadMyClaims = async () => {
+    try {
+      const data = await devoteeApi.getMyClaims()
+      if (data) {
+        setMyClaims(data)
+      }
+    } catch (err) {
+      console.error("Failed to load my claims list", err)
+    }
+  }
+
+  const handleClaimSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!claimingItem) return
+
+    setSubmittingClaim(true)
+    setClaimFeedback("")
+    try {
+      await devoteeApi.claimFoundItem({
+        found_item_id: parseInt(claimingItem.id),
+        claimant_name: claimForm.claimantName,
+        identity_proof_type: claimForm.identityProofType,
+        identity_proof_number: claimForm.identityProofNumber,
+        claim_description: claimForm.claimDescription
+      })
+      setClaimFeedback("Claim request submitted successfully!")
+      loadMyClaims()
+      // Refresh found list to show update status
+      const updatedFound = await devoteeApi.getFoundItems()
+      if (updatedFound) {
+        setFoundList(updatedFound.map((item: any) => ({
+          id: String(item.id),
+          item: item.item_name,
+          desc: item.description,
+          location: item.location_found,
+          date: item.date_found,
+          color: item.item_color || "bg-amber-50 text-amber-500 border-amber-100",
+          icon: item.category_icon || "PackageSearch",
+          status: item.status,
+          imageUrl: item.image_url,
+          category: item.category,
+          remarks: item.remarks,
+          foundBy: item.found_by,
+          storageLocation: item.storage_location,
+          time: item.time_found
+        })))
+      }
+      setTimeout(() => {
+        setClaimingItem(null)
+        setClaimForm({ claimantName: "", identityProofType: "Aadhaar Card", identityProofNumber: "", claimDescription: "" })
+        setClaimFeedback("")
+      }, 2000)
+    } catch (err: any) {
+      console.error(err)
+      setClaimFeedback("Failed to submit claim request. Please try again.")
+    } finally {
+      setSubmittingClaim(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === "my-reports") {
+      loadMyReports()
+      loadMyClaims()
+    }
+  }, [activeTab])
 
   // Fetch live found items on mount
   useEffect(() => {
@@ -49,7 +153,12 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
             color: item.item_color || "bg-amber-50 text-amber-500 border-amber-100",
             icon: item.category_icon || "PackageSearch",
             status: item.status,
-            imageUrl: item.image_url
+            imageUrl: item.image_url,
+            category: item.category,
+            remarks: item.remarks,
+            foundBy: item.found_by,
+            storageLocation: item.storage_location,
+            time: item.time_found
           })))
         }
       } catch (err) {
@@ -114,8 +223,9 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
         })
       }
 
-      setSubmitted(true)
-      setForm({ itemName: "", description: "", date: "", location: "", phone: "", imageName: "" })
+       setSubmitted(true)
+       loadMyReports()
+      setForm({ itemName: "", description: "", date: getTodayStr(), location: "", phone: "", imageName: "" })
       setImagePreview(null)
       setTimeout(() => setSubmitted(false), 5000)
     } catch (err) {
@@ -152,7 +262,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
       <div className="flex rounded-2xl bg-secondary/60 p-1.5 gap-1 shadow-inner">
         <button
           onClick={() => setActiveTab("found")}
-          className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all duration-200 ${
+          className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 ${
             activeTab === "found"
               ? "bg-gradient-to-r from-primary to-secondary text-white shadow-md"
               : "text-muted-foreground hover:text-foreground"
@@ -163,7 +273,7 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
         </button>
         <button
           onClick={() => setActiveTab("report")}
-          className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-bold transition-all duration-200 ${
+          className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 ${
             activeTab === "report"
               ? "bg-gradient-to-r from-primary to-secondary text-white shadow-md"
               : "text-muted-foreground hover:text-foreground"
@@ -171,6 +281,17 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
         >
           <Icon name="TriangleAlert" className="size-4" />
           {t("screens.lostFound.reportLost")}
+        </button>
+        <button
+          onClick={() => setActiveTab("my-reports")}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 ${
+            activeTab === "my-reports"
+              ? "bg-gradient-to-r from-primary to-secondary text-white shadow-md"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Icon name="ClipboardList" className="size-4" />
+          My Reports
         </button>
       </div>
 
@@ -204,20 +325,63 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
                 key={item.id}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-4 rounded-3xl border border-border bg-card p-4 shadow-sm"
+                className="flex flex-col gap-3 rounded-3xl border border-border bg-card p-4 shadow-sm"
               >
-                <span className={`grid size-12 shrink-0 place-items-center rounded-xl ${item.color}`}>
-                  <Icon name={item.icon} className="size-6" />
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="font-heading font-bold text-sm text-foreground truncate">{item.item}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Icon name="MapPin" className="size-3 text-primary" />
-                    <span className="text-[10px] font-semibold text-primary">{item.location}</span>
+                <div className="flex gap-4">
+                  {item.imageUrl ? (
+                    <img src={item.imageUrl} alt={item.item} className="size-16 rounded-xl object-cover shrink-0 border border-border" />
+                  ) : (
+                    <span className={`grid size-16 shrink-0 place-items-center rounded-xl ${item.color}`}>
+                      <Icon name={item.icon} className="size-8" />
+                    </span>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between">
+                      <p className="font-heading font-bold text-sm text-foreground truncate">{item.item}</p>
+                      <span className="text-[9px] font-bold text-muted-foreground bg-secondary rounded-lg px-2 py-0.5">ID: {item.id}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{item.desc}</p>
+                    <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-[10px] text-muted-foreground">
+                      <span className="flex items-center gap-1 font-semibold text-primary">
+                        <Icon name="Tag" className="size-3" /> {item.category || "General"}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Icon name="MapPin" className="size-3" /> {item.location}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Icon name="Calendar" className="size-3" /> {item.date} {item.time ? `(${item.time})` : ""}
+                      </span>
+                    </div>
                   </div>
                 </div>
-                <span className="text-[10px] font-bold text-muted-foreground bg-secondary rounded-lg px-2 py-1">{item.id}</span>
+                
+                <div className="flex items-center justify-between border-t border-border/40 pt-2.5 mt-1">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] text-muted-foreground">Status:</span>
+                    <span className={`text-[10px] font-bold uppercase rounded-lg px-2 py-0.5 ${
+                      item.status === "Found" || item.status === "ready-to-collect"
+                        ? "bg-blue-50 text-blue-700 border border-blue-200"
+                        : item.status === "Claim Requested"
+                          ? "bg-amber-50 text-amber-700 border border-amber-200"
+                          : item.status === "Claim Approved"
+                            ? "bg-purple-50 text-purple-700 border border-purple-200"
+                            : item.status === "Returned"
+                              ? "bg-green-50 text-green-700 border border-green-200"
+                              : "bg-gray-50 text-gray-700 border border-gray-200"
+                    }`}>
+                      {item.status || "Found"}
+                    </span>
+                  </div>
+
+                  {(item.status === "Found" || item.status === "ready-to-collect") && (
+                    <button
+                      onClick={() => setClaimingItem(item)}
+                      className="rounded-xl bg-primary text-white text-[11px] px-3.5 py-1.5 font-bold shadow-sm transition hover:bg-primary-dark active:scale-95"
+                    >
+                      Claim This Item
+                    </button>
+                  )}
+                </div>
               </motion.div>
             ))
           ) : (
@@ -379,6 +543,259 @@ export function LostFoundScreen({ navigate }: { navigate: (s: ScreenKey) => void
           </AnimatePresence>
         </div>
       )}
+
+      {/* My Reports Timeline & List */}
+      {activeTab === "my-reports" && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3">
+            <Icon name="Info" className="size-4 text-amber-600 shrink-0" />
+            <p className="text-xs text-amber-700 font-medium">
+              Track the status history of your reported items.
+            </p>
+          </div>
+
+          {loadingMyReports ? (
+            <p className="text-center text-xs text-muted-foreground py-6">Loading your reports...</p>
+          ) : myReportsList.length > 0 ? (
+            myReportsList.map((item) => {
+              // Parse history from additional_details
+              let parsed: any = { user_notes: "", history: [] }
+              try {
+                if (item.additional_details && item.additional_details.startsWith("{") && item.additional_details.endsWith("}")) {
+                  parsed = JSON.parse(item.additional_details)
+                }
+              } catch (e) {}
+
+              // Status pipeline trace stages
+              const stages = ["Reported", "Under Review", "Found", "Claimed", "Closed"]
+              // Determine active stage
+              let activeStage = "Reported"
+              if (parsed.history && parsed.history.length > 0) {
+                activeStage = parsed.history[parsed.history.length - 1].status
+              }
+
+              return (
+                <motion.div
+                  key={item.id}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-3xl border border-border bg-card p-4 shadow-sm space-y-3"
+                >
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="font-heading font-bold text-sm text-foreground">{item.item_name}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.color_description}</p>
+                    </div>
+                    <span className="text-[10px] font-bold text-muted-foreground bg-secondary rounded-lg px-2 py-1">
+                      {item.case_number}
+                    </span>
+                  </div>
+
+                  {/* Status Timeline Progress Bar */}
+                  <div className="pt-2">
+                    <div className="relative flex justify-between">
+                      {/* Connection Line */}
+                      <div className="absolute top-2.5 left-0 right-0 h-0.5 bg-muted z-0" />
+                      
+                      {stages.map((stage, idx) => {
+                        const isCompleted = parsed.history.some((h: any) => h.status === stage)
+                        const isActive = activeStage === stage
+                        
+                        return (
+                          <div key={stage} className="relative z-10 flex flex-col items-center">
+                            <span className={`size-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
+                              isActive
+                                ? "bg-gradient-to-r from-primary to-secondary text-white ring-2 ring-primary/20 animate-pulse"
+                                : isCompleted
+                                  ? "bg-green-500 text-white"
+                                  : "bg-muted text-muted-foreground"
+                            }`}>
+                              {isCompleted ? "✓" : idx + 1}
+                            </span>
+                            <span className={`text-[8px] font-bold mt-1 ${
+                              isActive ? "text-primary" : "text-muted-foreground"
+                            }`}>
+                              {stage}
+                            </span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Timeline Logs List */}
+                  {parsed.history && parsed.history.length > 0 && (
+                    <div className="border-t border-border/50 pt-2 space-y-1.5">
+                      <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                        <Icon name="History" className="size-3" /> Transition Logs
+                      </p>
+                      <div className="space-y-1 pl-2 border-l border-border/80">
+                        {parsed.history.map((h: any, logIdx: number) => (
+                          <div key={logIdx} className="text-[10px] flex justify-between text-muted-foreground">
+                            <span className="font-semibold text-foreground">· {h.status}</span>
+                            <span>{new Date(h.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </motion.div>
+              )
+            })
+          ) : (
+            <p className="text-center text-xs text-muted-foreground py-8 italic border border-dashed rounded-2xl">
+              You haven't reported any lost items.
+            </p>
+          )}
+
+          {/* My Claims Section */}
+          <div className="pt-6 border-t border-border/80 mt-6 space-y-4">
+            <h3 className="font-heading font-bold text-sm text-foreground flex items-center gap-1.5">
+              <Icon name="FileCheck" className="size-4 text-primary" />
+              My Claim Requests
+            </h3>
+            {myClaims.length > 0 ? (
+              <div className="space-y-3">
+                {myClaims.map((claim) => (
+                  <div key={claim.id} className="rounded-3xl border border-border bg-card p-4 shadow-sm space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-heading font-bold text-xs text-foreground">
+                          Claimed Item: {claim.found_items?.item_name || "Found Item"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          Category: {claim.found_items?.category || "General"}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground">
+                          Found Date: {claim.found_items?.date_found}
+                        </p>
+                      </div>
+                      <span className={`text-[9px] font-bold uppercase rounded-lg px-2 py-1 ${
+                        claim.status === "approved" 
+                          ? "bg-green-50 text-green-700 border border-green-200" 
+                          : claim.status === "rejected"
+                            ? "bg-red-50 text-red-700 border border-red-200"
+                            : "bg-amber-50 text-amber-700 border border-amber-200"
+                      }`}>
+                        {claim.status}
+                      </span>
+                    </div>
+                    <div className="border-t border-border/40 pt-2 text-[10px] text-muted-foreground space-y-1">
+                      <p><strong>Claimant Name:</strong> {claim.claimant_name}</p>
+                      <p><strong>Identity Proof:</strong> {claim.identity_proof_type} ({claim.identity_proof_number})</p>
+                      <p><strong>Claim Details:</strong> {claim.claim_description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-xs text-muted-foreground py-8 italic border border-dashed rounded-2xl">
+                No claim requests submitted.
+              </p>
+            )}
+          </div>
+
+          <Ornament />
+        </div>
+      )}
+
+      {/* Claim Request Modal */}
+      <AnimatePresence>
+        {claimingItem && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 p-4 sm:items-center">
+            <motion.div
+              initial={{ opacity: 0, y: 100 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 100 }}
+              className="w-full max-w-md rounded-t-[2.5rem] sm:rounded-[2.5rem] bg-card border border-border p-6 shadow-xl max-h-[90vh] overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="font-heading font-bold text-base text-foreground">Submit Claim Request</h3>
+                  <p className="text-xs text-muted-foreground">Item: {claimingItem.item}</p>
+                </div>
+                <button
+                  onClick={() => setClaimingItem(null)}
+                  className="grid size-8 place-items-center rounded-full bg-muted/65 hover:bg-muted text-foreground transition"
+                >
+                  <Icon name="X" className="size-4" />
+                </button>
+              </div>
+
+              {claimFeedback ? (
+                <div className={`rounded-2xl p-4 text-center text-xs font-bold ${
+                  claimFeedback.includes("successfully") 
+                    ? "bg-green-50 text-green-700 border border-green-200" 
+                    : "bg-red-50 text-red-700 border border-red-200"
+                }`}>
+                  {claimFeedback}
+                </div>
+              ) : (
+                <form onSubmit={handleClaimSubmit} className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1">Your Full Name *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Ramesh Kumar"
+                      value={claimForm.claimantName}
+                      onChange={(e) => setClaimForm(prev => ({ ...prev, claimantName: e.target.value }))}
+                      className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-primary focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1">ID Proof Type *</label>
+                      <select
+                        value={claimForm.identityProofType}
+                        onChange={(e) => setClaimForm(prev => ({ ...prev, identityProofType: e.target.value }))}
+                        className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-primary focus:outline-none"
+                      >
+                        <option value="Aadhaar Card">Aadhaar Card</option>
+                        <option value="PAN Card">PAN Card</option>
+                        <option value="Voter ID">Voter ID</option>
+                        <option value="Driving License">Driving License</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1">ID Proof Number *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="Last 4 digits or Full No."
+                        value={claimForm.identityProofNumber}
+                        onChange={(e) => setClaimForm(prev => ({ ...prev, identityProofNumber: e.target.value }))}
+                        className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-primary focus:outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-foreground mb-1">Describe the Item / Proof of Ownership *</label>
+                    <textarea
+                      required
+                      rows={3}
+                      placeholder="Describe unique identifiers, contents, or purchase proof to verify it belongs to you."
+                      value={claimForm.claimDescription}
+                      onChange={(e) => setClaimForm(prev => ({ ...prev, claimDescription: e.target.value }))}
+                      className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-primary focus:outline-none"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={submittingClaim}
+                    className="w-full flex items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] py-3 text-sm font-bold text-white shadow-md transition hover:shadow-lg active:scale-95 disabled:opacity-50"
+                  >
+                    {submittingClaim ? "Submitting..." : "Submit Claim Request"}
+                  </button>
+                </form>
+              )}
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

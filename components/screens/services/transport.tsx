@@ -13,12 +13,17 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
   const { goBack } = useNavigation();
   const { t } = useLanguage()
   const [selectedVehicle, setSelectedVehicle] = useHistoryState<any>("vehicle", null)
+  const getTodayStr = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+  }
+
   const [bookingForm, setBookingForm] = useState({
     name: "",
     phone: "",
     pickup: "jaipur-airport",
     customPickup: "",
-    date: "",
+    date: getTodayStr(),
     time: "",
   })
   const [booked, setBooked] = useState(false)
@@ -92,7 +97,7 @@ export function TransportScreen({ navigate }: { navigate: (s: ScreenKey) => void
       setTimeout(() => {
         setBooked(false)
         goBack()
-        setBookingForm({ name: "", phone: "", pickup: "jaipur-airport", customPickup: "", date: "", time: "" })
+         setBookingForm({ name: "", phone: "", pickup: "jaipur-airport", customPickup: "", date: getTodayStr(), time: "" })
         setSelectedVehicle(null)
       }, 4000)
     } catch (err) {

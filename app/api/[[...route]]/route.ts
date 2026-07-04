@@ -35,6 +35,28 @@ export async function createNotification(payload: {
   }
 }
 
+export async function createAuditLog(payload: {
+  admin_id?: string | null
+  action: string
+  department: string
+  actor_name: string
+  old_values?: any
+  new_values?: any
+}) {
+  try {
+    await supabaseAdmin.from("audit_logs").insert({
+      admin_id: payload.admin_id || null,
+      action: payload.action,
+      department: payload.department,
+      actor_name: payload.actor_name,
+      old_values: payload.old_values || null,
+      new_values: payload.new_values || null
+    })
+  } catch (err) {
+    console.error("Failed to insert audit log", err)
+  }
+}
+
 export const GET = withSupabase<any>({ auth: ["user", "none"] }, async (req, ctx) => {
   const url = new URL(req.url)
   const path = url.pathname.replace(/^\/api\//, "")
@@ -60,6 +82,55 @@ export const GET = withSupabase<any>({ auth: ["user", "none"] }, async (req, ctx
         .from("hotels")
         .select("*")
         .eq("is_active", true)
+      if (error) throw error
+      return apiResponse(data)
+    }
+
+    if (path === "devotee/reach") {
+      const [dest, options, routes, instrs] = await Promise.all([
+        supabase.from("temple_destinations").select("*").maybeSingle(),
+        supabase.from("travel_options").select("*").eq("is_active", true).order("display_order", { ascending: true }),
+        supabase.from("route_information").select("*").eq("is_active", true),
+        supabase.from("transport_instructions").select("*").eq("is_active", true)
+      ])
+      if (dest.error) throw dest.error
+      if (options.error) throw options.error
+      if (routes.error) throw routes.error
+      if (instrs.error) throw instrs.error
+      return apiResponse({
+        destination: dest.data,
+        travel_options: options.data,
+        routes: routes.data,
+        instructions: instrs.data
+      })
+    }
+
+    if (path === "devotee/aarti") {
+      const { data, error } = await supabase
+        .from("aarti_timings")
+        .select("*")
+        .eq("status", "active")
+        .order("display_order", { ascending: true })
+      if (error) throw error
+      return apiResponse(data)
+    }
+
+    if (path === "devotee/guidelines") {
+      const { data, error } = await supabase
+        .from("devotee_guidelines")
+        .select("*")
+        .eq("status", "published")
+        .order("display_order", { ascending: true })
+      if (error) throw error
+      return apiResponse(data)
+    }
+
+    if (path === "devotee/booking-centers") {
+      const { data, error } = await supabase
+        .from("offline_booking_centers")
+        .select("*")
+        .eq("status", "active")
+        .order("name", { ascending: true })
       if (error) throw error
       return apiResponse(data)
     }
@@ -109,9 +180,14 @@ export const GET = withSupabase<any>({ auth: ["user", "none"] }, async (req, ctx
     }
 
     if (path === "lost-found/found-items") {
+      const dateLimit = new Date()
+      dateLimit.setDate(dateLimit.getDate() - 30)
+      const dateLimitStr = dateLimit.toISOString().split("T")[0]
+
       const { data, error } = await supabase
         .from("found_items")
         .select("*")
+        .gte("date_found", dateLimitStr)
         .order("date_found", { ascending: false })
       if (error) throw error
       return apiResponse(data)
@@ -139,6 +215,72 @@ export const GET = withSupabase<any>({ auth: ["user", "none"] }, async (req, ctx
 
       if (error) throw error
       return apiResponse(data)
+    }
+
+    if (path === "seva/volunteers") {
+      const authCtx = await verifyAuth(req)
+      if (!authCtx) return apiError("Unauthorized: Devotee authentication required", 401)
+
+      const { data, error } = await supabase
+        .from("volunteer_applications")
+        .select("*")
+        .eq("profile_id", authCtx.user.id)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      return apiResponse(data)
+    }
+
+    if (path === "lost-found/my-reports") {
+      const authCtx = await verifyAuth(req)
+      if (!authCtx) return apiError("Unauthorized: Devotee authentication required", 401)
+
+      const { data, error } = await supabase
+        .from("lost_items")
+        .select("*")
+        .eq("profile_id", authCtx.user.id)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      return apiResponse(data)
+    }
+
+    if (path === "lost-found/claims") {
+      const authCtx = await verifyAuth(req)
+      if (!authCtx) return apiError("Unauthorized: Devotee authentication required", 401)
+
+      const { data, error } = await supabase
+        .from("claim_requests")
+        .select("*, found_items(*)")
+        .eq("profile_id", authCtx.user.id)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+      return apiResponse(data)
+    }
+
+    if (path === "devotee/bookings") {
+      const authCtx = await verifyAuth(req)
+      if (!authCtx) return apiError("Unauthorized: Devotee authentication required", 401)
+
+      const { data, error } = await supabaseAdmin
+        .from("darshan_bookings")
+        .select("*")
+        .eq("profile_id", authCtx.user.id)
+        .order("booking_date", { ascending: false })
+
+      if (error) throw error
+
+      const formatted = (data || []).map((b: any) => ({
+        id: b.booking_number,
+        name: b.group_name || "Solo Devotee",
+        date: new Date(b.booking_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }),
+        visitors: b.visitor_count,
+        status: b.status,
+        qrToken: `${b.booking_number}:${signBookingNumber(b.booking_number)}`
+      }))
+
+      return apiResponse(formatted)
     }
 
     if (path === "announcements") {
@@ -307,6 +449,15 @@ export const GET = withSupabase<any>({ auth: ["user", "none"] }, async (req, ctx
         return apiResponse(data)
       }
 
+      if (path === "admin/audit-logs") {
+        const { data, error } = await supabase
+          .from("audit_logs")
+          .select("*")
+          .order("created_at", { ascending: false })
+        if (error) throw error
+        return apiResponse(data)
+      }
+
       if (path === "admin/approvals") {
         const { data, error } = await supabase
           .from("approval_queue")
@@ -355,10 +506,15 @@ export const GET = withSupabase<any>({ auth: ["user", "none"] }, async (req, ctx
         if (prasad.error) throw prasad.error
         if (offerings.error) throw offerings.error
 
+        const mappedDining = dining.data?.map((item: any) => ({
+          ...item,
+          reservation_date: item.check_in_date
+        }))
+
         return apiResponse({
           cabs: cabs.data,
           buses: buses.data,
-          dining: dining.data,
+          dining: mappedDining,
           prasad: prasad.data,
           offerings: offerings.data
         })
@@ -445,6 +601,70 @@ export const GET = withSupabase<any>({ auth: ["user", "none"] }, async (req, ctx
           .from("donations")
           .select("*")
           .order("created_at", { ascending: false })
+        if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "admin/lost-found/claims") {
+        const { data, error } = await supabase
+          .from("claim_requests")
+          .select("*, found_items(*), profiles(name, phone)")
+          .order("created_at", { ascending: false })
+        if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "admin/reach") {
+        const [dest, options, routes, instrs] = await Promise.all([
+          supabase.from("temple_destinations").select("*").maybeSingle(),
+          supabase.from("travel_options").select("*").order("display_order", { ascending: true }),
+          supabase.from("route_information").select("*").order("title", { ascending: true }),
+          supabase.from("transport_instructions").select("*").order("title", { ascending: true })
+        ])
+        if (dest.error) throw dest.error
+        if (options.error) throw options.error
+        if (routes.error) throw routes.error
+        if (instrs.error) throw instrs.error
+        return apiResponse({
+          destination: dest.data,
+          travel_options: options.data,
+          routes: routes.data,
+          instructions: instrs.data
+        })
+      }
+
+      if (path === "admin/aarti") {
+        const { data, error } = await supabase
+          .from("aarti_timings")
+          .select("*")
+          .order("display_order", { ascending: true })
+        if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "admin/guidelines") {
+        const { data, error } = await supabase
+          .from("devotee_guidelines")
+          .select("*")
+          .order("display_order", { ascending: true })
+        if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "admin/booking-centers") {
+        const { data, error } = await supabase
+          .from("offline_booking_centers")
+          .select("*")
+          .order("name", { ascending: true })
+        if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "admin/cms-history") {
+        const { data, error } = await supabase
+          .from("temple_cms_history")
+          .select("*")
+          .order("updated_time", { ascending: false })
         if (error) throw error
         return apiResponse(data)
       }
@@ -595,6 +815,13 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
               return apiError(signUpError.message, 400)
             }
             existingUser = signUpData.user
+          } else {
+            // Ensure password matches dev bypass value
+            await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+              password: "devotee_dev_bypass_123",
+              email_confirm: true,
+              phone_confirm: true
+            })
           }
 
           if (!existingProfile && existingUser) {
@@ -646,6 +873,69 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
           .single()
 
         if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "devotee/accommodation/register") {
+        const { name, stars, total_rooms, price_range, address, contact_phone, manager_name, maps_link, type } = body
+        const hotel_code = `HTL-${Math.floor(100 + Math.random() * 900)}`
+
+        const { data, error } = await supabase
+          .from("hotel_registrations")
+          .insert({
+            hotel_code,
+            name,
+            stars: Number(stars) || 3,
+            total_rooms: Number(total_rooms) || 20,
+            price_range,
+            assigned_admin_id: "00000000-0000-0000-0000-000000000001",
+            status: "pending",
+            rating: 4.0,
+            address,
+            contact_phone,
+            manager_name,
+            maps_link,
+            photo_url: "/images/hotel-room-1.jpg",
+            type
+          })
+          .select()
+          .single()
+
+        if (error) {
+          if (error.code === "42P01") {
+            const queueRes = await supabase
+              .from("approval_queue")
+              .insert({
+                type: "hotel-update",
+                title: `Register stay: ${name}`,
+                submitted_by_admin_id: "00000000-0000-0000-0000-000000000001",
+                status: "pending",
+                department: "accommodation",
+                description: `Listing request for new ${type} stay ${name}. Price range: ${price_range}, stars: ${stars}`,
+                draft_payload: {
+                  hotel_code,
+                  name,
+                  stars: Number(stars) || 3,
+                  total_rooms: Number(total_rooms) || 20,
+                  price_range,
+                  assigned_admin_id: "00000000-0000-0000-0000-000000000001",
+                  status: "active",
+                  rating: 4.0,
+                  address,
+                  contact_phone,
+                  manager_name,
+                  maps_link,
+                  photo_url: "/images/hotel-room-1.jpg",
+                  type
+                }
+              })
+              .select()
+              .single()
+            if (queueRes.error) throw queueRes.error
+            return apiResponse(queueRes.data)
+          }
+          throw error
+        }
         return apiResponse(data)
       }
 
@@ -726,6 +1016,34 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
 
         const qr_token = `${booking_number}:${signBookingNumber(booking_number)}`
         return apiResponse({ ...booking, qr_token })
+      }
+
+      if (path === "devotee/bookings/cancel") {
+        const { booking_number } = body
+        if (!booking_number) return apiError("Missing booking number", 400)
+
+        const { data, error } = await supabaseAdmin
+          .from("darshan_bookings")
+          .update({ status: "cancelled" })
+          .eq("booking_number", booking_number)
+          .eq("profile_id", authCtx.user.id)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await createNotification({
+          profile_id: authCtx.user.id,
+          title_en: "Darshan Booking Cancelled",
+          title_hi: "दर्शन बुकिंग रद्द कर दी गई",
+          body_en: `Your Darshan slot reservation ${booking_number} has been cancelled successfully.`,
+          body_hi: `आपका दर्शन स्लॉट आरक्षण ${booking_number} सफलतापूर्वक रद्द कर दिया गया है।`,
+          type: "booking",
+          icon: "CalendarX",
+          tone: "danger"
+        })
+
+        return apiResponse(data)
       }
 
       if (path === "hotels/bookings") {
@@ -830,7 +1148,8 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
             restaurant_id,
             guest_name,
             guest_phone,
-            reservation_date,
+            check_in_date: reservation_date,
+            check_out_date: null,
             reservation_time,
             people_count: parseInt(people_count),
             status: "confirmed"
@@ -839,7 +1158,13 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
           .single()
 
         if (error) throw error
-        return apiResponse(data)
+
+        const mappedData = data ? {
+          ...data,
+          reservation_date: data.check_in_date
+        } : null
+
+        return apiResponse(mappedData)
       }
 
       if (path === "prashad/orders") {
@@ -939,6 +1264,24 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
           .single()
 
         if (error) throw error
+
+        await createNotification({
+          profile_id: authCtx.user.id,
+          title_en: "Donation/Payment Confirmed",
+          title_hi: "दान/भुगतान की पुष्टि की गई",
+          body_en: `Thank you for your donation of INR ${amount}. Receipt DN: ${donation_number}`,
+          body_hi: `INR ${amount} के आपके दान के लिए धन्यवाद। रसीद संख्या DN: ${donation_number}`,
+          type: "payment",
+          icon: "Coins",
+          tone: "success"
+        })
+
+        await createAuditLog({
+          action: `Donation of INR ${amount} made by ${donor_name} (Receipt: ${donation_number})`,
+          department: "Accounts / Donation",
+          actor_name: donor_name
+        })
+
         return apiResponse(data)
       }
 
@@ -980,6 +1323,16 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
         }
 
         const case_number = "LF-" + Math.floor(100000 + Math.random() * 900000)
+        const initialDetails = JSON.stringify({
+          user_notes: additional_details || "",
+          history: [
+            {
+              status: "Reported",
+              timestamp: new Date().toISOString(),
+              notes: "Item registered by user."
+            }
+          ]
+        })
 
         const { data, error } = await supabase
           .from("lost_items")
@@ -991,7 +1344,7 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
             location_lost,
             date_lost,
             contact_phone,
-            additional_details,
+            additional_details: initialDetails,
             image_url,
             status: "registered"
           })
@@ -999,7 +1352,61 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
           .single()
 
         if (error) throw error
+
+        await createNotification({
+          profile_id: authCtx.user.id,
+          title_en: "Lost Item Report Submitted",
+          title_hi: "खोई हुई वस्तु की रिपोर्ट जमा की गई",
+          body_en: `Your lost report for "${item_name}" has been registered. Case Number: ${case_number}`,
+          body_hi: `आपके "${item_name}" के लिए खोई हुई रिपोर्ट दर्ज कर ली गई है। केस नंबर: ${case_number}`,
+          type: "lost-found",
+          icon: "PackageSearch",
+          tone: "info"
+        })
+
+        await createAuditLog({
+          action: `Devotee reported lost item: "${item_name}" (Case: ${case_number})`,
+          department: "Security / Lost & Found",
+          actor_name: authCtx.user.name || "Devotee"
+        })
+
         return apiResponse(data)
+      }
+
+      if (path === "lost-found/claim") {
+        const { found_item_id, claimant_name, identity_proof_type, identity_proof_number, claim_description } = body
+        if (!found_item_id || !claimant_name || !identity_proof_type || !identity_proof_number || !claim_description) {
+          return apiError("Missing claim request parameters", 400)
+        }
+
+        const { data: claim, error } = await supabase
+          .from("claim_requests")
+          .insert({
+            found_item_id,
+            profile_id: authCtx.user.id,
+            claimant_name,
+            identity_proof_type,
+            identity_proof_number,
+            claim_description,
+            status: "pending"
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await supabase
+          .from("found_items")
+          .update({ status: "Claim Requested" })
+          .eq("id", found_item_id)
+
+        await createAuditLog({
+          action: `Devotee ${claimant_name} submitted claim for found item #${found_item_id}`,
+          department: "Security / Lost & Found",
+          actor_name: claimant_name
+        })
+
+        return apiResponse(claim)
       }
 
       if (path === "emergency/sos") {
@@ -1092,6 +1499,31 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
       const adminCtx = await verifyAdmin(req)
       if (!adminCtx) {
         return apiError("Unauthorized: Admin credentials required", 403)
+      }
+
+      if (path === "admin/traffic/routes/status") {
+        const { route_id, status, eta } = body
+        if (!route_id || !status) {
+          return apiError("Missing route status parameters", 400)
+        }
+
+        const { data, error } = await supabase
+          .from("traffic_routes")
+          .update({ status, eta })
+          .eq("id", route_id)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Update Route Status to ${status}`,
+          department: "Traffic",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse(data)
       }
 
       if (path === "admin/pilgrims/scan") {
@@ -1247,6 +1679,26 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
           .single()
 
         if (error) throw error
+
+        await createNotification({
+          profile_id: data.profile_id,
+          title_en: `Volunteer Application ${status === "approved" ? "Approved" : "Rejected"}`,
+          title_hi: `स्वयंसेवक आवेदन ${status === "approved" ? "स्वीकृत" : "अस्वीकृत"}`,
+          body_en: `Your volunteer application for "${data.preferred_role}" has been ${status}.`,
+          body_hi: `भूमिका "${data.preferred_role}" के लिए आपका स्वयंसेवक आवेदन ${status === "approved" ? "स्वीकार" : "अस्वीकार"} कर दिया गया है।`,
+          type: "volunteer",
+          icon: "ShieldCheck",
+          tone: status === "approved" ? "success" : "danger"
+        })
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Volunteer application for ${data.full_name} was ${status} (Role: ${data.preferred_role})`,
+          department: "Seva Management",
+          actor_name: adminCtx.admin.name,
+          new_values: { status }
+        })
+
         return apiResponse(data)
       }
 
@@ -1363,6 +1815,14 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
           })
         }
 
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Proposal "${proposal.title}" (Type: ${proposal.type}) has been ${status}.`,
+          department: "Temple Administration",
+          actor_name: adminCtx.admin.name,
+          new_values: { status }
+        })
+
         return apiResponse(proposal)
       }
 
@@ -1388,6 +1848,14 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
           .single()
 
         if (error) throw error
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Broadcasted notification: "${title_en}" (Category: ${type})`,
+          department: "Notifications / Public Relations",
+          actor_name: adminCtx.admin.name
+        })
+
         return apiResponse(data)
       }
 
@@ -1624,6 +2092,13 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
             tone: "success"
           })
 
+          await createAuditLog({
+            admin_id: adminCtx.admin.id,
+            action: `Approved hotel registration for "${reg.name}"`,
+            department: "Accommodation",
+            actor_name: adminCtx.admin.name
+          })
+
           return apiResponse({ success: true, hotel: reg })
         } else {
           const { data: proposal, error: propErr } = await supabase
@@ -1670,6 +2145,13 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
             tone: "success"
           })
 
+          await createAuditLog({
+            admin_id: adminCtx.admin.id,
+            action: `Approved hotel registration for "${payload.name}"`,
+            department: "Accommodation",
+            actor_name: adminCtx.admin.name
+          })
+
           return apiResponse({ success: true, hotel: payload })
         }
       }
@@ -1694,6 +2176,14 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
             .update({ status: "rejected" })
             .eq("id", registration_id)
           if (updateErr) throw updateErr
+
+          await createAuditLog({
+            admin_id: adminCtx.admin.id,
+            action: `Rejected hotel registration for "${reg.name}"`,
+            department: "Accommodation",
+            actor_name: adminCtx.admin.name
+          })
+
           return apiResponse({ success: true })
         } else {
           const { error: updateQueueErr } = await supabase
@@ -1701,6 +2191,14 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
             .update({ status: "rejected", rejected_by_admin_id: adminCtx.admin.id, rejected_at: new Date().toISOString(), rejection_reason })
             .eq("id", registration_id)
           if (updateQueueErr) throw updateQueueErr
+
+          await createAuditLog({
+            admin_id: adminCtx.admin.id,
+            action: `Rejected hotel registration proposal ID ${registration_id} (Reason: ${rejection_reason || "None"})`,
+            department: "Accommodation",
+            actor_name: adminCtx.admin.name
+          })
+
           return apiResponse({ success: true })
         }
       }
@@ -1773,6 +2271,205 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
         }
 
         return apiResponse(updatedBlock)
+      }
+
+      if (path === "admin/parking/add") {
+        const { block_code, name, total_capacity, occupied, status, vehicle_types, manager_name, latitude, longitude, google_maps_url, shuttle_active } = body
+        if (!block_code || !name || !total_capacity) {
+          return apiError("Missing required parking block details", 400)
+        }
+
+        const { data, error } = await supabase
+          .from("parking_blocks")
+          .insert({
+            block_code,
+            name,
+            total_capacity: Number(total_capacity),
+            occupied: Number(occupied || 0),
+            status: status || "open",
+            vehicle_types: vehicle_types || ["Car"],
+            manager_name: manager_name || null,
+            latitude: latitude ? Number(latitude) : null,
+            longitude: longitude ? Number(longitude) : null,
+            google_maps_url: google_maps_url || null,
+            shuttle_active: shuttle_active !== undefined ? shuttle_active : true,
+            is_active: true
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Create Parking Block ${name}`,
+          department: "Parking",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse(data)
+      }
+
+      if (path === "admin/parking/edit") {
+        const { id, block_code, name, total_capacity, occupied, status, vehicle_types, manager_name, latitude, longitude, google_maps_url, shuttle_active } = body
+        if (!id) {
+          return apiError("Missing parking block ID", 400)
+        }
+
+        const updatePayload: any = {}
+        if (block_code !== undefined) updatePayload.block_code = block_code
+        if (name !== undefined) updatePayload.name = name
+        if (total_capacity !== undefined) updatePayload.total_capacity = Number(total_capacity)
+        if (occupied !== undefined) updatePayload.occupied = Number(occupied)
+        if (status !== undefined) updatePayload.status = status
+        if (vehicle_types !== undefined) updatePayload.vehicle_types = vehicle_types
+        if (manager_name !== undefined) updatePayload.manager_name = manager_name
+        if (latitude !== undefined) updatePayload.latitude = latitude ? Number(latitude) : null
+        if (longitude !== undefined) updatePayload.longitude = longitude ? Number(longitude) : null
+        if (google_maps_url !== undefined) updatePayload.google_maps_url = google_maps_url
+        if (shuttle_active !== undefined) updatePayload.shuttle_active = shuttle_active
+        updatePayload.updated_at = new Date().toISOString()
+
+        const { data, error } = await supabase
+          .from("parking_blocks")
+          .update(updatePayload)
+          .eq("id", id)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Edit Parking Block ${data.name}`,
+          department: "Parking",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse(data)
+      }
+
+      if (path === "admin/parking/delete") {
+        const { id } = body
+        if (!id) {
+          return apiError("Missing parking block ID", 400)
+        }
+
+        const { data, error } = await supabase
+          .from("parking_blocks")
+          .delete()
+          .eq("id", id)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Delete Parking Block ${data.name}`,
+          department: "Parking",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse(data)
+      }
+
+      if (path === "admin/traffic/routes/add") {
+        const { name, origin, destination, coordinates, eta, congestion_level, status, google_maps_polyline, google_maps_url } = body
+        if (!name || !eta) {
+          return apiError("Missing required traffic route details", 400)
+        }
+
+        const { data, error } = await supabase
+          .from("traffic_routes")
+          .insert({
+            name,
+            origin: origin || null,
+            destination: destination || null,
+            coordinates: coordinates || null,
+            eta,
+            congestion_level: congestion_level || "smooth",
+            status: status || "smooth",
+            alert_count: 0,
+            google_maps_polyline: google_maps_polyline || null,
+            google_maps_url: google_maps_url || null,
+            is_active: true
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Create Traffic Route ${name}`,
+          department: "Traffic",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse(data)
+      }
+
+      if (path === "admin/traffic/routes/edit") {
+        const { id, name, origin, destination, coordinates, eta, congestion_level, status, google_maps_polyline, google_maps_url } = body
+        if (!id) {
+          return apiError("Missing traffic route ID", 400)
+        }
+
+        const updatePayload: any = {}
+        if (name !== undefined) updatePayload.name = name
+        if (origin !== undefined) updatePayload.origin = origin
+        if (destination !== undefined) updatePayload.destination = destination
+        if (coordinates !== undefined) updatePayload.coordinates = coordinates
+        if (eta !== undefined) updatePayload.eta = eta
+        if (congestion_level !== undefined) updatePayload.congestion_level = congestion_level
+        if (status !== undefined) updatePayload.status = status
+        if (google_maps_polyline !== undefined) updatePayload.google_maps_polyline = google_maps_polyline
+        if (google_maps_url !== undefined) updatePayload.google_maps_url = google_maps_url
+        updatePayload.updated_at = new Date().toISOString()
+
+        const { data, error } = await supabase
+          .from("traffic_routes")
+          .update(updatePayload)
+          .eq("id", id)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Edit Traffic Route ${data.name}`,
+          department: "Traffic",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse(data)
+      }
+
+      if (path === "admin/traffic/routes/delete") {
+        const { id } = body
+        if (!id) {
+          return apiError("Missing traffic route ID", 400)
+        }
+
+        const { data, error } = await supabase
+          .from("traffic_routes")
+          .delete()
+          .eq("id", id)
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Delete Traffic Route ${data.name}`,
+          department: "Traffic",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse(data)
       }
 
       if (path === "admin/traffic/alerts") {
@@ -1895,6 +2592,541 @@ export const POST = withSupabase<any>({ auth: ["user", "none"] }, async (req, ct
             last_updated_by_admin_id: adminCtx.admin.id,
             updated_at: new Date().toISOString()
           }, { onConflict: "section_key" })
+          .select()
+          .single()
+
+        if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "admin/lost-found/claims/action") {
+        const { claim_id, action, rejection_reason } = body
+        if (!claim_id || !action) {
+          return apiError("Missing claim action parameters", 400)
+        }
+
+        const { data: claim, error: claimErr } = await supabase
+          .from("claim_requests")
+          .select("*, found_items(*)")
+          .eq("id", claim_id)
+          .single()
+
+        if (claimErr) throw claimErr
+
+        const newStatus = action === "approve" ? "Claim Approved" : "ready-to-collect"
+        const claimStatus = action === "approve" ? "approved" : "rejected"
+
+        const { error: updClaimErr } = await supabase
+          .from("claim_requests")
+          .update({ status: claimStatus, updated_at: new Date().toISOString() })
+          .eq("id", claim_id)
+
+        if (updClaimErr) throw updClaimErr
+
+        await supabase
+          .from("found_items")
+          .update({ status: newStatus })
+          .eq("id", claim.found_item_id)
+
+        const { data: matchedLost } = await supabase
+          .from("lost_items")
+          .select("*")
+          .eq("profile_id", claim.profile_id)
+          .eq("matched_found_item_id", claim.found_item_id)
+          .maybeSingle()
+
+        if (matchedLost) {
+          let parsed: any = { user_notes: "", history: [] }
+          try {
+            parsed = JSON.parse(matchedLost.additional_details || "{}")
+          } catch(e) {}
+          if (!Array.isArray(parsed.history)) parsed.history = []
+          parsed.history.push({
+            status: newStatus,
+            timestamp: new Date().toISOString(),
+            notes: `Claim ${claimStatus} by Admin. Remarks: ${rejection_reason || "N/A"}`
+          })
+
+          await supabase
+            .from("lost_items")
+            .update({
+              status: newStatus,
+              additional_details: JSON.stringify(parsed),
+              updated_at: new Date().toISOString()
+            })
+            .eq("id", matchedLost.id)
+        }
+
+        await createNotification({
+          profile_id: claim.profile_id,
+          title_en: action === "approve" ? "Claim Request Approved" : "Claim Request Rejected",
+          title_hi: action === "approve" ? "दावा अनुरोध स्वीकृत" : "दावा अनुरोध अस्वीकृत",
+          body_en: action === "approve"
+            ? `Your claim for item "${claim.found_items?.item_name}" has been approved! Please collect it at the Lost & Found desk.`
+            : `Your claim for item "${claim.found_items?.item_name}" was not approved. Remarks: ${rejection_reason || "Verification failed."}`,
+          body_hi: action === "approve"
+            ? `आपकी वस्तु "${claim.found_items?.item_name}" के लिए आपका दावा स्वीकृत हो गया है! कृपया इसे खोया-पाया डेस्क से प्राप्त करें।`
+            : `आपकी वस्तु "${claim.found_items?.item_name}" के लिए आपका दावा स्वीकृत नहीं किया गया। विवरण: ${rejection_reason || "सत्यापन विफल रहा।"}`,
+          type: "lost-found",
+          icon: action === "approve" ? "CheckCircle" : "XCircle",
+          tone: action === "approve" ? "success" : "danger"
+        })
+
+        await createAuditLog({
+          action: `Claim request ${claimStatus} for found item #${claim.found_item_id} by devotee (Profile: ${claim.profile_id})`,
+          department: "Security / Lost & Found",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse({ success: true })
+      }
+
+      if (path === "admin/lost-found/found/manual") {
+        const { item_name, category, description, image_url, date_found, time_found, location_found, storage_location, found_by, remarks, lost_item_id } = body
+        if (!item_name || !description || !location_found || !date_found) {
+          return apiError("Missing manual found item details", 400)
+        }
+
+        const { data: item, error } = await supabase
+          .from("found_items")
+          .insert({
+            item_name,
+            category: category || "General",
+            description,
+            image_url: image_url || null,
+            date_found,
+            time_found: time_found || "12:00 PM",
+            location_found,
+            storage_location: storage_location || "Storage Safe",
+            found_by: found_by || "Admin Staff",
+            remarks: remarks || "",
+            status: "Found",
+            item_color: "N/A",
+            category_icon: "PackageSearch"
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        let autoMatchedId = lost_item_id || null
+
+        if (!autoMatchedId) {
+          const { data: pendingLost } = await supabase
+            .from("lost_items")
+            .select("*")
+            .eq("status", "registered")
+            .is("matched_found_item_id", null)
+
+          if (pendingLost && pendingLost.length > 0) {
+            const normalizedFoundName = item_name.toLowerCase();
+            const matchedReport = pendingLost.find(l =>
+              l.item_name.toLowerCase().includes(normalizedFoundName) ||
+              normalizedFoundName.includes(l.item_name.toLowerCase())
+            )
+            if (matchedReport) {
+              autoMatchedId = matchedReport.id
+            }
+          }
+        }
+
+        if (autoMatchedId) {
+          const { data: lostItem } = await supabase
+            .from("lost_items")
+            .select("*")
+            .eq("id", autoMatchedId)
+            .single()
+
+          if (lostItem) {
+            let parsed: any = { user_notes: "", history: [] }
+            try {
+              parsed = JSON.parse(lostItem.additional_details || "{}")
+            } catch(e) {}
+            if (!Array.isArray(parsed.history)) parsed.history = []
+            parsed.history.push({
+              status: "Found",
+              timestamp: new Date().toISOString(),
+              notes: `Item matched automatically with Found Item ID: ${item.id}`
+            })
+
+            await supabase
+              .from("lost_items")
+              .update({
+                status: "Found",
+                matched_found_item_id: item.id,
+                additional_details: JSON.stringify(parsed),
+                updated_at: new Date().toISOString()
+              })
+              .eq("id", autoMatchedId)
+
+            await supabase
+              .from("found_items")
+              .update({ status: "Found" })
+              .eq("id", item.id)
+
+            await createNotification({
+              profile_id: lostItem.profile_id,
+              title_en: "Lost Item Match Found",
+              title_hi: "खोई हुई वस्तु का मिलान मिला",
+              body_en: `Good news! Your reported lost item "${lostItem.item_name}" has been matched with a found item. Please verify and claim it.`,
+              body_hi: `अच्छी खबर! आपकी रिपोर्ट की गई खोई हुई वस्तु "${lostItem.item_name}" का मिलान मिल गया है। कृपया जांच करें।`,
+              type: "lost-found",
+              icon: "PackageSearch",
+              tone: "success"
+            })
+          }
+        }
+
+        await createAuditLog({
+          action: `Admin manually added found item: "${item_name}"` + (autoMatchedId ? ` (Auto-matched to lost report ID: ${autoMatchedId})` : ""),
+          department: "Security / Lost & Found",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse(item)
+      }
+
+      if (path === "admin/lost-found/resolve") {
+        const { lost_item_id, found_item_id, remarks } = body
+        if (!lost_item_id && !found_item_id) {
+          return apiError("Missing resolution targets", 400)
+        }
+
+        const timestamp = new Date().toISOString()
+
+        if (lost_item_id) {
+          const { data: lostItem } = await supabase
+            .from("lost_items")
+            .select("*")
+            .eq("id", lost_item_id)
+            .single()
+
+          if (lostItem) {
+            let parsed: any = { user_notes: "", history: [] }
+            try {
+              parsed = JSON.parse(lostItem.additional_details || "{}")
+            } catch(e) {}
+            if (!Array.isArray(parsed.history)) parsed.history = []
+            parsed.history.push({
+              status: "Returned",
+              timestamp,
+              notes: remarks || "Item returned to owner and case closed."
+            })
+
+            await supabase
+              .from("lost_items")
+              .update({
+                status: "Returned",
+                additional_details: JSON.stringify(parsed),
+                updated_at: timestamp
+              })
+              .eq("id", lost_item_id)
+
+            await createNotification({
+              profile_id: lostItem.profile_id,
+              title_en: "Lost & Found Case Closed",
+              title_hi: "खोया-पाया मामला बंद",
+              body_en: `Your reported lost item "${lostItem.item_name}" has been returned to you. Thank you!`,
+              body_hi: `आपकी खोई हुई वस्तु "${lostItem.item_name}" आपको वापस कर दी गई है। धन्यवाद!`,
+              type: "lost-found",
+              icon: "CheckSquare",
+              tone: "success"
+            })
+          }
+        }
+
+        if (found_item_id) {
+          await supabase
+            .from("found_items")
+            .update({ status: "Returned" })
+            .eq("id", found_item_id)
+        }
+
+        await createAuditLog({
+          action: `Lost & Found case resolved (Returned) for lost_id: ${lost_item_id || "N/A"}, found_id: ${found_item_id || "N/A"}`,
+          department: "Security / Lost & Found",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse({ success: true })
+      }
+
+      if (path === "admin/reach/destination") {
+        const { id, name, latitude, longitude, google_maps_url } = body
+        if (!name || !latitude || !longitude || !google_maps_url) {
+          return apiError("Missing destination details", 400)
+        }
+
+        const { data, error } = await supabase
+          .from("temple_destinations")
+          .upsert({
+            id: id || undefined,
+            name,
+            latitude: Number(latitude),
+            longitude: Number(longitude),
+            google_maps_url,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await createAuditLog({
+          admin_id: adminCtx.admin.id,
+          action: `Updated Temple Destination to: "${name}"`,
+          department: "Facilities / Reach",
+          actor_name: adminCtx.admin.name
+        })
+
+        return apiResponse(data)
+      }
+
+      if (path === "admin/reach/travel-option") {
+        const { action, id, mode, icon, detail, detail_hi, display_order, is_active } = body
+        if (!action) return apiError("Missing action", 400)
+
+        if (action === "delete") {
+          const { error } = await supabase
+            .from("travel_options")
+            .delete()
+            .eq("id", id)
+          if (error) throw error
+          return apiResponse({ success: true })
+        }
+
+        const { data, error } = await supabase
+          .from("travel_options")
+          .upsert({
+            id: id || undefined,
+            mode,
+            icon,
+            detail,
+            detail_hi,
+            display_order: Number(display_order) || 0,
+            is_active: is_active !== false,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "admin/reach/route-info") {
+        const { action, id, title, distance, duration, description, is_active } = body
+        if (!action) return apiError("Missing action", 400)
+
+        if (action === "delete") {
+          const { error } = await supabase
+            .from("route_information")
+            .delete()
+            .eq("id", id)
+          if (error) throw error
+          return apiResponse({ success: true })
+        }
+
+        const { data, error } = await supabase
+          .from("route_information")
+          .upsert({
+            id: id || undefined,
+            title,
+            distance,
+            duration,
+            description,
+            is_active: is_active !== false
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "admin/reach/transport-instruction") {
+        const { action, id, title, instructions, is_active } = body
+        if (!action) return apiError("Missing action", 400)
+
+        if (action === "delete") {
+          const { error } = await supabase
+            .from("transport_instructions")
+            .delete()
+            .eq("id", id)
+          if (error) throw error
+          return apiResponse({ success: true })
+        }
+
+        const { data, error } = await supabase
+          .from("transport_instructions")
+          .upsert({
+            id: id || undefined,
+            title,
+            instructions,
+            is_active: is_active !== false
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+        return apiResponse(data)
+      }
+
+      if (path === "admin/aarti") {
+        const { action, id, name, name_hi, start_time, end_time, description, description_hi, status, display_order } = body
+        if (!action) return apiError("Missing action", 400)
+
+        let previousState: any = null
+        if (id) {
+          const { data } = await supabase
+            .from("aarti_timings")
+            .select("*")
+            .eq("id", id)
+            .maybeSingle()
+          previousState = data
+        }
+
+        if (action === "delete") {
+          const { error } = await supabase
+            .from("aarti_timings")
+            .delete()
+            .eq("id", id)
+          if (error) throw error
+
+          await supabase.from("temple_cms_history").insert({
+            module_type: "aarti",
+            record_id: id,
+            action_type: "delete",
+            updated_by: adminCtx.admin.name || adminCtx.admin.initials || "Admin",
+            previous_value: previousState,
+            current_value: null
+          })
+
+          return apiResponse({ success: true })
+        }
+
+        const { data, error } = await supabase
+          .from("aarti_timings")
+          .upsert({
+            id: id || undefined,
+            name,
+            name_hi,
+            start_time,
+            end_time: end_time || null,
+            description: description || null,
+            description_hi: description_hi || null,
+            status: status || "active",
+            display_order: Number(display_order) || 0,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await supabase.from("temple_cms_history").insert({
+          module_type: "aarti",
+          record_id: data.id,
+          action_type: id ? "update" : "create",
+          updated_by: adminCtx.admin.name || adminCtx.admin.initials || "Admin",
+          previous_value: previousState,
+          current_value: data
+        })
+
+        return apiResponse(data)
+      }
+
+      if (path === "admin/guidelines") {
+        const { action, id, title, title_hi, content, content_hi, status, display_order } = body
+        if (!action) return apiError("Missing action", 400)
+
+        let previousState: any = null
+        if (id) {
+          const { data } = await supabase
+            .from("devotee_guidelines")
+            .select("*")
+            .eq("id", id)
+            .maybeSingle()
+          previousState = data
+        }
+
+        if (action === "delete") {
+          const { error } = await supabase
+            .from("devotee_guidelines")
+            .delete()
+            .eq("id", id)
+          if (error) throw error
+
+          await supabase.from("temple_cms_history").insert({
+            module_type: "guideline",
+            record_id: id,
+            action_type: "delete",
+            updated_by: adminCtx.admin.name || adminCtx.admin.initials || "Admin",
+            previous_value: previousState,
+            current_value: null
+          })
+
+          return apiResponse({ success: true })
+        }
+
+        const { data, error } = await supabase
+          .from("devotee_guidelines")
+          .upsert({
+            id: id || undefined,
+            title,
+            title_hi,
+            content,
+            content_hi,
+            status: status || "published",
+            display_order: Number(display_order) || 0,
+            updated_at: new Date().toISOString()
+          })
+          .select()
+          .single()
+
+        if (error) throw error
+
+        await supabase.from("temple_cms_history").insert({
+          module_type: "guideline",
+          record_id: data.id,
+          action_type: id ? "update" : "create",
+          updated_by: adminCtx.admin.name || adminCtx.admin.initials || "Admin",
+          previous_value: previousState,
+          current_value: data
+        })
+
+        return apiResponse(data)
+      }
+
+      if (path === "admin/booking-centers") {
+        const { action, id, name, address, district, state, latitude, longitude, google_maps_url, working_hours, description, status } = body
+        if (!action) return apiError("Missing action", 400)
+
+        if (action === "delete") {
+          const { error } = await supabase
+            .from("offline_booking_centers")
+            .delete()
+            .eq("id", id)
+          if (error) throw error
+          return apiResponse({ success: true })
+        }
+
+        const { data, error } = await supabase
+          .from("offline_booking_centers")
+          .upsert({
+            id: id || undefined,
+            name,
+            address,
+            district,
+            state,
+            latitude: Number(latitude),
+            longitude: Number(longitude),
+            google_maps_url,
+            working_hours,
+            description: description || null,
+            status: status || "active",
+            updated_at: new Date().toISOString()
+          })
           .select()
           .single()
 

@@ -58,10 +58,17 @@ export const devoteeApi = {
   
   donate: (payload: any) => apiClient.post("/api/donations", payload),
   applyVolunteer: (payload: any) => apiClient.post("/api/seva/volunteers", payload),
+  getVolunteerApplications: () => apiClient.get("/api/seva/volunteers"),
   updateProfile: (payload: any) => apiClient.post("/api/devotee/update-profile", payload),
+  registerHotelDevotee: (payload: any) => apiClient.post("/api/devotee/accommodation/register", payload),
+  getDevoteeBookings: () => apiClient.get("/api/devotee/bookings"),
+  cancelDevoteeBooking: (payload: { booking_number: string }) => apiClient.post("/api/devotee/bookings/cancel", payload),
   
   getFoundItems: () => apiClient.get("/api/lost-found/found-items"),
   reportLostItem: (payload: any) => apiClient.post("/api/lost-found/lost-items", payload),
+  getMyLostReports: () => apiClient.get("/api/lost-found/my-reports"),
+  claimFoundItem: (payload: any) => apiClient.post("/api/lost-found/claim", payload),
+  getMyClaims: () => apiClient.get("/api/lost-found/claims"),
   
   triggerSOS: (payload: any) => apiClient.post("/api/emergency/sos", payload),
   getAnnouncements: () => apiClient.get("/api/announcements"),
@@ -70,6 +77,10 @@ export const devoteeApi = {
   markNotificationRead: (payload: { notification_id: string }) => apiClient.post("/api/notifications/read", payload),
   getParkingBlocks: () => apiClient.get("/api/parking"),
   getTempleInfo: () => apiClient.get("/api/temple"),
+  getReachInfo: () => apiClient.get("/api/devotee/reach"),
+  getAartiTimings: () => apiClient.get("/api/devotee/aarti"),
+  getDevoteeGuidelines: () => apiClient.get("/api/devotee/guidelines"),
+  getBookingCenters: () => apiClient.get("/api/devotee/booking-centers"),
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -95,12 +106,20 @@ export const adminApi = {
   
   getParkingBlocks: () => apiClient.get("/api/admin/parking"),
   updateParkingOccupancy: (payload: any) => apiClient.post("/api/admin/parking/occupancy", payload),
+  addParkingBlock: (payload: any) => apiClient.post("/api/admin/parking/add", payload),
+  editParkingBlock: (payload: any) => apiClient.post("/api/admin/parking/edit", payload),
+  deleteParkingBlock: (payload: any) => apiClient.post("/api/admin/parking/delete", payload),
   
   getTraffic: () => apiClient.get("/api/admin/traffic"),
   publishTrafficAlert: (payload: any) => apiClient.post("/api/admin/traffic/alerts", payload),
   resolveTrafficAlert: (payload: any) => apiClient.post("/api/admin/traffic/alerts/resolve", payload),
+  updateTrafficRouteStatus: (payload: any) => apiClient.post("/api/admin/traffic/routes/status", payload),
+  addTrafficRoute: (payload: any) => apiClient.post("/api/admin/traffic/routes/add", payload),
+  editTrafficRoute: (payload: any) => apiClient.post("/api/admin/traffic/routes/edit", payload),
+  deleteTrafficRoute: (payload: any) => apiClient.post("/api/admin/traffic/routes/delete", payload),
   
   getEmergencyRequests: () => apiClient.get("/api/admin/emergency"),
+  getAuditLogs: () => apiClient.get("/api/admin/audit-logs"),
   updateEmergencyStatus: (payload: any) => apiClient.post("/api/admin/emergency/update", payload),
   getNotifications: () => apiClient.get("/api/admin/notifications"),
   broadcastNotification: (payload: any) => apiClient.post("/api/admin/notifications", payload),
@@ -113,4 +132,20 @@ export const adminApi = {
   registerHotel: (payload: any) => apiClient.post("/api/admin/accommodation/register", payload),
   approveHotelRegistration: (payload: any) => apiClient.post("/api/admin/accommodation/approve-registration", payload),
   rejectHotelRegistration: (payload: any) => apiClient.post("/api/admin/accommodation/reject-registration", payload),
+  getFoundClaims: () => apiClient.get("/api/admin/lost-found/claims"),
+  actionFoundClaim: (payload: any) => apiClient.post("/api/admin/lost-found/claims/action", payload),
+  registerManualFound: (payload: any) => apiClient.post("/api/admin/lost-found/found/manual", payload),
+  resolveLostFoundCase: (payload: any) => apiClient.post("/api/admin/lost-found/resolve", payload),
+  getReachInfo: () => apiClient.get("/api/admin/reach"),
+  updateReachDestination: (payload: any) => apiClient.post("/api/admin/reach/destination", payload),
+  actionReachTravelOption: (payload: any) => apiClient.post("/api/admin/reach/travel-option", payload),
+  actionReachRouteInfo: (payload: any) => apiClient.post("/api/admin/reach/route-info", payload),
+  actionReachTransportInstruction: (payload: any) => apiClient.post("/api/admin/reach/transport-instruction", payload),
+  getAartiTimings: () => apiClient.get("/api/admin/aarti"),
+  actionAartiTiming: (payload: any) => apiClient.post("/api/admin/aarti", payload),
+  getDevoteeGuidelines: () => apiClient.get("/api/admin/guidelines"),
+  actionDevoteeGuideline: (payload: any) => apiClient.post("/api/admin/guidelines", payload),
+  getBookingCenters: () => apiClient.get("/api/admin/booking-centers"),
+  actionBookingCenter: (payload: any) => apiClient.post("/api/admin/booking-centers", payload),
+  getCmsHistory: () => apiClient.get("/api/admin/cms-history"),
 }

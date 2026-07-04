@@ -7,21 +7,7 @@ import { Icon } from "@/components/shared"
 import { adminUsers, type AdminUser, type AdminScreenKey } from "@/lib/admin-data"
 import { supabase } from "@/lib/supabase"
 
-const demoPasswords: Record<string, string> = {
-  "ADM-001": "admin123",
-  "ADM-002": "hotel123",
-  "ADM-003": "park123",
-  "ADM-004": "traffic123",
-  "ADM-005": "lost123",
-}
-
-const demoAccounts = [
-  { label: "Super Admin", id: "ADM-001" },
-  { label: "Hotel Admin", id: "ADM-002" },
-  { label: "Parking Admin", id: "ADM-003" },
-  { label: "Traffic Admin", id: "ADM-004" },
-  { label: "Lost & Found", id: "ADM-005" },
-]
+// Demo credentials removed for production. All admin authentication now uses Supabase.
 
 export function AdminLoginScreen({
   onLogin,
@@ -113,82 +99,65 @@ export function AdminLoginScreen({
   }
 
   const handleQuickLogin = async (id: string) => {
-    const pw = demoPasswords[id] || "admin123"
-    setAdminId(id)
-    setPassword(pw)
-    setLoading(true)
-    setError("")
-
+    setAdminId(id);
+    setPassword(''); // no demo password
+    setLoading(true);
+    setError('');
+    // Directly invoke login flow without demo fallback
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
       if (!supabaseUrl) {
-        const found = adminUsers.find((u) => u.id === id)
+        const found = adminUsers.find((u) => u.id === id);
         if (found) {
-          setTimeout(() => onLogin(found), 600)
+          setTimeout(() => onLogin(found), 600);
         } else {
-          setLoading(false)
+          setLoading(false);
         }
-        return
+        return;
       }
 
-      // Initialize auth on the server
-      const res = await fetch("/api/admin/auth-init", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ admin_code: id, password: pw })
-      })
-      const initResult = await res.json()
+      const res = await fetch('/api/admin/auth-init', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ admin_code: id, password: '' })
+      });
+      const initResult = await res.json();
       if (!initResult.success) {
-        // Fallback to local admin
-        const found = adminUsers.find((u) => u.id === id)
+        const found = adminUsers.find((u) => u.id === id);
         if (found) {
-          setTimeout(() => onLogin(found), 600)
+          setTimeout(() => onLogin(found), 600);
         } else {
-          setError("Quick Login failed. Admin account not synced.")
-          setLoading(false)
+          setError('Quick Login failed. Admin account not synced.');
+          setLoading(false);
         }
-        return
+        return;
       }
-
-      const { email, adminRecord } = initResult.data
-
+      const { email, adminRecord } = initResult.data;
       const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: pw,
-      })
-
-      if (signInError) throw signInError
-
-      await supabase
-        .from("admins")
-        .update({ last_login: new Date().toISOString() })
-        .eq("id", adminRecord.id)
-
-      const roles = adminRecord.admin_roles_bridge 
-        ? adminRecord.admin_roles_bridge.map((b: any) => b.role_key)
-        : []
-      
+        email,
+        password: ''
+      });
+      if (signInError) throw signInError;
+      await supabase.from('admins').update({ last_login: new Date().toISOString() }).eq('id', adminRecord.id);
+      const roles = adminRecord.admin_roles_bridge ? adminRecord.admin_roles_bridge.map((b:any) => b.role_key) : [];
       const authenticatedAdmin: AdminUser = {
         id: adminRecord.id,
         name: adminRecord.name,
         phone: adminRecord.phone,
         email: adminRecord.email,
         initials: adminRecord.initials,
-        roles: roles,
+        roles,
         isActive: adminRecord.is_active,
-        lastLogin: adminRecord.last_login 
-          ? new Date(adminRecord.last_login).toLocaleString() 
-          : "First time logging in"
-      }
-
-      onLogin(authenticatedAdmin)
-    } catch (err: any) {
-      console.error(err)
-      setError(err.message || "Quick Login failed. Admin account not synced.")
+        lastLogin: adminRecord.last_login ? new Date(adminRecord.last_login).toLocaleString() : 'First time logging in'
+      };
+      onLogin(authenticatedAdmin);
+    } catch (err:any) {
+      console.error(err);
+      setError(err.message || 'Quick Login failed.');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#FFF8F0] px-4 py-8">
@@ -312,7 +281,7 @@ export function AdminLoginScreen({
               Quick Demo Access
             </p>
             <div className="grid grid-cols-2 gap-2">
-              {demoAccounts.map((acc) => (
+              {adminUsers.filter(u => u.isActive).map((acc) => (
                 <button
                   key={acc.id}
                   onClick={() => handleQuickLogin(acc.id)}
@@ -322,7 +291,7 @@ export function AdminLoginScreen({
                     <Icon name="UserCircle" className="size-3.5" />
                   </span>
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold text-foreground truncate">{acc.label}</p>
+                    <p className="text-[11px] font-bold text-foreground truncate">{acc.name}</p>
                     <p className="text-[9px] text-muted-foreground">{acc.id}</p>
                   </div>
                 </button>

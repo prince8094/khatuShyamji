@@ -5,10 +5,11 @@ import { Icon, StatusDot, SectionTitle } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { devoteeApi } from "@/lib/api-client"
 import TrafficMap from "@/components/shared/TrafficMap"
+import { supabase } from "@/lib/supabase"
 
 const routes = [
   {
-    name: "Jaipur – Khatu via NH-148D",
+    name: "NH-148D (Jaipur → Khatu)",
     nameHi: "जयपुर – खाटू (NH-148D)",
     distance: "80 km",
     status: "smooth" as const,
@@ -18,7 +19,7 @@ const routes = [
     icon: "CarFront",
   },
   {
-    name: "Sikar – Khatu (30 km)",
+    name: "Sikar Road",
     nameHi: "सीकर – खाटू (30 km)",
     distance: "30 km",
     status: "moderate" as const,
@@ -28,7 +29,7 @@ const routes = [
     icon: "TrafficCone",
   },
   {
-    name: "Ringas Junction – Khatu",
+    name: "Temple Approach Road",
     nameHi: "रिंगस जंक्शन – खाटू",
     distance: "17 km",
     status: "heavy" as const,
@@ -38,7 +39,7 @@ const routes = [
     icon: "AlertTriangle",
   },
   {
-    name: "Delhi – Khatu via NH-48",
+    name: "NH-148D (Delhi → Khatu)",
     nameHi: "दिल्ली – खाटू (NH-48)",
     distance: "~340 km",
     status: "smooth" as const,
@@ -77,28 +78,76 @@ export function TrafficScreen({ navigate }: { navigate: (s: any) => void }) {
   const [showTrafficLayer, setShowTrafficLayer] = useState(true)
   const [routesList, setRoutesList] = useState<any[]>(routes)
   const [alerts, setAlerts] = useState<any[]>([])
+  const [parkingBlocks, setParkingBlocks] = useState<any[]>([])
 
   useEffect(() => {
-    devoteeApi.getTraffic()
-      .then((res) => {
-        if (res.alerts) setAlerts(res.alerts)
-        if (res.routes && res.routes.length > 0) {
-          setRoutesList(res.routes.map((r: any) => {
-            const mapped = routes.find(mr => mr.name.toLowerCase() === r.name.toLowerCase())
-            return {
-              name: r.name,
-              nameHi: mapped?.nameHi || r.name,
-              distance: mapped?.distance || "30 km",
-              status: r.status === "heavy" ? "heavy" : (r.status === "moderate" ? "moderate" : "smooth"),
-              eta: r.eta,
-              note: mapped?.note || "Usual traffic conditions",
-              noteHi: mapped?.noteHi || "सामान्य ट्रैफिक",
-              icon: r.status === "heavy" ? "AlertTriangle" : (r.status === "moderate" ? "TrafficCone" : "CarFront")
-            }
-          }))
+    const fetchTrafficData = () => {
+      devoteeApi.getTraffic()
+        .then((res) => {
+          if (res.alerts) setAlerts(res.alerts)
+          if (res.routes && res.routes.length > 0) {
+            setRoutesList(res.routes.map((r: any) => {
+              const mapped = routes.find(mr => mr.name.toLowerCase() === r.name.toLowerCase())
+              return {
+                id: r.id,
+                name: r.name,
+                nameHi: mapped?.nameHi || r.name,
+                distance: mapped?.distance || (r.origin && r.destination ? `Route: ${r.origin} → ${r.destination}` : "30 km"),
+                status: r.status === "heavy" ? "heavy" : (r.status === "moderate" ? "moderate" : (r.status === "congested" || r.status === "blocked" ? "heavy" : "smooth")),
+                eta: r.eta,
+                note: mapped?.note || `From ${r.origin || 'origin'} to ${r.destination || 'destination'}`,
+                noteHi: mapped?.noteHi || `${r.origin || 'प्रारंभ'} से ${r.destination || 'गंतव्य'}`,
+                icon: r.status === "heavy" || r.status === "congested" || r.status === "blocked" ? "AlertTriangle" : (r.status === "moderate" ? "TrafficCone" : "CarFront"),
+                coordinates: r.coordinates,
+                google_maps_url: r.google_maps_url || `https://www.google.com/maps/dir/?api=1&destination=Shree+Khatu+Shyam+Ji+Temple+Khatu`
+              }
+            }))
+          }
+        })
+        .catch((err) => console.error("Failed to load traffic alerts", err))
+    }
+
+    const fetchParkingBlocks = () => {
+      devoteeApi.getParkingBlocks()
+        .then((res: any) => {
+          if (Array.isArray(res)) {
+            setParkingBlocks(res)
+          }
+        })
+        .catch((err) => console.error("Failed to load parking blocks for traffic map", err))
+    }
+
+    fetchTrafficData()
+    fetchParkingBlocks()
+
+    const channel = supabase
+      .channel("public:traffic_routes_devotee")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "traffic_routes" },
+        () => {
+          console.log("Realtime traffic_routes change detected!")
+          fetchTrafficData()
         }
-      })
-      .catch((err) => console.error("Failed to load traffic alerts", err))
+      )
+      .subscribe()
+
+    const parkingChannel = supabase
+      .channel("public:parking_blocks_traffic_devotee")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "parking_blocks" },
+        () => {
+          console.log("Realtime parking_blocks change detected on traffic screen!")
+          fetchParkingBlocks()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+      supabase.removeChannel(parkingChannel)
+    }
   }, [])
 
   return (
@@ -164,6 +213,8 @@ export function TrafficScreen({ navigate }: { navigate: (s: any) => void }) {
             message: a.message,
             severity: a.severity
           }))}
+          routes={routesList}
+          parkingBlocks={parkingBlocks}
         />
 
         {/* Toggle Route Indicators */}
@@ -213,7 +264,15 @@ export function TrafficScreen({ navigate }: { navigate: (s: any) => void }) {
           {routesList.map((route) => {
             const cfg = (statusConfig as any)[route.status] || statusConfig.smooth
             return (
-              <div key={route.name} className={`rounded-2xl border p-4 shadow-sm ${cfg.bg}`}>
+              <div 
+                key={route.name} 
+                className={`rounded-2xl border p-4 shadow-sm cursor-pointer transition-all hover:shadow-md hover:border-amber-300 active:scale-[0.99] ${cfg.bg}`}
+                onClick={() => {
+                  if (route.google_maps_url) {
+                    window.open(route.google_maps_url, "_blank")
+                  }
+                }}
+              >
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-start gap-3">
                     <span className={`grid size-9 place-items-center rounded-xl border bg-white shrink-0`}>

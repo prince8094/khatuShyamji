@@ -6,47 +6,152 @@ import { Icon } from "@/components/shared"
 import { AdminSectionTitle, MetricCard, PipelineStep, LiveDot, ActivityItem } from "@/components/admin/admin-shared"
 import { lostFoundCases, lostFoundStatuses, type AdminScreenKey } from "@/lib/admin-data"
 import { supabase } from "@/lib/supabase"
+import { adminApi } from "@/lib/api-client"
 
 export function LostFoundAdminScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
-  const [tab, setTab] = useState<"lost-reports" | "found-registration">("lost-reports")
+  const [tab, setTab] = useState<"lost-reports" | "found-registration" | "claim-requests">("lost-reports")
   const [filter, setFilter] = useState<string>("all")
   const [cases, setCases] = useState<any[]>(lostFoundCases)
   const [loading, setLoading] = useState(false)
+  const getTodayStr = () => {
+    const d = new Date()
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+  }
+
   const [foundForm, setFoundForm] = useState({
     itemName: "",
+    category: "General",
     description: "",
+    imageUrl: "",
+    date: getTodayStr(),
+    time: "12:00 PM",
     location: "",
-    date: "",
-    color: "Brown",
+    storageLocation: "Security Desk",
+    foundBy: "Security Guard",
+    status: "Found",
+    remarks: "",
+    associatedLostId: ""
   })
+
+  const [openReports, setOpenReports] = useState<any[]>([])
+  const [claimsList, setClaimsList] = useState<any[]>([])
+  const [loadingClaims, setLoadingClaims] = useState(false)
+
+  const loadCases = async () => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl) return
+
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from("lost_items")
+        .select(`
+          *,
+          profiles (
+            name,
+            phone
+          )
+        `)
+        .order("created_at", { ascending: false })
+
+      if (error) throw error
+
+      if (data && data.length > 0) {
+        setCases(data.map(c => ({
+          id: c.case_number,
+          dbId: c.id,
+          itemName: c.item_name,
+          description: c.color_description,
+          location: c.location_lost,
+          reportedAt: new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          reportedBy: c.profiles?.name || "Anonymous",
+          phone: c.contact_phone || c.profiles?.phone || "No phone",
+          status: c.status as any,
+          icon: "PackageSearch",
+          matchedFoundItem: c.matched_found_item_id ? `Found Item ID: ${c.matched_found_item_id}` : undefined,
+          additionalDetails: c.additional_details
+        })))
+      } else {
+        setCases([])
+      }
+    } catch (err) {
+      console.error("Failed to load lost cases from Supabase", err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const loadClaims = async () => {
+    setLoadingClaims(true)
+    try {
+      const data = await adminApi.getFoundClaims()
+      if (data) {
+        setClaimsList(data)
+      }
+    } catch (err) {
+      console.error("Failed to load claims list", err)
+    } finally {
+      setLoadingClaims(false)
+    }
+  }
+
+  const loadOpenReports = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("lost_items")
+        .select(`
+          id,
+          case_number,
+          item_name,
+          profiles (name)
+        `)
+        .is("matched_found_item_id", null)
+        .not("status", "eq", "collected")
+
+      if (error) throw error
+      if (data) {
+        setOpenReports(data)
+      }
+    } catch (err) {
+      console.error("Failed to load open lost reports", err)
+    }
+  }
 
   const handleRegisterFound = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const { data, error } = await supabase
-        .from("found_items")
-        .insert({
-          item_name: foundForm.itemName,
-          description: foundForm.description,
-          location_found: foundForm.location,
-          date_found: foundForm.date || new Date().toISOString().split("T")[0],
-          item_color: foundForm.color,
-          status: "registered",
-          category_icon: "PackageSearch"
-        })
-        .select()
-        .single()
-
-      if (error) throw error
+      await adminApi.registerManualFound({
+        item_name: foundForm.itemName,
+        category: foundForm.category,
+        description: foundForm.description,
+        image_url: foundForm.imageUrl || null,
+        date_found: foundForm.date,
+        time_found: foundForm.time,
+        location_found: foundForm.location,
+        storage_location: foundForm.storageLocation,
+        found_by: foundForm.foundBy,
+        remarks: foundForm.remarks,
+        lost_item_id: foundForm.associatedLostId || null
+      })
 
       alert("Found item registered successfully!")
       setFoundForm({
         itemName: "",
+        category: "General",
         description: "",
+        imageUrl: "",
+        date: getTodayStr(),
+        time: "12:00 PM",
         location: "",
-        date: "",
-        color: "Brown",
+        storageLocation: "Security Desk",
+        foundBy: "Security Guard",
+        status: "Found",
+        remarks: "",
+        associatedLostId: ""
       })
+      
+      loadCases()
+      loadOpenReports()
       setTab("lost-reports")
     } catch (err: any) {
       console.error(err)
@@ -54,51 +159,42 @@ export function LostFoundAdminScreen({ navigate }: { navigate: (s: AdminScreenKe
     }
   }
 
+  const handleActionClaim = async (claimId: string, action: "approve" | "reject", rejectionReason?: string) => {
+    try {
+      await adminApi.actionFoundClaim({
+        claim_id: claimId,
+        action,
+        rejection_reason: rejectionReason
+      })
+      alert(`Claim request ${action}d successfully!`)
+      loadClaims()
+      loadCases()
+    } catch (err: any) {
+      console.error(err)
+      alert("Failed to perform action on claim: " + (err.message || err))
+    }
+  }
+
   // Fetch live cases on mount
   useEffect(() => {
-    const loadCases = async () => {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      if (!supabaseUrl) return
-
-      setLoading(true)
-      try {
-        const { data, error } = await supabase
-          .from("lost_items")
-          .select(`
-            *,
-            profiles (
-              name,
-              phone
-            )
-          `)
-          .order("created_at", { ascending: false })
-
-        if (error) throw error
-
-        if (data && data.length > 0) {
-          setCases(data.map(c => ({
-            id: c.case_number,
-            dbId: c.id,
-            itemName: c.item_name,
-            description: c.color_description,
-            location: c.location_lost,
-            reportedAt: new Date(c.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            reportedBy: c.profiles?.name || "Anonymous",
-            phone: c.contact_phone || c.profiles?.phone || "No phone",
-            status: c.status as any,
-            icon: "PackageSearch",
-            matchedFoundItem: c.matched_found_item_id ? `Found Item ID: ${c.matched_found_item_id}` : undefined
-          })))
-        }
-      } catch (err) {
-        console.error("Failed to load lost cases from Supabase", err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
     loadCases()
+    loadClaims()
+    loadOpenReports()
   }, [])
+
+  const mapStatusToHistoryLabel = (status: string) => {
+    switch (status) {
+      case "registered": return "Reported"
+      case "searching":
+      case "possible-match":
+      case "verification":
+        return "Under Review"
+      case "ready-to-collect": return "Found"
+      case "collected": return "Claimed"
+      case "closed": return "Closed"
+      default: return "Reported"
+    }
+  }
 
   const handleMoveStatus = async (caseId: string, dbId: string, nextStatus: string) => {
     setCases(prev => prev.map(c => c.id === caseId ? { ...c, status: nextStatus } : c))
@@ -106,16 +202,162 @@ export function LostFoundAdminScreen({ navigate }: { navigate: (s: AdminScreenKe
     try {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       if (supabaseUrl && dbId) {
-        await supabase
+        // 1. Fetch current details
+        const { data: item, error: fetchErr } = await supabase
+          .from("lost_items")
+          .select("profile_id, item_name, additional_details, status")
+          .eq("id", dbId)
+          .single()
+        
+        if (fetchErr) throw fetchErr
+
+        // 2. Parse existing additional_details
+        let parsed: any = { user_notes: "", history: [] }
+        try {
+          if (item.additional_details && item.additional_details.startsWith("{") && item.additional_details.endsWith("}")) {
+            parsed = JSON.parse(item.additional_details)
+          } else {
+            parsed.user_notes = item.additional_details || ""
+          }
+        } catch (e) {
+          parsed.user_notes = item.additional_details || ""
+        }
+
+        if (!Array.isArray(parsed.history)) {
+          parsed.history = []
+        }
+
+        // 3. Add transition entry
+        const historyLabel = mapStatusToHistoryLabel(nextStatus)
+        const timestamp = new Date().toISOString()
+        parsed.history.push({
+          status: historyLabel,
+          timestamp,
+          notes: `Status changed to ${nextStatus.replace(/-/g, " ")} by Admin`
+        })
+
+        // 4. Update status and history
+        const { error: updateErr } = await supabase
           .from("lost_items")
           .update({ 
             status: nextStatus,
-            updated_at: new Date().toISOString()
+            additional_details: JSON.stringify(parsed),
+            updated_at: timestamp
           })
           .eq("id", dbId)
+        
+        if (updateErr) throw updateErr
+
+        // 5. Notify user if status is "ready-to-collect" (Found)
+        if (nextStatus === "ready-to-collect") {
+          await supabase
+            .from("notifications")
+            .insert({
+              profile_id: item.profile_id,
+              title_en: "Lost Item Found",
+              title_hi: "खोई हुई वस्तु मिल गई है",
+              body_en: `Your reported item "${item.item_name}" has been marked as found! Please visit the Lost & Found desk at Gate 2 to collect it.`,
+              body_hi: `आपकी रिपोर्ट की गई वस्तु "${item.item_name}" मिल गई है! कृपया इसे प्राप्त करने के लिए गेट 2 पर खोया-पाया डेस्क पर जाएं।`,
+              type: "lost-found",
+              icon: "PackageSearch",
+              tone: "success"
+            })
+        }
+
+        // 6. Write Audit Log
+        await supabase
+          .from("audit_logs")
+          .insert({
+            action: `Lost & Found status updated to ${nextStatus} for item "${item.item_name}" (Case: ${caseId})`,
+            department: "Security / Lost & Found",
+            actor_name: "Admin",
+            old_values: { status: item.status },
+            new_values: { status: nextStatus }
+          })
       }
     } catch (err) {
       console.error("Failed to update status in Supabase", err)
+    }
+  }
+
+  const handleCloseCase = async (caseId: string, dbId: string) => {
+    setCases(prev => prev.map(c => c.id === caseId ? { ...c, status: "collected" } : c))
+
+    try {
+      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+      if (supabaseUrl && dbId) {
+        // 1. Fetch current details
+        const { data: item, error: fetchErr } = await supabase
+          .from("lost_items")
+          .select("profile_id, item_name, additional_details, status")
+          .eq("id", dbId)
+          .single()
+        
+        if (fetchErr) throw fetchErr
+
+        // 2. Parse existing additional_details
+        let parsed: any = { user_notes: "", history: [] }
+        try {
+          if (item.additional_details && item.additional_details.startsWith("{") && item.additional_details.endsWith("}")) {
+            parsed = JSON.parse(item.additional_details)
+          } else {
+            parsed.user_notes = item.additional_details || ""
+          }
+        } catch (e) {
+          parsed.user_notes = item.additional_details || ""
+        }
+
+        if (!Array.isArray(parsed.history)) {
+          parsed.history = []
+        }
+
+        // 3. Add Closed transition entry
+        const timestamp = new Date().toISOString()
+        parsed.history.push({
+          status: "Closed",
+          timestamp,
+          notes: "Case closed by Admin"
+        })
+
+        // 4. Update lost_items
+        const { error: updateErr } = await supabase
+          .from("lost_items")
+          .update({ 
+            status: "collected",
+            additional_details: JSON.stringify(parsed),
+            updated_at: timestamp
+          })
+          .eq("id", dbId)
+        
+        if (updateErr) throw updateErr
+
+        // 5. Notify user
+        await supabase
+          .from("notifications")
+          .insert({
+            profile_id: item.profile_id,
+            title_en: "Lost Item Case Closed",
+            title_hi: "खोई हुई वस्तु का केस बंद किया गया",
+            body_en: `Your reported lost item case for "${item.item_name}" has been closed.`,
+            body_hi: `"${item.item_name}" के लिए आपका खोया हुआ वस्तु केस बंद कर दिया गया है।`,
+            type: "lost-found",
+            icon: "XCircle",
+            tone: "info"
+          })
+
+        // 6. Write Audit Log
+        await supabase
+          .from("audit_logs")
+          .insert({
+            action: `Lost & Found case ${caseId} was CLOSED by Admin`,
+            department: "Security / Lost & Found",
+            actor_name: "Admin",
+            old_values: { status: item.status },
+            new_values: { status: "collected" }
+          })
+      }
+    } catch (err) {
+      console.error("Failed to close case in Supabase", err)
     }
   }
 
@@ -193,9 +435,17 @@ export function LostFoundAdminScreen({ navigate }: { navigate: (s: AdminScreenKe
         >
           Register Found Item
         </button>
+        <button
+          onClick={() => setTab("claim-requests")}
+          className={`px-4 py-2.5 text-xs font-bold transition border-b-2 -mb-px ${
+            tab === "claim-requests" ? "border-purple-650 text-purple-650" : "border-transparent text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          Claim Requests ({claimsList.filter(c => c.status === "pending").length})
+        </button>
       </div>
 
-      {tab === "lost-reports" ? (
+      {tab === "lost-reports" && (
         <>
           {/* Pipeline View */}
           <section>
@@ -302,18 +552,53 @@ export function LostFoundAdminScreen({ navigate }: { navigate: (s: AdminScreenKe
                     </div>
                   )}
 
+                  {/* Status History Timeline */}
+                  {(() => {
+                    let parsed: any = { user_notes: "", history: [] }
+                    try {
+                      if (item.additionalDetails && item.additionalDetails.startsWith("{") && item.additionalDetails.endsWith("}")) {
+                        parsed = JSON.parse(item.additionalDetails)
+                      }
+                    } catch (e) {}
+
+                    if (parsed.history && parsed.history.length > 0) {
+                      return (
+                        <div className="mt-3 border-t border-border/50 pt-2.5 space-y-2">
+                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1">
+                            <Icon name="History" className="size-3" /> Status History Timeline
+                          </p>
+                          <div className="space-y-1.5 pl-2 border-l border-border/80">
+                            {parsed.history.map((h: any, idx: number) => (
+                              <div key={idx} className="text-[10px] flex justify-between items-center text-muted-foreground">
+                                <span className="font-semibold text-foreground">· {h.status}</span>
+                                <span>{new Date(h.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    }
+                    return null
+                  })()}
+
                   {/* Actions */}
-                  {nextStatus && (
+                  {item.status !== "collected" && (
                     <div className="mt-3 flex items-center gap-2">
+                      {nextStatus && (
+                        <button
+                          onClick={() => handleMoveStatus(item.id, item.dbId, nextStatus)}
+                          className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:shadow-md active:scale-[0.98]"
+                        >
+                          <Icon name="ArrowRight" className="size-3.5" />
+                          Move to {nextStatus.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                        </button>
+                      )}
                       <button
-                        onClick={() => handleMoveStatus(item.id, item.dbId, nextStatus)}
-                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] py-2.5 text-[11px] font-bold text-white shadow-sm transition hover:shadow-md active:scale-[0.98]"
+                        onClick={() => handleCloseCase(item.id, item.dbId)}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 text-red-700 py-2.5 text-[11px] font-bold shadow-sm transition hover:bg-red-100 active:scale-[0.98]"
                       >
-                        <Icon name="ArrowRight" className="size-3.5" />
-                        Move to {nextStatus.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-                      </button>
-                      <button className="grid size-10 place-items-center rounded-xl border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition">
-                        <Icon name="Bell" className="size-4" />
+                        <Icon name="XCircle" className="size-3.5" />
+                        Close Case
                       </button>
                     </div>
                   )}
@@ -330,27 +615,48 @@ export function LostFoundAdminScreen({ navigate }: { navigate: (s: AdminScreenKe
         )}
       </section>
         </>
-      ) : (
+      )}
+
+      {tab === "found-registration" && (
         <form onSubmit={handleRegisterFound} className="space-y-4 bg-card border border-border rounded-2xl p-5 shadow-sm">
           <AdminSectionTitle title="Register New Found Item" icon="Plus" />
           
-          <div>
-            <label className="block text-xs font-bold text-foreground mb-1.5">Item Name *</label>
-            <input
-              type="text"
-              required
-              placeholder="e.g. Leather Wallet, Gold Chain"
-              value={foundForm.itemName}
-              onChange={(e) => setFoundForm(prev => ({ ...prev, itemName: e.target.value }))}
-              className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Item Name *</label>
+              <input
+                type="text"
+                required
+                placeholder="e.g. Leather Wallet, Gold Chain"
+                value={foundForm.itemName}
+                onChange={(e) => setFoundForm(prev => ({ ...prev, itemName: e.target.value }))}
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Category *</label>
+              <select
+                value={foundForm.category}
+                onChange={(e) => setFoundForm(prev => ({ ...prev, category: e.target.value }))}
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
+              >
+                <option value="General">General</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Valuables">Valuables</option>
+                <option value="Documents">Documents</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Keys">Keys</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-foreground mb-1.5">Description / Colors *</label>
+            <label className="block text-xs font-bold text-foreground mb-1.5">Description *</label>
             <textarea
               required
-              rows={3}
+              rows={2}
               placeholder="e.g. Black leather wallet containing ID card for Nand Kumar"
               value={foundForm.description}
               onChange={(e) => setFoundForm(prev => ({ ...prev, description: e.target.value }))}
@@ -372,9 +678,10 @@ export function LostFoundAdminScreen({ navigate }: { navigate: (s: AdminScreenKe
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-foreground mb-1.5">Date Found</label>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Date Found *</label>
               <input
                 type="date"
+                required
                 value={foundForm.date}
                 onChange={(e) => setFoundForm(prev => ({ ...prev, date: e.target.value }))}
                 className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
@@ -382,12 +689,76 @@ export function LostFoundAdminScreen({ navigate }: { navigate: (s: AdminScreenKe
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-foreground mb-1.5">Primary Color Code</label>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Time Found</label>
               <input
                 type="text"
-                placeholder="e.g. Black, Gold, Silver"
-                value={foundForm.color}
-                onChange={(e) => setFoundForm(prev => ({ ...prev, color: e.target.value }))}
+                placeholder="e.g. 10:30 AM"
+                value={foundForm.time}
+                onChange={(e) => setFoundForm(prev => ({ ...prev, time: e.target.value }))}
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Storage Location</label>
+              <input
+                type="text"
+                placeholder="e.g. Safe Cabinet A"
+                value={foundForm.storageLocation}
+                onChange={(e) => setFoundForm(prev => ({ ...prev, storageLocation: e.target.value }))}
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Found By</label>
+              <input
+                type="text"
+                placeholder="e.g. Volunteer Ramesh"
+                value={foundForm.foundBy}
+                onChange={(e) => setFoundForm(prev => ({ ...prev, foundBy: e.target.value }))}
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Image URL (Optional)</label>
+              <input
+                type="text"
+                placeholder="e.g. /images/found-watch.jpg"
+                value={foundForm.imageUrl}
+                onChange={(e) => setFoundForm(prev => ({ ...prev, imageUrl: e.target.value }))}
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Associate with Open Lost Report (Optional)</label>
+              <select
+                value={foundForm.associatedLostId}
+                onChange={(e) => setFoundForm(prev => ({ ...prev, associatedLostId: e.target.value }))}
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
+              >
+                <option value="">-- Auto Match or Keep Independent --</option>
+                {openReports.map(r => (
+                  <option key={r.id} value={r.id}>
+                    {r.case_number} - {r.item_name} ({r.profiles?.name || "Devotee"})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Remarks / Internal Notes</label>
+              <input
+                type="text"
+                placeholder="e.g. Back scratch, pending verification"
+                value={foundForm.remarks}
+                onChange={(e) => setFoundForm(prev => ({ ...prev, remarks: e.target.value }))}
                 className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#7C3AED] focus:outline-none"
               />
             </div>
@@ -409,6 +780,87 @@ export function LostFoundAdminScreen({ navigate }: { navigate: (s: AdminScreenKe
             </button>
           </div>
         </form>
+      )}
+
+      {tab === "claim-requests" && (
+        <section className="space-y-4">
+          <AdminSectionTitle title="Devotee Claim Requests" icon="FileCheck" />
+          
+          {loadingClaims ? (
+            <p className="text-center text-xs text-muted-foreground py-6">Loading claims...</p>
+          ) : claimsList.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {claimsList.map((claim) => (
+                <motion.div
+                  key={claim.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-2xl border border-border bg-card p-4 shadow-sm space-y-3"
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-heading text-sm font-bold text-foreground">
+                        {claim.found_items?.item_name || "Found Item"}
+                      </h4>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Category: {claim.found_items?.category || "General"} | Found on: {claim.found_items?.date_found}
+                      </p>
+                    </div>
+                    <span className={`text-[10px] font-bold uppercase rounded-lg px-2.5 py-1 ${
+                      claim.status === "approved" 
+                        ? "bg-green-50 text-green-700 border border-green-200" 
+                        : claim.status === "rejected" 
+                          ? "bg-red-50 text-red-700 border border-red-200" 
+                          : "bg-amber-50 text-amber-700 border border-amber-200"
+                    }`}>
+                      {claim.status}
+                    </span>
+                  </div>
+
+                  <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground space-y-1.5">
+                    <p className="text-foreground font-semibold border-b border-border pb-1 mb-1 flex items-center gap-1.5">
+                      <Icon name="User" className="size-3.5" /> Claimant Information
+                    </p>
+                    <p><strong>Name:</strong> {claim.claimant_name}</p>
+                    <p><strong>Phone:</strong> {claim.profiles?.phone || "N/A"}</p>
+                    <p><strong>Identity Proof:</strong> {claim.identity_proof_type} ({claim.identity_proof_number})</p>
+                    <p className="pt-1 text-foreground leading-relaxed">
+                      <strong>Claim Description:</strong> {claim.claim_description}
+                    </p>
+                  </div>
+
+                  {claim.status === "pending" && (
+                    <div className="flex gap-2 pt-1.5">
+                      <button
+                        onClick={() => handleActionClaim(claim.id, "approve")}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-green-600 hover:bg-green-700 text-white py-2 text-xs font-bold shadow-sm transition active:scale-95"
+                      >
+                        <Icon name="Check" className="size-3.5" />
+                        Approve Claim
+                      </button>
+                      <button
+                        onClick={() => {
+                          const reason = prompt("Enter rejection reason:")
+                          if (reason !== null) {
+                            handleActionClaim(claim.id, "reject", reason)
+                          }
+                        }}
+                        className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-700 py-2 text-xs font-bold transition active:scale-95"
+                      >
+                        <Icon name="X" className="size-3.5" />
+                        Reject Claim
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-xs text-muted-foreground py-8 italic border border-dashed rounded-2xl">
+              No claim requests found in queue.
+            </p>
+          )}
+        </section>
       )}
     </div>
   )

@@ -7,6 +7,7 @@ import { AdminSectionTitle, MetricCard, LiveDot, QuickAction, ActivityItem } fro
 import { trafficAlerts, type AdminScreenKey } from "@/lib/admin-data"
 import { adminApi } from "@/lib/api-client"
 import TrafficMap from "@/components/shared/TrafficMap"
+import { supabase } from "@/lib/supabase"
 
 const routes = [
   { name: "NH-148D (Jaipur → Khatu)", status: "moderate", icon: "ArrowRight", eta: "1h 45m" },
@@ -15,7 +16,8 @@ const routes = [
   { name: "Temple Approach Road", status: "heavy", icon: "ArrowRight", eta: "15m" },
 ]
 
-export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
+export function TrafficOpsScreen({ navigate, currentAdmin }: { navigate: (s: AdminScreenKey) => void, currentAdmin?: any }) {
+  const isSuperAdmin = currentAdmin?.roles?.includes("super-admin") || false
   const [composing, setComposing] = useState(false)
   const [alertForm, setAlertForm] = useState({ 
     route: "", 
@@ -45,6 +47,7 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
           setAlerts(data.alerts.map((a: any) => ({
             id: a.id,
             route: data.routes?.find((r: any) => r.id === a.route_id)?.name || a.route_id,
+            routeId: a.route_id,
             severity: a.severity as "low" | "medium" | "high" | "critical",
             message: a.message,
             source: a.source,
@@ -59,6 +62,30 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
     }
 
     loadTrafficAlerts()
+
+    const channel = supabase
+      .channel("admin:traffic")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "traffic_routes" },
+        () => {
+          console.log("Admin realtime traffic routes update!")
+          loadTrafficAlerts()
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "traffic_alerts" },
+        () => {
+          console.log("Admin realtime traffic alerts update!")
+          loadTrafficAlerts()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   const activeAlerts = alerts.filter((a) => a.isActive)
@@ -93,29 +120,126 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
 
     setAlerts(prev => [newAlert, ...prev])
     setComposing(false)
-    const latVal = alertForm.latitude
-    const lngVal = alertForm.longitude
-    const alertType = alertForm.alert_type
-    setAlertForm({ route: "", severity: "low", message: "", latitude: "", longitude: "", alert_type: "closure" })
 
     try {
-      const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-      if (supabaseUrl) {
-        const targetRoute = routesList.find(r => r.name === alertForm.route)
-        const routeId = targetRoute ? targetRoute.id : 1
+      const routeRow = routesList.find(r => r.name === alertForm.route)
+      await adminApi.publishTrafficAlert({
+        route_id: routeRow?.id,
+        severity: alertForm.severity,
+        message: alertForm.message,
+        source: "Manual",
+        latitude: alertForm.latitude ? Number(alertForm.latitude) : null,
+        longitude: alertForm.longitude ? Number(alertForm.longitude) : null,
+        alert_type: alertForm.alert_type
+      })
+    } catch (err) {
+      console.error("Failed to publish alert in DB", err)
+    }
+  }
 
-        await adminApi.publishTrafficAlert({
-          route_id: routeId,
-          severity: alertForm.severity,
-          message: alertForm.message,
-          source: "Manual",
-          latitude: latVal ? Number(latVal) : null,
-          longitude: lngVal ? Number(lngVal) : null,
-          alert_type: alertType
-        })
+  // Create / Edit Route form state
+  const [showCreateEditRouteModal, setShowCreateEditRouteModal] = useState(false)
+  const [createEditRouteFormMode, setCreateEditRouteFormMode] = useState<"create" | "edit">("create")
+  const [createEditRouteForm, setCreateEditRouteForm] = useState({
+    id: "",
+    name: "",
+    origin: "",
+    destination: "",
+    coordinates: "",
+    eta: "",
+    congestion_level: "smooth",
+    status: "smooth",
+    google_maps_polyline: "",
+    google_maps_url: ""
+  })
+
+  const handleCreateRouteClick = () => {
+    setCreateEditRouteFormMode("create")
+    setCreateEditRouteForm({
+      id: "",
+      name: "",
+      origin: "",
+      destination: "",
+      coordinates: JSON.stringify([
+        { lat: 27.3512, lng: 75.5629 },
+        { lat: 27.3693, lng: 75.4746 }
+      ], null, 2),
+      eta: "30 mins",
+      congestion_level: "smooth",
+      status: "smooth",
+      google_maps_polyline: "",
+      google_maps_url: ""
+    })
+    setShowCreateEditRouteModal(true)
+  }
+
+  const handleEditRouteClick = (route: any) => {
+    setCreateEditRouteFormMode("edit")
+    setCreateEditFormModeEdit(route)
+  }
+
+  const setCreateEditFormModeEdit = (route: any) => {
+    setCreateEditRouteForm({
+      id: route.id || "",
+      name: route.name,
+      origin: route.origin || "",
+      destination: route.destination || "",
+      coordinates: route.coordinates ? JSON.stringify(route.coordinates, null, 2) : "",
+      eta: route.eta,
+      congestion_level: route.congestion_level || route.status,
+      status: route.status,
+      google_maps_polyline: route.google_maps_polyline || "",
+      google_maps_url: route.google_maps_url || ""
+    })
+    setShowCreateEditRouteModal(true)
+  }
+
+  const handleDeleteRoute = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this traffic route? This will permanently remove it from the system.")) return
+    try {
+      await adminApi.deleteTrafficRoute({ id })
+      setRoutesList(prev => prev.filter(r => r.id !== id))
+    } catch (err) {
+      console.error("Failed to delete route", err)
+      alert("Failed to delete route.")
+    }
+  }
+
+  const handleCreateEditRouteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    let parsedCoords = null
+    try {
+      if (createEditRouteForm.coordinates.trim()) {
+        parsedCoords = JSON.parse(createEditRouteForm.coordinates)
       }
     } catch (err) {
-      console.error("Failed to insert alert", err)
+      alert("Invalid JSON format for Coordinates. Must be an array of objects: [{\"lat\": x, \"lng\": y}, ...]")
+      return
+    }
+
+    const payload = {
+      id: createEditRouteForm.id,
+      name: createEditRouteForm.name,
+      origin: createEditRouteForm.origin,
+      destination: createEditRouteForm.destination,
+      coordinates: parsedCoords,
+      eta: createEditRouteForm.eta,
+      congestion_level: createEditRouteForm.congestion_level,
+      status: createEditRouteForm.status,
+      google_maps_polyline: createEditRouteForm.google_maps_polyline,
+      google_maps_url: createEditRouteForm.google_maps_url
+    }
+
+    try {
+      if (createEditRouteFormMode === "create") {
+        await adminApi.addTrafficRoute(payload)
+      } else {
+        await adminApi.editTrafficRoute(payload)
+      }
+      setShowCreateEditRouteModal(false)
+    } catch (err: any) {
+      console.error("Failed to save traffic route", err)
+      alert(err.message || "Failed to save traffic route.")
     }
   }
 
@@ -134,6 +258,19 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
     }
   }
 
+  const handleUpdateRouteStatus = async (routeId: number, status: string, eta: string) => {
+    setRoutesList(prev => prev.map(r => r.id === routeId ? { ...r, status, eta } : r))
+    try {
+      await adminApi.updateTrafficRouteStatus({
+        route_id: routeId,
+        status,
+        eta
+      })
+    } catch (err) {
+      console.error("Failed to update route status in database", err)
+    }
+  }
+
   return (
     <div className="space-y-5 pb-6">
       {/* Header */}
@@ -148,10 +285,11 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
             <Icon name="TrafficCone" className="size-6" />
           </span>
         </div>
+
         <div className="relative mt-4 grid grid-cols-3 gap-2">
           {[
             { label: "Active Alerts", value: activeAlerts.length },
-            { label: "Routes Monitored", value: routes.length },
+            { label: "Routes Monitored", value: routesList.length },
             { label: "Data Sources", value: "4" },
           ].map((s) => (
             <div key={s.label} className="rounded-xl bg-black/20 backdrop-blur-sm px-3 py-2 text-center">
@@ -175,13 +313,24 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
       {/* Route Status */}
       <section>
         <AdminSectionTitle title="Route Status" icon="Route" action={
-          <span className="text-[11px] font-semibold text-green-600 flex items-center gap-1.5">
-            <LiveDot color="bg-green-500" /> Live
-          </span>
+          <div className="flex items-center gap-2">
+            {isSuperAdmin && (
+              <button
+                onClick={() => handleCreateRouteClick()}
+                className="flex items-center gap-1 rounded-xl bg-red-650 hover:bg-red-700 px-2.5 py-1 text-xs font-bold text-white shadow-sm transition"
+              >
+                <Icon name="Plus" className="size-3.5" />
+                Add Route
+              </button>
+            )}
+            <span className="text-[11px] font-semibold text-green-600 flex items-center gap-1.5">
+              <LiveDot color="bg-green-500" /> Live
+            </span>
+          </div>
         } />
         <div className="space-y-2">
-          {routes.map((route) => (
-            <div key={route.name} className={`flex items-center justify-between rounded-2xl border p-4 ${routeStatusColors[route.status]}`}>
+          {routesList.map((route) => (
+            <div key={route.name} className={`flex items-center justify-between rounded-2xl border p-4 ${routeStatusColors[route.status] || "text-green-650 bg-green-50 border-green-200"}`}>
               <div className="flex items-center gap-3">
                 <Icon name="MapPin" className="size-5 shrink-0" />
                 <div>
@@ -189,7 +338,44 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
                   <p className="text-[11px] opacity-80">ETA: {route.eta}</p>
                 </div>
               </div>
-              <span className="text-xs font-bold uppercase">{route.status}</span>
+              
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={route.eta}
+                  onChange={(e) => handleUpdateRouteStatus(route.id, route.status, e.target.value)}
+                  placeholder="ETA"
+                  className="w-20 rounded-xl border border-border bg-card p-1 text-center text-xs font-semibold focus:outline-none"
+                />
+                <select
+                  value={route.status}
+                  onChange={(e) => handleUpdateRouteStatus(route.id, e.target.value, route.eta)}
+                  className="text-xs font-bold uppercase rounded-xl border border-border bg-card p-1.5 focus:outline-none cursor-pointer"
+                >
+                  <option value="smooth">Smooth</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="heavy">Heavy</option>
+                  <option value="congested">Congested</option>
+                </select>
+                {isSuperAdmin && (
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => handleEditRouteClick(route)}
+                      className="p-1 rounded-lg border border-border bg-card hover:bg-muted/40 text-foreground transition"
+                      title="Edit Route"
+                    >
+                      <Icon name="Edit3" className="size-3.5" />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteRoute(route.id)}
+                      className="p-1 rounded-lg border border-red-200 bg-red-50 hover:bg-red-100 text-red-650 transition"
+                      title="Delete Route"
+                    >
+                      <Icon name="Trash2" className="size-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -316,6 +502,7 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
             message: a.message,
             severity: a.severity
           }))}
+          routes={routesList}
         />
       </section>
 
@@ -360,6 +547,135 @@ export function TrafficOpsScreen({ navigate }: { navigate: (s: AdminScreenKey) =
           })}
         </div>
       </section>
+      {/* Route CRUD Modals */}
+      {renderCreateEditRouteModal()}
     </div>
   )
+
+  function renderCreateEditRouteModal() {
+    if (!showCreateEditRouteModal) return null
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="w-full max-w-lg rounded-2xl border border-border bg-card p-5 shadow-xl max-h-[90vh] overflow-y-auto"
+        >
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="font-heading text-base font-bold text-foreground">
+              {createEditRouteFormMode === "create" ? "Add New Traffic Route" : "Edit Traffic Route"}
+            </h3>
+            <button
+              onClick={() => setShowCreateEditRouteModal(false)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <Icon name="X" className="size-5" />
+            </button>
+          </div>
+          <form onSubmit={handleCreateEditRouteSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Route Name *</label>
+              <input
+                type="text"
+                value={createEditRouteForm.name}
+                onChange={(e) => setCreateEditRouteForm({ ...createEditRouteForm, name: e.target.value })}
+                placeholder="e.g. NH-148D (Jaipur → Khatu)"
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Origin</label>
+                <input
+                  type="text"
+                  value={createEditRouteForm.origin}
+                  onChange={(e) => setCreateEditRouteForm({ ...createEditRouteForm, origin: e.target.value })}
+                  placeholder="e.g. Jaipur"
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Destination</label>
+                <input
+                  type="text"
+                  value={createEditRouteForm.destination}
+                  onChange={(e) => setCreateEditRouteForm({ ...createEditRouteForm, destination: e.target.value })}
+                  placeholder="e.g. Khatu"
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">ETA *</label>
+                <input
+                  type="text"
+                  value={createEditRouteForm.eta}
+                  onChange={(e) => setCreateEditRouteForm({ ...createEditRouteForm, eta: e.target.value })}
+                  placeholder="e.g. 45 mins"
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-foreground mb-1.5">Congestion Level / Status</label>
+                <select
+                  value={createEditRouteForm.status}
+                  onChange={(e) => setCreateEditRouteForm({ ...createEditRouteForm, status: e.target.value, congestion_level: e.target.value })}
+                  className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+                >
+                  <option value="smooth">Smooth</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="heavy">Heavy</option>
+                  <option value="congested">Congested</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Route Coordinates (JSON Array) *</label>
+              <textarea
+                value={createEditRouteForm.coordinates}
+                onChange={(e) => setCreateEditRouteForm({ ...createEditRouteForm, coordinates: e.target.value })}
+                placeholder='[{"lat": 27.3512, "lng": 75.5629}, ...]'
+                rows={5}
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-mono focus:border-green-600 focus:outline-none"
+                required
+              />
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-foreground mb-1.5">Google Maps URL / Navigation Link</label>
+              <input
+                type="text"
+                value={createEditRouteForm.google_maps_url}
+                onChange={(e) => setCreateEditRouteForm({ ...createEditRouteForm, google_maps_url: e.target.value })}
+                placeholder="e.g. https://www.google.com/maps/dir/..."
+                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-semibold focus:border-green-600 focus:outline-none"
+              />
+            </div>
+
+            <div className="flex gap-2 justify-end pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setShowCreateEditRouteModal(false)}
+                className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold hover:bg-muted/50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-xs font-bold text-white shadow-sm"
+              >
+                Save Route
+              </button>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    )
+  }
 }

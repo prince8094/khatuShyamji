@@ -26,6 +26,30 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
   const [success, setSuccess] = useState(false)
   const [opportunitiesList, setOpportunitiesList] = useState<Opportunity[]>([])
 
+  const [activeTab, setActiveTab] = useState<"roles" | "history">("roles")
+  const [myVolunteerApps, setMyVolunteerApps] = useState<any[]>([])
+  const [loadingApps, setLoadingApps] = useState(false)
+
+  const loadMyApplications = async () => {
+    setLoadingApps(true)
+    try {
+      const apps = await devoteeApi.getVolunteerApplications()
+      if (apps) {
+        setMyVolunteerApps(apps)
+      }
+    } catch (err) {
+      console.error("Failed to load volunteer applications", err)
+    } finally {
+      setLoadingApps(false)
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === "history") {
+      loadMyApplications()
+    }
+  }, [activeTab])
+
   useEffect(() => {
     devoteeApi.getTempleInfo()
       .then((res: any) => {
@@ -182,6 +206,7 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
         }
 
         setSuccess(true)
+        loadMyApplications()
         setFullName("")
         setEmail("")
         setMobile("")
@@ -253,78 +278,173 @@ export function SevaBookingScreen({ navigate }: { navigate: (s: ScreenKey) => vo
         </div>
       </section>
 
-      {/* Volunteer Opportunities Title */}
-      <div className="pt-2 border-t border-border">
-        <h3 className="font-heading text-base font-bold text-[#800000]">
-          {lang === "hi" ? "उपलब्ध स्वयंसेवा के अवसर" : "Available Volunteering Opportunities"}
-        </h3>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          {lang === "hi"
-            ? "विविध विभागों में अपनी रुचि के अनुसार सेवा का चयन करें"
-            : "Select a volunteer role matching your skills and availability"}
-        </p>
+      {/* Tabs */}
+      <div className="flex rounded-2xl bg-orange-50/50 border border-orange-100 p-1 gap-1 shadow-sm">
+        <button
+          onClick={() => setActiveTab("roles")}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 ${
+            activeTab === "roles"
+              ? "bg-gradient-to-r from-[#800000] to-[#a02020] text-white shadow-md"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Icon name="HeartHandshake" className="size-4" />
+          {lang === "hi" ? "उपलब्ध भूमिकाएं" : "Available Roles"}
+        </button>
+        <button
+          onClick={() => setActiveTab("history")}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 ${
+            activeTab === "history"
+              ? "bg-gradient-to-r from-[#800000] to-[#a02020] text-white shadow-md"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Icon name="ClipboardList" className="size-4" />
+          {lang === "hi" ? "आवेदन इतिहास" : "Application History"}
+        </button>
       </div>
 
-      {/* Volunteer Opportunities Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {opportunitiesList.map((opp) => {
-          const isOpen = opp.status === "Open"
-          return (
-            <div
-              key={opp.id}
-              className="group flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-sm hover:border-[#800000]/30 hover:shadow-md transition duration-200"
-            >
-              <div className="space-y-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3">
-                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#800000]/10 text-[#800000]">
-                      <Icon name={opp.icon} className="size-5" />
-                    </span>
+      {activeTab === "roles" && (
+        <>
+          {/* Volunteer Opportunities Title */}
+          <div className="pt-2 border-t border-border">
+            <h3 className="font-heading text-base font-bold text-[#800000]">
+              {lang === "hi" ? "उपलब्ध स्वयंसेवा के अवसर" : "Available Volunteering Opportunities"}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              {lang === "hi"
+                ? "विविध विभागों में अपनी रुचि के अनुसार सेवा का चयन करें"
+                : "Select a volunteer role matching your skills and availability"}
+            </p>
+          </div>
+
+          {/* Volunteer Opportunities Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {opportunitiesList.map((opp) => {
+              const isOpen = opp.status === "Open"
+              return (
+                <div
+                  key={opp.id}
+                  className="group flex flex-col justify-between rounded-2xl border border-border bg-card p-4 shadow-sm hover:border-[#800000]/30 hover:shadow-md transition duration-200"
+                >
+                  <div className="space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-3">
+                        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[#800000]/10 text-[#800000]">
+                          <Icon name={opp.icon} className="size-5" />
+                        </span>
+                        <div>
+                          <h4 className="font-heading text-sm font-extrabold text-[#800000]">
+                            {lang === "hi" ? opp.roleHi : opp.role}
+                          </h4>
+                          <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1 mt-0.5">
+                            <Icon name="Clock" className="size-3 text-[#8a5a22]" />
+                            {lang === "hi" ? `शिफ्ट: ${opp.durationHi}` : `Shift: ${opp.duration}`}
+                          </p>
+                        </div>
+                      </div>
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold border ${
+                          isOpen
+                            ? "bg-green-500/10 border-green-500/20 text-green-700"
+                            : "bg-red-500/10 border-red-500/20 text-red-700"
+                        }`}
+                      >
+                        {isOpen ? (lang === "hi" ? "खुला है" : "Open") : (lang === "hi" ? "बंद है" : "Closed")}
+                      </span>
+                    </div>
+                    <p className="text-xs leading-relaxed text-muted-foreground pt-1">
+                      {lang === "hi" ? opp.descHi : opp.desc}
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Guidelines / Info Card */}
+          <section className="rounded-2xl border border-[#D4AF37]/30 bg-[#FFF8F0] p-4 shadow-inner space-y-3">
+            <div className="flex items-center gap-2">
+              <Icon name="BookOpen" className="size-5 text-[#800000]" />
+              <h4 className="font-heading text-sm font-bold text-[#800000]">
+                {lang === "hi" ? "स्वयंसेवक सेवा निर्देश" : "Volunteer Guidelines & Instructions"}
+              </h4>
+            </div>
+            <ul className="list-disc list-inside text-xs space-y-2 text-[#8a5a22] font-medium pl-1 leading-relaxed">
+              <li>{lang === "hi" ? "स्वयंसेवकों को अपनी शिफ्ट के समय पर रिपोर्ट करना चाहिए।" : "Volunteers must report on time for their scheduled shifts."}</li>
+              <li>{lang === "hi" ? "साथ में एक वैध पहचान पत्र (आधार, वोटर कार्ड आदि) रखें।" : "Carry a valid government-issued ID proof (e.g. Aadhaar Card)."}</li>
+              <li>{lang === "hi" ? "शालीन, सभ्य और आरामदायक पोशाक पहनें।" : "Wear decent, respectful, and comfortable clothing suitable for temple services."}</li>
+              <li>{lang === "hi" ? "मंदिर प्रशासन और सुरक्षा अधिकारियों के निर्देशों का कड़ाई से पालन करें।" : "Strictly follow temple administration instructions and security protocols."}</li>
+              <li>{lang === "hi" ? "सभी भक्तों के साथ विनम्र, आदरपूर्ण और सेवाभावी व्यवहार करें।" : "Behave respectfully, politely, and helpfully with all visiting devotees."}</li>
+            </ul>
+          </section>
+        </>
+      )}
+
+      {activeTab === "history" && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 rounded-2xl bg-[#FFF8F0] border border-[#D4AF37]/30 px-4 py-3">
+            <Icon name="Info" className="size-4 text-[#800000] shrink-0" />
+            <p className="text-xs text-[#8a5a22] font-medium">
+              {lang === "hi"
+                ? "आपके द्वारा सबमिट किए गए स्वयंसेवक आवेदनों की स्थिति देखें।"
+                : "Track the active review status of your volunteer application profiles."}
+            </p>
+          </div>
+
+          {loadingApps ? (
+            <p className="text-center text-xs text-muted-foreground py-6">
+              {lang === "hi" ? "आवेदनों को लोड किया जा रहा है..." : "Loading applications..."}
+            </p>
+          ) : myVolunteerApps.length > 0 ? (
+            myVolunteerApps.map((app) => {
+              const statusColors: Record<string, string> = {
+                pending: "bg-amber-50 border-amber-200 text-amber-700",
+                approved: "bg-green-50 border-green-200 text-green-700",
+                rejected: "bg-red-50 border-red-200 text-red-700",
+              }
+              const color = statusColors[app.status] || "bg-muted border-border text-muted-foreground"
+
+              return (
+                <motion.div
+                  key={app.id}
+                  initial={{ opacity: 0, y: 5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="rounded-3xl border border-border bg-card p-4 shadow-sm space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
                     <div>
-                      <h4 className="font-heading text-sm font-extrabold text-[#800000]">
-                        {lang === "hi" ? opp.roleHi : opp.role}
+                      <h4 className="font-heading text-sm font-bold text-foreground">
+                        {app.preferred_role.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
                       </h4>
                       <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1 mt-0.5">
-                        <Icon name="Clock" className="size-3 text-[#8a5a22]" />
-                        {lang === "hi" ? `शिफ्ट: ${opp.durationHi}` : `Shift: ${opp.duration}`}
+                        <Icon name="Calendar" className="size-3 text-primary" />
+                        {new Date(app.preferred_date).toLocaleDateString([], { dateStyle: 'medium' })}
+                        <span className="text-muted-foreground/30">|</span>
+                        <Icon name="Clock" className="size-3 text-primary" />
+                        {app.preferred_time_slot.replace(/-/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase())}
                       </p>
                     </div>
+                    <span className={`rounded-full px-2.5 py-0.5 text-[9px] font-bold border capitalize ${color}`}>
+                      {app.status}
+                    </span>
                   </div>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-[9px] font-extrabold border ${
-                      isOpen
-                        ? "bg-green-500/10 border-green-500/20 text-green-700"
-                        : "bg-red-500/10 border-red-500/20 text-red-700"
-                    }`}
-                  >
-                    {isOpen ? (lang === "hi" ? "खुला है" : "Open") : (lang === "hi" ? "बंद है" : "Closed")}
-                  </span>
-                </div>
-                <p className="text-xs leading-relaxed text-muted-foreground pt-1">
-                  {lang === "hi" ? opp.descHi : opp.desc}
-                </p>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* Guidelines / Info Card */}
-      <section className="rounded-2xl border border-[#D4AF37]/30 bg-[#FFF8F0] p-4 shadow-inner space-y-3">
-        <div className="flex items-center gap-2">
-          <Icon name="BookOpen" className="size-5 text-[#800000]" />
-          <h4 className="font-heading text-sm font-bold text-[#800000]">
-            {lang === "hi" ? "स्वयंसेवक सेवा निर्देश" : "Volunteer Guidelines & Instructions"}
-          </h4>
+                  <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground border-t border-border/40 pt-2">
+                    <div>Applicant: {app.full_name}</div>
+                    <div>City: {app.city}</div>
+                  </div>
+                </motion.div>
+              )
+            })
+          ) : (
+            <p className="text-center text-xs text-muted-foreground py-8 italic border border-dashed rounded-2xl">
+              {lang === "hi"
+                ? "आपने कोई स्वयंसेवक आवेदन जमा नहीं किया है।"
+                : "You haven't submitted any volunteer applications yet."}
+            </p>
+          )}
         </div>
-        <ul className="list-disc list-inside text-xs space-y-2 text-[#8a5a22] font-medium pl-1 leading-relaxed">
-          <li>{lang === "hi" ? "स्वयंसेवकों को अपनी शिफ्ट के समय पर रिपोर्ट करना चाहिए।" : "Volunteers must report on time for their scheduled shifts."}</li>
-          <li>{lang === "hi" ? "साथ में एक वैध पहचान पत्र (आधार, वोटर कार्ड आदि) रखें।" : "Carry a valid government-issued ID proof (e.g. Aadhaar Card)."}</li>
-          <li>{lang === "hi" ? "शालीन, सभ्य और आरामदायक पोशाक पहनें।" : "Wear decent, respectful, and comfortable clothing suitable for temple services."}</li>
-          <li>{lang === "hi" ? "मंदिर प्रशासन और सुरक्षा अधिकारियों के निर्देशों का कड़ाई से पालन करें।" : "Strictly follow temple administration instructions and security protocols."}</li>
-          <li>{lang === "hi" ? "सभी भक्तों के साथ विनम्र, आदरपूर्ण और सेवाभावी व्यवहार करें।" : "Behave respectfully, politely, and helpfully with all visiting devotees."}</li>
-        </ul>
-      </section>
+      )}
 
       {/* Registration Modal Dialog */}
       <AnimatePresence>

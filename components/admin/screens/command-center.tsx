@@ -14,6 +14,7 @@ import {
 } from "@/components/admin/admin-shared"
 import { commandCenterData, activityFeed, type AdminScreenKey } from "@/lib/admin-data"
 import { devoteeApi, adminApi } from "@/lib/api-client"
+import { supabase } from "@/lib/supabase"
 
 export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey) => void }) {
   const [liveTime, setLiveTime] = useState("")
@@ -33,6 +34,10 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
     is_darshan_closed: false,
     is_global_alarm: false,
   })
+
+  const [trafficVal, setTrafficVal] = useState("Smooth")
+  const [trafficRoute, setTrafficRoute] = useState("All routes clear")
+  const [trafficStatus, setTrafficStatus] = useState<"normal" | "warning" | "critical">("normal")
 
   const [summary, setSummary] = useState<any>({
     total_profiles: 0,
@@ -56,6 +61,40 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
     }
   })
 
+  const loadAuditLogs = async () => {
+    try {
+      const logs = await adminApi.getAuditLogs()
+      if (logs && logs.length > 0) {
+        setActivityLogs(logs.map((log: any) => ({
+          id: String(log.id),
+          time: new Date(log.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          action: log.action,
+          department: log.department,
+          actor: log.actor_name,
+          icon: log.department.toLowerCase().includes("emergency") ? "Siren" : "Info"
+        })))
+      } else {
+        setActivityLogs(activityFeed)
+      }
+    } catch (err) {
+      console.error("Failed to load audit logs", err)
+      setActivityLogs(activityFeed)
+    }
+  }
+
+  const logOverrideAction = async (action: string, department: string) => {
+    try {
+      await supabase.from("audit_logs").insert({
+        action,
+        department,
+        actor_name: "Nand Kumar"
+      })
+      await loadAuditLogs()
+    } catch (err) {
+      console.error("Failed to insert override audit log", err)
+    }
+  }
+
   useEffect(() => {
     const fetchSummary = async () => {
       try {
@@ -71,7 +110,40 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
         console.error("Error loading dashboard summary stats", err)
       }
     }
+
+    const fetchTraffic = async () => {
+      try {
+        const [routesRes, alertsRes] = await Promise.all([
+          supabase.from("traffic_routes").select("*"),
+          supabase.from("traffic_alerts").select("*").eq("is_active", true)
+        ])
+
+        if (routesRes.data && alertsRes.data) {
+          const routesData = routesRes.data
+          const alertsData = alertsRes.data
+
+          if (alertsData.length > 0) {
+            const hasCritical = alertsData.some((a: any) => a.severity === "critical" || a.severity === "high")
+            setTrafficStatus(hasCritical ? "critical" : "warning")
+            setTrafficVal(hasCritical ? "Heavy delays" : "Moderate slow")
+            
+            const affectedRouteId = alertsData[0].route_id
+            const affectedRoute = routesData.find((r: any) => Number(r.id) === Number(affectedRouteId))
+            setTrafficRoute(affectedRoute ? affectedRoute.name : "Congestion reported")
+          } else {
+            setTrafficStatus("normal")
+            setTrafficVal("Smooth")
+            setTrafficRoute("All routes clear")
+          }
+        }
+      } catch (err) {
+        console.error("Error loading traffic on command center", err)
+      }
+    }
+
     fetchSummary()
+    fetchTraffic()
+    loadAuditLogs()
   }, [])
 
   const updateTelemetryInDb = async (updatedFields: any) => {
@@ -108,61 +180,30 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
     const nextState = !isEmergencyMode
     setIsEmergencyMode(nextState)
     updateTelemetryInDb({ is_emergency_mode: nextState })
-    
-    // Log command override
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-    setActivityLogs(prev => [
-      {
-        id: `ACT-${Date.now()}`,
-        time: timeStr,
-        action: `[CRITICAL CONTROL] Emergency Mode toggled to ${nextState ? "ACTIVE" : "INACTIVE"}`,
-        department: "emergency",
-        actor: "Nand Kumar",
-        icon: "Siren",
-      },
-      ...prev,
-    ])
+    logOverrideAction(
+      `[CRITICAL CONTROL] Emergency Mode toggled to ${nextState ? "ACTIVE" : "INACTIVE"}`,
+      "Emergency"
+    )
   }
 
   const toggleCloseDarshan = () => {
     const nextState = !isDarshanClosed
     setIsDarshanClosed(nextState)
     updateTelemetryInDb({ is_darshan_closed: nextState })
-
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-    setActivityLogs(prev => [
-      {
-        id: `ACT-${Date.now()}`,
-        time: timeStr,
-        action: `[SYSTEM ACTION] Main Shrine Darshan gates toggled to ${nextState ? "CLOSED" : "OPEN"}`,
-        department: "super-admin",
-        actor: "Nand Kumar",
-        icon: "DoorClosed",
-      },
-      ...prev,
-    ])
+    logOverrideAction(
+      `[SYSTEM ACTION] Main Shrine Darshan gates toggled to ${nextState ? "CLOSED" : "OPEN"}`,
+      "Super-Admin"
+    )
   }
 
   const toggleGlobalAlarm = () => {
     const nextState = !isGlobalAlarm
     setIsGlobalAlarm(nextState)
     updateTelemetryInDb({ is_global_alarm: nextState })
-
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-    setActivityLogs(prev => [
-      {
-        id: `ACT-${Date.now()}`,
-        time: timeStr,
-        action: `[CRITICAL ALERT] Global Alarm broadcast toggled to ${nextState ? "ACTIVE" : "OFF"}`,
-        department: "super-admin",
-        actor: "Nand Kumar",
-        icon: "Megaphone",
-      },
-      ...prev,
-    ])
+    logOverrideAction(
+      `[CRITICAL ALERT] Global Alarm broadcast toggled to ${nextState ? "ACTIVE" : "OFF"}`,
+      "Super-Admin"
+    )
   }
 
   return (
@@ -259,9 +300,9 @@ export function CommandCenterScreen({ navigate }: { navigate: (s: AdminScreenKey
           <StatusWidget
             icon="TrafficCone"
             label="Highway traffic"
-            value={d.traffic.value}
-            sub={d.traffic.route}
-            status={d.traffic.status}
+            value={trafficVal}
+            sub={trafficRoute}
+            status={trafficStatus}
             onClick={() => navigate("traffic-ops")}
           />
           <StatusWidget

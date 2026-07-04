@@ -7,6 +7,7 @@ import { useLanguage } from "@/lib/contexts/LanguageContext"
 import type { ScreenKey } from "@/lib/data"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
 import { devoteeApi } from "@/lib/api-client"
+import { supabase } from "@/lib/supabase"
 
 interface AnnouncementItem {
   id: string
@@ -86,6 +87,22 @@ export function AnnouncementsScreen({ navigate }: { navigate: (s: ScreenKey) => 
     }
 
     fetchAnnouncements()
+
+    const channel = supabase
+      .channel("public:announcements")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "announcements" },
+        () => {
+          console.log("Realtime announcements change detected!")
+          fetchAnnouncements()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [lang])
 
   const priorityColors = {

@@ -134,13 +134,77 @@ export function AppShell() {
   const { lang, setLang, t } = useLanguage()
   const { bhatiMode, setBhatiMode, soundEnabled, setSoundEnabled, timeOfDay } = useAudio()
 
+  const syncUserProfile = async (user: any) => {
+    try {
+      const { data: profile, error } = await supabase
+        .from("profiles")
+        .select("id, name, phone, city")
+        .eq("id", user.id)
+        .maybeSingle()
+
+      if (error) {
+        console.error("Failed to load user profile:", error)
+        return null
+      }
+
+      if (profile) {
+        return profile
+      }
+
+      // Auto-create profile if missing (first-time OAuth login)
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Google User"
+      const email = user.email || ""
+      
+      // Generate a unique placeholder phone number
+      let phone = user.phone || user.user_metadata?.phone || ""
+      if (!phone) {
+        let uniquePhone = `+99${Math.floor(1000000000 + Math.random() * 9000000000)}`
+        for (let i = 0; i < 5; i++) {
+          const { data: existing } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("phone", uniquePhone)
+            .maybeSingle()
+          if (!existing) break
+          uniquePhone = `+99${Math.floor(1000000000 + Math.random() * 9000000000)}`
+        }
+        phone = uniquePhone
+      }
+
+      const { data: newProfile, error: insErr } = await supabase
+        .from("profiles")
+        .insert({
+          id: user.id,
+          name: fullName,
+          phone: phone,
+          email: email || null,
+          city: ""
+        })
+        .select("id, name, phone, city")
+        .single()
+
+      if (insErr) {
+        console.error("Failed to auto-create user profile:", insErr)
+        return null
+      }
+      return newProfile
+    } catch (err) {
+      console.error("Error in syncUserProfile:", err)
+      return null
+    }
+  }
+
   useEffect(() => {
     // Check if user is logged in
     const sessionUser = localStorage.getItem("current_user") || localStorage.getItem("temp_signup_user")
-    let initialScreen: ScreenKey = sessionUser ? "home" : "welcome"
+    const sessionAdmin = localStorage.getItem("current_admin")
+    let initialScreen: ScreenKey = sessionAdmin ? "welcome" : (sessionUser ? "home" : "welcome")
     
     if (sessionUser) {
       setCurrentUser(JSON.parse(sessionUser))
+    }
+    if (sessionAdmin) {
+      setAdminUser(JSON.parse(sessionAdmin))
     }
 
     // Subscribe to real-time auth changes if Supabase URL is present
@@ -151,35 +215,7 @@ export function AppShell() {
       const initSession = async () => {
         const { data: { session } } = await supabase.auth.getSession()
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id, name, phone, city")
-            .eq("id", session.user.id)
-            .maybeSingle()
-
-          if (profile) {
-            const userObj = {
-              id: profile.id,
-              name: profile.name,
-              phone: profile.phone,
-              city: profile.city || "",
-              initials: profile.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
-            }
-            setCurrentUser(userObj)
-            localStorage.setItem("current_user", JSON.stringify(userObj))
-          }
-        }
-      }
-      initSession()
-
-      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-        if (session?.user) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("id, name, phone, city")
-            .eq("id", session.user.id)
-            .maybeSingle()
-
+          const profile = await syncUserProfile(session.user)
           if (profile) {
             const userObj = {
               id: profile.id,
@@ -194,6 +230,33 @@ export function AppShell() {
         } else {
           setCurrentUser(null)
           localStorage.removeItem("current_user")
+        }
+      }
+      initSession()
+
+      const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+        if (session?.user) {
+          const profile = await syncUserProfile(session.user)
+          if (profile) {
+            const userObj = {
+              id: profile.id,
+              name: profile.name,
+              phone: profile.phone,
+              city: profile.city || "",
+              initials: profile.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+            }
+            setCurrentUser(userObj)
+            localStorage.setItem("current_user", JSON.stringify(userObj))
+          }
+        } else {
+          setCurrentUser(null)
+          localStorage.removeItem("current_user")
+
+          const params = new URLSearchParams(window.location.search)
+          const currentScreen = params.get("screen") || "welcome"
+          if (currentScreen !== "welcome" && currentScreen !== "login" && currentScreen !== "signup" && currentScreen !== "otp") {
+            navigate("welcome")
+          }
         }
       })
       subscription = authListener.subscription
@@ -313,6 +376,7 @@ export function AppShell() {
         initialUser={adminUser}
         onExitAdmin={() => {
           setAdminUser(null)
+          localStorage.removeItem("current_admin")
           navigate("welcome")
         }}
       />
@@ -584,7 +648,10 @@ export function AppShell() {
           {screen === "welcome" && (
             <WelcomeScreen
               navigate={navigate}
-              onAdminLogin={(user) => setAdminUser(user)}
+              onAdminLogin={(user) => {
+                setAdminUser(user)
+                localStorage.setItem("current_admin", JSON.stringify(user))
+              }}
             />
           )}
           {screen === "login" && (
@@ -644,8 +711,12 @@ export function AppShell() {
               currentUser={currentUser}
               onLogout={handleLogout}
               onUpdateUser={(updatedUser) => {
-                setCurrentUser(updatedUser)
-                localStorage.setItem("current_user", JSON.stringify(updatedUser))
+                const merged = {
+                  ...currentUser,
+                  ...updatedUser
+                }
+                setCurrentUser(merged)
+                localStorage.setItem("current_user", JSON.stringify(merged))
               }}
             />
           )}

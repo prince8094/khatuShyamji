@@ -241,16 +241,16 @@ export function PilgrimRegistryScreen({ navigate }: { navigate: (s: AdminScreenK
       p.lastBooking,
     ])
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n")
-    const encodedUri = encodeURI(csvContent)
+    const csvText = [headers.join(","), ...rows.map((e) => e.join(","))].join("\n")
+    const blob = new Blob([csvText], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
     const link = document.createElement("a")
-    link.setAttribute("href", encodedUri)
-    link.setAttribute("download", `pilgrim_registry_${TODAY_STR}.csv`)
+    link.href = url
+    link.download = `pilgrim_registry_${TODAY_STR}.csv`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
+    URL.revokeObjectURL(url)
   }
 
   // Excel Export

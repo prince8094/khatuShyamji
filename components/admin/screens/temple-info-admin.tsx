@@ -1,555 +1,711 @@
+"use client"
+
 import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Icon } from "@/components/shared"
-import { AdminSectionTitle, ActivityItem } from "@/components/admin/admin-shared"
-import { devoteeApi, adminApi } from "@/lib/api-client"
+import { AdminSectionTitle, MetricCard } from "@/components/admin/admin-shared"
+import { adminApi } from "@/lib/api-client"
 import { type AdminScreenKey, type AdminUser } from "@/lib/admin-data"
 
-type TempleContentState = {
-  id: string
-  title: string
-  status: "published" | "draft" | "archived" | "pending-review"
-  lastUpdated: string
-  updatedBy: string
-  icon: string
-  content: string
-}
-
-type AartiTimingState = {
+interface AartiTiming {
   id: string
   name: string
-  time: string
-  isEditing: boolean
+  name_hi?: string
+  start_time: string
+  end_time?: string
+  description?: string
+  description_hi?: string
+  status: "active" | "inactive"
+  display_order: number
 }
 
-const initialTempleContent: TempleContentState[] = [
-  { id: "TC-01", title: "Darshan Timings", status: "published", lastUpdated: "Today, 10:15 AM", updatedBy: "Rajesh K.", icon: "Clock", content: "Morning: 4:30 AM – 12:30 PM | Evening: 4:00 PM – 9:00 PM" },
-  { id: "TC-02", title: "Aarti Schedule", status: "published", lastUpdated: "Today, 10:15 AM", updatedBy: "Rajesh K.", icon: "Flame", content: "Mangla 4:30 AM, Shringaar 7:00 AM, Bhog 12:30 PM, Sandhya 7:30 PM" },
-  { id: "TC-03", title: "Temple Guidelines", status: "published", lastUpdated: "Yesterday, 03:00 PM", updatedBy: "Rajesh K.", icon: "BookOpen", content: "No photography inside sanctum. Mobile phones on silent. Dress modestly." },
-  { id: "TC-04", title: "Monsoon Special Timings", status: "pending-review", lastUpdated: "Today, 09:00 AM", updatedBy: "Rajesh K.", icon: "CloudRain", content: "Updated morning aarti to 5:00 AM due to sunrise change" },
-  { id: "TC-05", title: "Festival Calendar", status: "published", lastUpdated: "27 Jun, 11:00 AM", updatedBy: "Rajesh K.", icon: "Calendar", content: "Ekadashi: 30 Jun | Purnima: 10 Jul | Janmashtami: 26 Aug" },
-]
+interface DevoteeGuideline {
+  id: string
+  title: string
+  title_hi?: string
+  content: string
+  content_hi?: string
+  status: "published" | "unpublished"
+  display_order: number
+}
 
-const initialAartiTimings: AartiTimingState[] = [
-  { id: "AT-1", name: "Mangla Aarti", time: "4:30 AM", isEditing: false },
-  { id: "AT-2", name: "Shringaar", time: "7:00 AM", isEditing: false },
-  { id: "AT-3", name: "Bhog Aarti", time: "12:30 PM", isEditing: false },
-  { id: "AT-4", name: "Sandhya Aarti", time: "7:30 PM", isEditing: false },
-]
+interface CmsHistoryRecord {
+  id: string
+  module_type: "aarti" | "guideline"
+  record_id: string
+  action_type: "create" | "update" | "delete"
+  updated_by: string
+  updated_time: string
+  previous_value: any
+  current_value: any
+}
 
 export function TempleInfoAdminScreen({
   navigate,
-  currentAdmin,
+  currentAdmin
 }: {
   navigate: (s: AdminScreenKey) => void
   currentAdmin?: AdminUser
 }) {
   const activeUser = currentAdmin?.name || "Rajesh Kumar"
-  const isSuperAdmin = currentAdmin?.roles.includes("super-admin") || false
-  const isTrusted = isSuperAdmin || currentAdmin?.roles.includes("temple-info")
 
-  const [tab, setTab] = useState<"content" | "timings">("content")
-  const [contentList, setContentList] = useState<TempleContentState[]>(initialTempleContent)
-  const [aartiTimings, setAartiTimings] = useState<AartiTimingState[]>(initialAartiTimings)
-  const [activityLogs, setActivityLogs] = useState<any[]>([
-    { id: "L-1", time: "10:15 AM", action: "Temple guidelines updated — Dress modesty code", actor: "Rajesh K." },
-    { id: "L-2", time: "09:00 AM", action: "Submitted Monsoon Timings draft for approval", actor: "Rajesh K." },
-  ])
+  const [tab, setTab] = useState<"aarti" | "guidelines" | "history">("aarti")
+  const [loading, setLoading] = useState(true)
+  const [successMsg, setSuccessMsg] = useState("")
+  const [errorMsg, setErrorMsg] = useState("")
+
+  // Aarti state
+  const [aartis, setAartis] = useState<AartiTiming[]>([])
+  const [editingAarti, setEditingAarti] = useState<AartiTiming | null>(null)
+
+  // Guidelines state
+  const [guidelines, setGuidelines] = useState<DevoteeGuideline[]>([])
+  const [editingGuideline, setEditingGuideline] = useState<DevoteeGuideline | null>(null)
+
+  // History state
+  const [history, setHistory] = useState<CmsHistoryRecord[]>([])
+
+  const triggerToast = (msg: string, isError = false) => {
+    if (isError) {
+      setErrorMsg(msg)
+      setTimeout(() => setErrorMsg(""), 4000)
+    } else {
+      setSuccessMsg(msg)
+      setTimeout(() => setSuccessMsg(""), 4000)
+    }
+  }
+
+  const loadData = () => {
+    setLoading(true)
+    Promise.all([
+      adminApi.getAartiTimings(),
+      adminApi.getDevoteeGuidelines(),
+      adminApi.getCmsHistory()
+    ])
+      .then(([aartiRes, guideRes, histRes]) => {
+        setAartis(aartiRes || [])
+        setGuidelines(guideRes || [])
+        setHistory(histRes || [])
+      })
+      .catch((err) => {
+        triggerToast("Failed to load CMS data: " + err.message, true)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }
 
   useEffect(() => {
-    devoteeApi.getTempleInfo()
-      .then((res: any) => {
-        if (Array.isArray(res)) {
-          // 1. Timings
-          const timingsRecord = res.find(r => r.section_key === "darshan_timings")
-          if (timingsRecord && Array.isArray(timingsRecord.content)) {
-            setAartiTimings(timingsRecord.content.map((t: any, i: number) => ({
-              id: t.id || `AT-${i + 1}`,
-              name: t.name,
-              time: t.time,
-              isEditing: false
-            })))
-          }
-
-          // 2. Guides
-          setContentList((prev: TempleContentState[]) => prev.map((c: TempleContentState) => {
-            let key = ""
-            if (c.id === "TC-01" || c.title.includes("Darshan Timings")) key = "darshan_timings"
-            else if (c.id === "TC-03" || c.title.includes("Guidelines")) key = "temple_guidelines"
-
-            if (key) {
-              const rec = res.find(r => r.section_key === key)
-              if (rec) {
-                let text = ""
-                if (Array.isArray(rec.content)) {
-                  if (key === "darshan_timings") {
-                    text = rec.content.map((t: any) => `${t.name}: ${t.time}`).join(" | ")
-                  } else {
-                    text = rec.content.join(" ")
-                  }
-                } else if (typeof rec.content === "string") {
-                  text = rec.content
-                }
-                return {
-                  ...c,
-                  content: text,
-                  lastUpdated: new Date(rec.updated_at).toLocaleTimeString()
-                }
-              }
-            }
-            return c
-          }))
-        }
-      })
-      .catch((err) => console.error("Error loading temple info in admin", err))
+    loadData()
   }, [])
 
-  // Modals state
-  const [editingItemId, setEditingItemId] = useState<string | null>(null)
-  const [editingTitle, setEditingTitle] = useState("")
-  const [editingContent, setEditingContent] = useState("")
-  const [scheduleDate, setScheduleDate] = useState("")
-  const [showScheduleInput, setShowScheduleInput] = useState(false)
-
-  // Timing inputs
-  const [tempTimes, setTempTimes] = useState<Record<string, string>>({})
-
-  // Stats
-  const published = contentList.filter((c: TempleContentState) => c.status === "published").length
-  const pendingReview = contentList.filter((c: TempleContentState) => c.status === "pending-review").length
-
-  const handleEditClick = (item: TempleContentState) => {
-    setEditingItemId(item.id)
-    setEditingTitle(item.title)
-    setEditingContent(item.content)
-    setShowScheduleInput(false)
-    setScheduleDate("")
-  }
-
-  const handleSaveContent = async (e: React.FormEvent) => {
+  // Aarti CRUD
+  const handleSaveAarti = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!editingItemId) return
+    if (!editingAarti) return
 
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-
-    if (isTrusted && !showScheduleInput) {
-      // Direct update
-      setContentList(prev =>
-        prev.map(c => (c.id === editingItemId ? { ...c, title: editingTitle, content: editingContent, status: "published", lastUpdated: "Just now", updatedBy: activeUser } : c))
-      )
-      setActivityLogs(prev => [
-        { id: `L-${Date.now()}`, time: timeStr, action: `Directly published changes to: ${editingTitle}`, actor: activeUser },
-        ...prev,
-      ])
-
-      let key = ""
-      let title = ""
-      if (editingItemId === "TC-01" || editingTitle.includes("Darshan Timings")) {
-        key = "darshan_timings"
-        title = "Darshan Timings"
-      } else if (editingItemId === "TC-03" || editingTitle.includes("Guidelines")) {
-        key = "temple_guidelines"
-        title = "Temple Guidelines"
-      }
-
-      if (key) {
-        let contentVal: any = editingContent
-        if (key === "temple_guidelines") {
-          contentVal = editingContent.split(/[.\n]/).map(s => s.trim()).filter(Boolean)
-        } else if (key === "darshan_timings") {
-          contentVal = editingContent.split("|").map(p => {
-            const parts = p.split(":")
-            return {
-              name: parts[0]?.trim() || "Aarti",
-              time: parts.slice(1).join(":")?.trim() || "4:30 AM"
-            }
-          })
-        }
-        try {
-          await adminApi.updateTempleInfo({
-            section_key: key,
-            title: title,
-            content: contentVal
-          })
-        } catch (err) {
-          console.error("Failed to save content to database", err)
-        }
-      }
-    } else {
-      // Route to approval queue / pending
-      setContentList(prev =>
-        prev.map(c => (c.id === editingItemId ? { ...c, title: editingTitle, content: editingContent, status: "pending-review", lastUpdated: "Just now", updatedBy: activeUser } : c))
-      )
-      setActivityLogs(prev => [
-        {
-          id: `L-${Date.now()}`,
-          time: timeStr,
-          action: `Submitted changes for review: ${editingTitle} ${showScheduleInput ? `(Scheduled: ${scheduleDate})` : ""}`,
-          actor: activeUser,
-        },
-        ...prev,
-      ])
-    }
-
-    setEditingItemId(null)
+    adminApi.actionAartiTiming({
+      action: "upsert",
+      ...editingAarti
+    })
+      .then(() => {
+        triggerToast("Aarti timing saved successfully!")
+        setEditingAarti(null)
+        loadData()
+      })
+      .catch((err) => {
+        triggerToast("Failed to save Aarti timing: " + err.message, true)
+      })
   }
 
-  const handleArchiveContent = (id: string) => {
-    setContentList(prev =>
-      prev.map(c => (c.id === id ? { ...c, status: "archived" } : c))
-    )
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-    setActivityLogs(prev => [
-      { id: `L-${Date.now()}`, time: timeStr, action: `Archived content block: ${id}`, actor: activeUser },
-      ...prev,
+  const handleDeleteAarti = (id: string) => {
+    if (!confirm("Are you sure you want to delete this Aarti timing?")) return
+    adminApi.actionAartiTiming({ action: "delete", id })
+      .then(() => {
+        triggerToast("Aarti timing deleted successfully!")
+        loadData()
+      })
+      .catch((err) => {
+        triggerToast("Failed to delete Aarti: " + err.message, true)
+      })
+  }
+
+  const handleToggleAartiStatus = (aarti: AartiTiming) => {
+    const nextStatus = aarti.status === "active" ? "inactive" : "active"
+    adminApi.actionAartiTiming({
+      action: "upsert",
+      ...aarti,
+      status: nextStatus
+    })
+      .then(() => {
+        triggerToast(`Aarti status toggled to ${nextStatus}!`)
+        loadData()
+      })
+      .catch((err) => {
+        triggerToast("Failed to toggle status: " + err.message, true)
+      })
+  }
+
+  const handleReorderAarti = (aarti: AartiTiming, direction: "up" | "down") => {
+    const currentIndex = aartis.findIndex(a => a.id === aarti.id)
+    if (currentIndex === -1) return
+    const targetIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1
+    if (targetIndex < 0 || targetIndex >= aartis.length) return
+
+    const targetAarti = aartis[targetIndex]
+    const currentOrder = aarti.display_order
+    const targetOrder = targetAarti.display_order
+
+    // Swap orders
+    Promise.all([
+      adminApi.actionAartiTiming({ action: "upsert", ...aarti, display_order: targetOrder }),
+      adminApi.actionAartiTiming({ action: "upsert", ...targetAarti, display_order: currentOrder })
     ])
+      .then(() => {
+        triggerToast("Aarti order updated successfully!")
+        loadData()
+      })
+      .catch((err) => {
+        triggerToast("Failed to reorder: " + err.message, true)
+      })
   }
 
-  const handlePublishFromReview = (id: string) => {
-    if (!isTrusted) return
-    setContentList(prev =>
-      prev.map(c => (c.id === id ? { ...c, status: "published", lastUpdated: "Just now", updatedBy: activeUser } : c))
-    )
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-    setActivityLogs(prev => [
-      { id: `L-${Date.now()}`, time: timeStr, action: `Approved & Published: ${id}`, actor: activeUser },
-      ...prev,
-    ])
+  // Guidelines CRUD
+  const handleSaveGuideline = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!editingGuideline) return
+
+    adminApi.actionDevoteeGuideline({
+      action: "upsert",
+      ...editingGuideline
+    })
+      .then(() => {
+        triggerToast("Devotee guideline saved successfully!")
+        setEditingGuideline(null)
+        loadData()
+      })
+      .catch((err) => {
+        triggerToast("Failed to save guideline: " + err.message, true)
+      })
   }
 
-  // Aarti Timing edits
-  const handleEditTiming = (id: string, currentTime: string) => {
-    setAartiTimings(prev => prev.map(t => (t.id === id ? { ...t, isEditing: true } : t)))
-    setTempTimes(prev => ({ ...prev, [id]: currentTime }))
+  const handleDeleteGuideline = (id: string) => {
+    if (!confirm("Are you sure you want to delete this devotee guideline?")) return
+    adminApi.actionDevoteeGuideline({ action: "delete", id })
+      .then(() => {
+        triggerToast("Devotee guideline deleted successfully!")
+        loadData()
+      })
+      .catch((err) => {
+        triggerToast("Failed to delete guideline: " + err.message, true)
+      })
   }
 
-  const handleSaveTiming = async (id: string) => {
-    const newTime = tempTimes[id]
-    if (!newTime) return
-
-    const target = aartiTimings.find(t => t.id === id)
-    if (!target) return
-
-    const now = new Date()
-    const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true })
-
-    if (isTrusted) {
-      const nextTimings = aartiTimings.map(t => (t.id === id ? { ...t, time: newTime, isEditing: false } : t))
-      setAartiTimings(nextTimings)
-      setActivityLogs(prev => [
-        { id: `L-${Date.now()}`, time: timeStr, action: `Aarti timing direct update: ${target.name} to ${newTime}`, actor: activeUser },
-        ...prev,
-      ])
-
-      try {
-        await adminApi.updateTempleInfo({
-          section_key: "darshan_timings",
-          title: "Darshan Timings",
-          content: nextTimings.map(t => ({ id: t.id, name: t.name, time: t.time }))
-        })
-      } catch (err) {
-        console.error("Failed to save timings to database", err)
-      }
-    } else {
-      setAartiTimings(prev => prev.map(t => (t.id === id ? { ...t, isEditing: false } : t)))
-      setActivityLogs(prev => [
-        { id: `L-${Date.now()}`, time: timeStr, action: `Submitted timing edit request for: ${target.name} (${newTime})`, actor: activeUser },
-        ...prev,
-      ])
-    }
-  }
-
-  const renderEditModal = () => {
-    if (!editingItemId) return null
-    const item = contentList.find(c => c.id === editingItemId)
-    if (!item) return null
-
-    return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="w-full max-w-lg rounded-2xl border border-border bg-card p-5 shadow-xl"
-        >
-          <div className="flex items-center justify-between mb-4 border-b border-border pb-3">
-            <h3 className="font-heading text-base font-bold text-foreground">Edit Temple Content</h3>
-            <button onClick={() => setEditingItemId(null)} className="text-muted-foreground hover:text-foreground">
-              <Icon name="X" className="size-5" />
-            </button>
-          </div>
-          <form onSubmit={handleSaveContent} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-foreground mb-1.5">Title</label>
-              <input
-                type="text"
-                required
-                value={editingTitle}
-                onChange={e => setEditingTitle(e.target.value)}
-                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-bold focus:border-[#D4AF37] focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-foreground mb-1.5">Guidelines / Schedule Content</label>
-              <textarea
-                required
-                rows={4}
-                value={editingContent}
-                onChange={e => setEditingContent(e.target.value)}
-                className="w-full rounded-xl border border-border bg-muted/40 p-2.5 text-xs font-medium focus:border-[#D4AF37] focus:outline-none resize-none"
-              />
-            </div>
-
-            <div className="rounded-xl bg-muted/30 p-3 border border-border/50">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={showScheduleInput}
-                    onChange={() => setShowScheduleInput(!showScheduleInput)}
-                    className="size-4 rounded accent-[#D4AF37]"
-                  />
-                  <span className="text-xs font-bold text-foreground">Schedule Publication for Later</span>
-                </label>
-              </div>
-              {showScheduleInput && (
-                <div className="mt-2.5">
-                  <label className="block text-[10px] font-bold text-muted-foreground mb-1">Release Date & Time</label>
-                  <input
-                    type="datetime-local"
-                    value={scheduleDate}
-                    onChange={e => setScheduleDate(e.target.value)}
-                    required
-                    className="w-full rounded-lg border border-border bg-card p-2 text-xs font-bold focus:border-[#D4AF37]"
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-2 justify-end pt-2 border-t border-border">
-              <button
-                type="button"
-                onClick={() => handleArchiveContent(item.id)}
-                className="rounded-xl border border-red-200 bg-red-50 text-red-600 px-4 py-2 text-xs font-bold hover:bg-red-100 mr-auto"
-              >
-                Archive Block
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditingItemId(null)}
-                className="rounded-xl border border-border bg-card px-4 py-2 text-xs font-bold hover:bg-muted/50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="rounded-xl bg-gradient-to-r from-[#D97706] to-[#D4AF37] px-4 py-2 text-xs font-bold text-white shadow-sm"
-              >
-                {isTrusted && !showScheduleInput ? "Publish Live" : "Submit for Approval"}
-              </button>
-            </div>
-          </form>
-        </motion.div>
-      </div>
-    )
+  const handleToggleGuidelineStatus = (guide: DevoteeGuideline) => {
+    const nextStatus = guide.status === "published" ? "unpublished" : "published"
+    adminApi.actionDevoteeGuideline({
+      action: "upsert",
+      ...guide,
+      status: nextStatus
+    })
+      .then(() => {
+        triggerToast(`Guideline status toggled to ${nextStatus}!`)
+        loadData()
+      })
+      .catch((err) => {
+        triggerToast("Failed to toggle status: " + err.message, true)
+      })
   }
 
   return (
-    <div className="space-y-5 pb-6">
-      {/* Header operations banner */}
-      <section className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#D4AF37] to-[#B8960C] p-6 text-white shadow-lg">
-        <div className="absolute inset-0 opacity-10" style={{ backgroundImage: "url(/images/mandala-pattern.png)", backgroundSize: "180px" }} />
-        <div className="relative flex items-center justify-between">
-          <div>
-            <h1 className="font-heading text-xl font-bold">Temple Guidelines Command</h1>
-            <p className="text-xs text-white/80 mt-1">Configure active timings & devotee rules lists</p>
-          </div>
-          <span className="grid size-12 place-items-center rounded-2xl bg-white/20 border border-white/20">
-            <Icon name="Landmark" className="size-6 text-white" />
-          </span>
+    <div className="space-y-6 pb-12 animate-in fade-in duration-300">
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-5">
+        <div>
+          <h1 className="font-heading text-2xl font-bold flex items-center gap-2">
+            <Icon name="BookOpen" className="size-6 text-[#FF8C00]" /> Temple Information CMS
+          </h1>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Configure Aarti timings schedules, Devotee guidelines, and track change audit logs.
+          </p>
         </div>
-        <div className="relative mt-4 grid grid-cols-3 gap-2">
-          {[
-            { label: "Total Blocks", value: contentList.length },
-            { label: "Active Live", value: published },
-            { label: "Pending Reviews", value: pendingReview },
-          ].map((s) => (
-            <div key={s.label} className="rounded-xl bg-black/20 backdrop-blur-sm px-3 py-2.5 text-center border border-white/5">
-              <p className="text-[10px] text-white/70 uppercase tracking-wide font-semibold">{s.label}</p>
-              <p className="font-heading text-lg font-extrabold text-white mt-0.5">{s.value.toLocaleString()}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        <button
+          onClick={() => navigate("command-center")}
+          className="flex items-center gap-1.5 rounded-xl border border-border px-3.5 py-2 text-xs font-bold transition hover:bg-secondary self-start md:self-auto active:scale-95"
+        >
+          <Icon name="ArrowLeft" className="size-4" /> Back to CommandCenter
+        </button>
+      </div>
 
-      {/* Role notice warning banner */}
-      {!isTrusted && (
-        <div className="flex items-start gap-3 rounded-2xl bg-amber-50 border border-amber-200 px-4 py-3 shadow-sm">
-          <Icon name="AlertTriangle" className="size-4 text-amber-600 shrink-0 mt-0.5" />
-          <div className="text-xs text-amber-700">
-            <p className="font-bold">Standard Role Restrictions Active</p>
-            <p className="mt-0.5">Your updates to guidelines and timings require verification logs and approval from operations supervisor before rendering in the Pilgrim app.</p>
-          </div>
+      {/* Metrics Banner */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <MetricCard label="Active Aartis" value={aartis.filter(a => a.status === "active").length.toString()} icon="Flame" trend="live" />
+        <MetricCard label="Published Guidelines" value={guidelines.filter(g => g.status === "published").length.toString()} icon="FileText" trend="live" />
+        <MetricCard label="CMS Audit Log Logs" value={history.length.toString()} icon="History" />
+        <MetricCard label="Last Edited By" value={history[0]?.updated_by || activeUser} icon="User" />
+      </div>
+
+      {/* Toast Feedback */}
+      {successMsg && (
+        <div className="flex items-center gap-2 rounded-2xl bg-green-50 border border-green-200 p-4 text-xs font-semibold text-green-700">
+          <Icon name="CheckCircle" className="size-4 shrink-0" /> {successMsg}
+        </div>
+      )}
+      {errorMsg && (
+        <div className="flex items-center gap-2 rounded-2xl bg-red-50 border border-red-200 p-4 text-xs font-semibold text-red-700">
+          <Icon name="AlertCircle" className="size-4 shrink-0" /> {errorMsg}
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex rounded-2xl bg-secondary/60 p-1.5 gap-1 shadow-inner">
-        {(["content", "timings"] as const).map((t) => (
+      {/* Tabs selectors */}
+      <div className="flex border-b border-border -mx-1 overflow-x-auto no-scrollbar">
+        {[
+          { id: "aarti", title: "Aarti Timings CMS", icon: "Flame" },
+          { id: "guidelines", title: "Devotee Guidelines", icon: "BookOpen" },
+          { id: "history", title: "Change History Log", icon: "History" }
+        ].map((t) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-200 ${
-              tab === t ? "bg-white text-[#D97706] shadow" : "text-muted-foreground hover:text-foreground"
+            key={t.id}
+            onClick={() => {
+              setTab(t.id as any)
+              setEditingAarti(null)
+              setEditingGuideline(null)
+            }}
+            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold transition border-b-2 -mb-px shrink-0 ${
+              tab === t.id ? "border-[#FF8C00] text-[#FF8C00]" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Icon name={t === "content" ? "FileText" : "Clock"} className="size-4" />
-            {t === "content" ? "Devotee Guidelines & Info" : "Aarti Timings"}
+            <Icon name={t.icon} className="size-4" /> {t.title}
           </button>
         ))}
       </div>
 
-      {/* Main content display blocks */}
-      {tab === "content" && (
-        <section className="space-y-4">
-          <AdminSectionTitle title="Guidelines & Schedules Catalog" icon="FileText" />
-          <div className="space-y-3">
-            {contentList.map((item: TempleContentState) => (
-              <motion.div
-                key={item.id}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="rounded-2xl border border-border bg-card p-4 shadow-sm"
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="grid size-11 place-items-center rounded-xl bg-amber-50 text-amber-600 shadow-sm">
-                      <Icon name={item.icon} className="size-5" />
-                    </span>
+      {loading ? (
+        <div className="flex h-64 items-center justify-center">
+          <div className="size-8 animate-spin rounded-full border-4 border-[#FF8C00] border-t-transparent" />
+        </div>
+      ) : (
+        <>
+          {/* TAB 1: AARTI TIMINGS */}
+          {tab === "aarti" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="font-heading text-sm font-bold">Aarti Timing Records ({aartis.length})</h3>
+                <button
+                  onClick={() => setEditingAarti({ id: "", name: "", name_hi: "", start_time: "", end_time: "", description: "", description_hi: "", status: "active", display_order: aartis.length + 1 })}
+                  className="flex items-center gap-1 text-xs font-bold bg-[#FF8C00]/10 text-[#FF8C00] hover:bg-[#FF8C00]/25 px-3 py-1.5 rounded-xl transition"
+                >
+                  <Icon name="Plus" className="size-3.5" /> Add Aarti
+                </button>
+              </div>
+
+              {editingAarti && (
+                <form onSubmit={handleSaveAarti} className="bg-muted/50 border border-border rounded-2xl p-5 space-y-4">
+                  <AdminSectionTitle title={editingAarti.id ? "Edit Aarti Schedule" : "New Aarti Schedule"} icon="Edit" />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <p className="font-heading text-sm font-bold text-foreground">{item.title}</p>
-                      <div className="flex items-center gap-2 mt-0.5 text-[10px] text-muted-foreground">
-                        <span>Updated: {item.lastUpdated}</span>
-                        <span className="size-1 rounded-full bg-muted-foreground/30" />
-                        <span>By: {item.updatedBy}</span>
-                      </div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Aarti Name (English) *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingAarti.name}
+                        onChange={(e) => setEditingAarti({ ...editingAarti, name: e.target.value })}
+                        placeholder="e.g. Mangla Aarti"
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Aarti Name (Hindi)</label>
+                      <input
+                        type="text"
+                        value={editingAarti.name_hi || ""}
+                        onChange={(e) => setEditingAarti({ ...editingAarti, name_hi: e.target.value })}
+                        placeholder="मंगला आरती"
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
                     </div>
                   </div>
 
-                  <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-extrabold uppercase ${
-                    item.status === "published" ? "bg-green-50 text-green-700 border-green-200" :
-                    item.status === "pending-review" ? "bg-amber-50 text-amber-700 border-amber-200 animate-pulse" :
-                    "bg-muted text-muted-foreground border-border"
-                  }`}>
-                    <span className={`size-1 rounded-full ${
-                      item.status === "published" ? "bg-green-500" :
-                      item.status === "pending-review" ? "bg-amber-500" : "bg-muted-foreground"
-                    }`} />
-                    {item.status.replace("-", " ")}
-                  </span>
-                </div>
-
-                <p className="mt-3 text-xs text-muted-foreground leading-relaxed rounded-xl bg-muted/40 px-3 py-2 border border-border/40">
-                  {item.content}
-                </p>
-
-                <div className="mt-3 flex items-center gap-2">
-                  <button
-                    onClick={() => handleEditClick(item)}
-                    className="flex-1 flex items-center justify-center gap-1.5 rounded-xl border border-border bg-card py-2 text-xs font-bold text-foreground hover:bg-muted/40 transition hover:shadow-sm"
-                  >
-                    <Icon name="Settings" className="size-3.5 text-muted-foreground" /> View & Edit
-                  </button>
-
-                  {item.status === "pending-review" && isTrusted && (
-                    <button
-                      onClick={() => handlePublishFromReview(item.id)}
-                      className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-green-600 hover:bg-green-700 py-2 text-xs font-bold text-white shadow-sm transition active:scale-[0.98]"
-                    >
-                      <Icon name="CheckCircle" className="size-3.5" /> Approve & Publish
-                    </button>
-                  )}
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Aarti Timings checklist */}
-      {tab === "timings" && (
-        <section className="space-y-4">
-          <AdminSectionTitle title="Aarti Timings Scheduler" icon="Flame" />
-          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden divide-y divide-border/60">
-            {aartiTimings.map((aarti: AartiTimingState) => (
-              <div key={aarti.id} className="flex items-center justify-between px-4 py-3.5 hover:bg-muted/10 transition">
-                <div className="flex items-center gap-3">
-                  <span className="grid size-9 place-items-center rounded-lg bg-amber-50 text-amber-600">
-                    <Icon name="Flame" className="size-4" />
-                  </span>
-                  <p className="font-heading text-sm font-bold text-foreground">{aarti.name}</p>
-                </div>
-                <div className="flex items-center gap-2.5">
-                  {aarti.isEditing ? (
-                    <div className="flex items-center gap-1.5">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Start Time *</label>
                       <input
                         type="text"
-                        value={tempTimes[aarti.id] || ""}
-                        onChange={e => setTempTimes({ ...tempTimes, [aarti.id]: e.target.value })}
-                        className="rounded-lg border border-border bg-card p-1 text-center font-bold text-xs text-[#D97706] w-24"
+                        required
+                        value={editingAarti.start_time}
+                        onChange={(e) => setEditingAarti({ ...editingAarti, start_time: e.target.value })}
+                        placeholder="e.g. 4:30 AM"
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
                       />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">End Time (Optional)</label>
+                      <input
+                        type="text"
+                        value={editingAarti.end_time || ""}
+                        onChange={(e) => setEditingAarti({ ...editingAarti, end_time: e.target.value })}
+                        placeholder="e.g. 5:15 AM"
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Display Order *</label>
+                      <input
+                        type="number"
+                        required
+                        value={editingAarti.display_order}
+                        onChange={(e) => setEditingAarti({ ...editingAarti, display_order: parseInt(e.target.value) || 1 })}
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Description (English)</label>
+                      <textarea
+                        rows={2}
+                        value={editingAarti.description || ""}
+                        onChange={(e) => setEditingAarti({ ...editingAarti, description: e.target.value })}
+                        placeholder="Aarti detail summary..."
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Description (Hindi)</label>
+                      <textarea
+                        rows={2}
+                        value={editingAarti.description_hi || ""}
+                        onChange={(e) => setEditingAarti({ ...editingAarti, description_hi: e.target.value })}
+                        placeholder="आरती का विवरण..."
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setEditingAarti(null)}
+                      className="px-3.5 py-2 text-xs font-bold rounded-xl border border-border hover:bg-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-xs font-bold rounded-xl bg-[#FF8C00] text-white shadow hover:opacity-95"
+                    >
+                      Save Aarti Schedule
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Aarti List Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {aartis.map((a, idx) => (
+                  <div key={a.id} className={`bg-card border rounded-3xl p-5 shadow-sm flex items-start justify-between gap-3 ${a.status === "inactive" ? "opacity-60 border-dashed" : "border-border"}`}>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2">
+                        <span className="grid size-9 place-items-center rounded-xl bg-orange-50 text-[#FF8C00]">
+                          <Icon name="Flame" className="size-4" />
+                        </span>
+                        <div>
+                          <p className="font-heading text-sm font-bold text-foreground">{a.name}</p>
+                          {a.name_hi && (
+                            <p className="text-[10px] text-muted-foreground font-hindi">{a.name_hi}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <span className="font-bold text-[#FF8C00] bg-[#FF8C00]/10 px-2.5 py-0.5 rounded-full">
+                          {a.start_time}{a.end_time ? ` - ${a.end_time}` : ""}
+                        </span>
+                        <span className="text-[10px] font-semibold text-muted-foreground bg-slate-100 px-2 py-0.5 rounded-full">
+                          Order: {a.display_order}
+                        </span>
+                      </div>
+                      {(a.description || a.description_hi) && (
+                        <p className="text-xs text-muted-foreground leading-relaxed italic">
+                          {a.description || a.description_hi}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 items-end shrink-0">
+                      {/* Active switch */}
                       <button
-                        onClick={() => handleSaveTiming(aarti.id)}
-                        className="grid size-8 place-items-center rounded-lg bg-green-600 hover:bg-green-700 text-white shadow"
+                        type="button"
+                        onClick={() => handleToggleAartiStatus(a)}
+                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full border transition active:scale-95 ${
+                          a.status === "active" ? "bg-green-50 border-green-200 text-green-700" : "bg-slate-100 border-slate-300 text-slate-500"
+                        }`}
                       >
-                        <Icon name="Check" className="size-4" />
+                        {a.status === "active" ? "ENABLED" : "DISABLED"}
+                      </button>
+
+                      {/* Reorder controls */}
+                      <div className="flex gap-1">
+                        <button
+                          disabled={idx === 0}
+                          onClick={() => handleReorderAarti(a, "up")}
+                          className="p-1 rounded-lg border border-border hover:bg-secondary text-muted-foreground disabled:opacity-30"
+                        >
+                          <Icon name="ChevronUp" className="size-3" />
+                        </button>
+                        <button
+                          disabled={idx === aartis.length - 1}
+                          onClick={() => handleReorderAarti(a, "down")}
+                          className="p-1 rounded-lg border border-border hover:bg-secondary text-muted-foreground disabled:opacity-30"
+                        >
+                          <Icon name="ChevronDown" className="size-3" />
+                        </button>
+                      </div>
+
+                      {/* Edit Delete actions */}
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setEditingAarti(a)}
+                          className="p-1.5 rounded-lg border border-border hover:bg-secondary text-muted-foreground"
+                        >
+                          <Icon name="Edit" className="size-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteAarti(a.id)}
+                          className="p-1.5 rounded-lg border border-border hover:bg-red-50 text-muted-foreground hover:text-red-600"
+                        >
+                          <Icon name="Trash2" className="size-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {aartis.length === 0 && (
+                  <p className="text-center text-xs text-muted-foreground py-8 md:col-span-2">No Aarti timings configured in database.</p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* TAB 2: DEVOTEE GUIDELINES */}
+          {tab === "guidelines" && (
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <h3 className="font-heading text-sm font-bold">Pilgrim Devotee Guidelines ({guidelines.length})</h3>
+                <button
+                  onClick={() => setEditingGuideline({ id: "", title: "", title_hi: "", content: "", content_hi: "", status: "published", display_order: guidelines.length + 1 })}
+                  className="flex items-center gap-1 text-xs font-bold bg-[#FF8C00]/10 text-[#FF8C00] hover:bg-[#FF8C00]/25 px-3 py-1.5 rounded-xl transition"
+                >
+                  <Icon name="Plus" className="size-3.5" /> Add Guideline
+                </button>
+              </div>
+
+              {editingGuideline && (
+                <form onSubmit={handleSaveGuideline} className="bg-muted/50 border border-border rounded-2xl p-5 space-y-4">
+                  <AdminSectionTitle title={editingGuideline.id ? "Edit Guideline" : "New Guideline"} icon="Edit" />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Guideline Title (English) *</label>
+                      <input
+                        type="text"
+                        required
+                        value={editingGuideline.title}
+                        onChange={(e) => setEditingGuideline({ ...editingGuideline, title: e.target.value })}
+                        placeholder="e.g. No Photography Policy"
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Guideline Title (Hindi)</label>
+                      <input
+                        type="text"
+                        value={editingGuideline.title_hi || ""}
+                        onChange={(e) => setEditingGuideline({ ...editingGuideline, title_hi: e.target.value })}
+                        placeholder="फोटोग्राफी निषेध"
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Content (English) *</label>
+                      <textarea
+                        required
+                        rows={3}
+                        value={editingGuideline.content}
+                        onChange={(e) => setEditingGuideline({ ...editingGuideline, content: e.target.value })}
+                        placeholder="Detailed guideline instructions..."
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Content (Hindi)</label>
+                      <textarea
+                        rows={3}
+                        value={editingGuideline.content_hi || ""}
+                        onChange={(e) => setEditingGuideline({ ...editingGuideline, content_hi: e.target.value })}
+                        placeholder="विस्तृत दिशानिर्देश..."
+                        className="w-full text-xs p-3 rounded-xl border border-border bg-background"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div>
+                      <label className="block text-xs font-bold text-foreground mb-1.5">Display Order *</label>
+                      <input
+                        type="number"
+                        required
+                        value={editingGuideline.display_order}
+                        onChange={(e) => setEditingGuideline({ ...editingGuideline, display_order: parseInt(e.target.value) || 1 })}
+                        className="text-xs p-2.5 rounded-xl border border-border bg-background w-32"
+                      />
+                    </div>
+                    <div className="flex items-end pb-2">
+                      <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editingGuideline.status === "published"}
+                          onChange={(e) => setEditingGuideline({ ...editingGuideline, status: e.target.checked ? "published" : "unpublished" })}
+                        />
+                        Publish instantly to devotee app
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setEditingGuideline(null)}
+                      className="px-3.5 py-2 text-xs font-bold rounded-xl border border-border hover:bg-secondary"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      className="px-4 py-2 text-xs font-bold rounded-xl bg-[#FF8C00] text-white shadow hover:opacity-95"
+                    >
+                      Save Guideline
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              <div className="space-y-3">
+                {guidelines.map((g) => (
+                  <div key={g.id} className={`bg-card border rounded-2xl p-4 shadow-sm flex items-start justify-between gap-3 ${g.status === "unpublished" ? "opacity-60 border-dashed" : "border-border"}`}>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-heading text-sm font-bold text-foreground">{g.title}</p>
+                        {g.title_hi && (
+                          <span className="text-[10px] font-hindi text-muted-foreground">({g.title_hi})</span>
+                        )}
+                        <span className="text-[9px] font-semibold text-muted-foreground bg-slate-100 px-2 py-0.5 rounded-full">
+                          Order {g.display_order}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{g.content}</p>
+                      {g.content_hi && (
+                        <p className="text-xs text-muted-foreground/80 leading-relaxed font-hindi border-t border-border/40 pt-1 mt-1.5">{g.content_hi}</p>
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 items-center shrink-0">
+                      <button
+                        onClick={() => handleToggleGuidelineStatus(g)}
+                        className={`text-[9px] font-bold px-2 py-0.5 rounded-full border transition active:scale-95 ${
+                          g.status === "published" ? "bg-green-50 border-green-200 text-green-700" : "bg-slate-100 border-slate-300 text-slate-500"
+                        }`}
+                      >
+                        {g.status === "published" ? "PUBLISHED" : "UNPUBLISHED"}
                       </button>
                       <button
-                        onClick={() => setAartiTimings((prev: AartiTimingState[]) => prev.map((t: AartiTimingState) => (t.id === aarti.id ? { ...t, isEditing: false } : t)))}
-                        className="grid size-8 place-items-center rounded-lg border border-border text-muted-foreground hover:bg-muted/50"
+                        onClick={() => setEditingGuideline(g)}
+                        className="p-1.5 rounded-lg border border-border hover:bg-secondary text-muted-foreground"
                       >
-                        <Icon name="X" className="size-4" />
+                        <Icon name="Edit" className="size-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteGuideline(g.id)}
+                        className="p-1.5 rounded-lg border border-border hover:bg-red-50 text-muted-foreground hover:text-red-600"
+                      >
+                        <Icon name="Trash2" className="size-3.5" />
                       </button>
                     </div>
-                  ) : (
-                    <>
-                      <span className="font-heading text-sm font-bold text-[#D97706]">{aarti.time}</span>
-                      <button
-                        onClick={() => handleEditTiming(aarti.id, aarti.time)}
-                        className="grid size-8 place-items-center rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 transition"
-                      >
-                        <Icon name="Pencil" className="size-3.5" />
-                      </button>
-                    </>
-                  )}
-                </div>
+                  </div>
+                ))}
+                {guidelines.length === 0 && (
+                  <p className="text-center text-xs text-muted-foreground py-8">No guidelines configured in database.</p>
+                )}
               </div>
-            ))}
-          </div>
-        </section>
+            </div>
+          )}
+
+          {/* TAB 3: CHANGE HISTORY LOG */}
+          {tab === "history" && (
+            <div className="space-y-4">
+              <h3 className="font-heading text-sm font-bold">CMS Audit & Change History Logs</h3>
+              <div className="relative border-l border-border pl-5 space-y-5 ml-2.5 pt-2">
+                {history.map((log) => {
+                  const date = new Date(log.updated_time).toLocaleString("en-IN")
+                  let summary = ""
+                  if (log.action_type === "create") {
+                    summary = `Created new ${log.module_type === "aarti" ? "Aarti timing" : "devotee guideline"}: "${log.current_value?.name || log.current_value?.title || "N/A"}"`
+                  } else if (log.action_type === "update") {
+                    summary = `Updated ${log.module_type === "aarti" ? "Aarti timing" : "devotee guideline"}: "${log.current_value?.name || log.current_value?.title || "N/A"}"`
+                  } else {
+                    summary = `Deleted ${log.module_type === "aarti" ? "Aarti timing" : "devotee guideline"}`
+                  }
+
+                  return (
+                    <div key={log.id} className="relative">
+                      {/* Timeline dot */}
+                      <span className="absolute -left-[26px] top-1.5 grid size-3 place-items-center rounded-full bg-[#FF8C00] ring-4 ring-orange-50 border border-white" />
+                      <div className="bg-card border border-border rounded-2xl p-4 shadow-xs space-y-2">
+                        <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground gap-2">
+                          <span className="flex items-center gap-1 text-foreground">
+                            <Icon name="User" className="size-3.5" /> {log.updated_by}
+                          </span>
+                          <span>{date}</span>
+                        </div>
+                        <p className="text-xs font-bold text-foreground">{summary}</p>
+                        
+                        {/* Diff Viewer (Simplified) */}
+                        {log.action_type === "update" && log.previous_value && log.current_value && (
+                          <div className="text-[10px] font-mono bg-muted/40 p-2.5 rounded-xl border border-border/50 divide-y divide-border/30">
+                            {Object.keys(log.current_value).map((key) => {
+                              if (["updated_at", "created_at"].includes(key)) return null
+                              const prev = log.previous_value[key]
+                              const curr = log.current_value[key]
+                              if (prev !== curr) {
+                                return (
+                                  <div key={key} className="py-1 first:pt-0 last:pb-0 flex flex-wrap gap-2 justify-between">
+                                    <span className="font-bold text-foreground">{key}:</span>
+                                    <span className="text-red-600 line-through">"{String(prev)}"</span>
+                                    <span className="text-muted-foreground">&rarr;</span>
+                                    <span className="text-green-600 font-bold">"{String(curr)}"</span>
+                                  </div>
+                                )
+                              }
+                              return null
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+                {history.length === 0 && (
+                  <p className="text-center text-xs text-muted-foreground py-8">No change history logs available.</p>
+                )}
+              </div>
+            </div>
+          )}
+        </>
       )}
-
-      {/* History Log */}
-      <section>
-        <AdminSectionTitle title="Information Change Log" icon="History" />
-        <div className="rounded-2xl border border-border bg-card px-4 py-2 shadow-sm">
-          {activityLogs.map((log: any) => (
-            <ActivityItem
-              key={log.id}
-              time={log.time}
-              action={log.action}
-              department="temple-info"
-              actor={log.actor}
-              icon="Landmark"
-            />
-          ))}
-        </div>
-      </section>
-
-      {/* Edit content modal portal */}
-      {renderEditModal()}
     </div>
   )
 }

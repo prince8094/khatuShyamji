@@ -177,7 +177,7 @@ export function ServicesScreen({ navigate }: { navigate?: (s: ScreenKey) => void
                       {t("screens.services.details")}
                     </button>
                     <a
-                      href={`https://www.google.com/maps/search/${encodeURIComponent(place.name + " Rajasthan")}`}
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(place.name + " Sikar Rajasthan")}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-primary to-secondary py-2 text-xs font-bold text-white shadow-sm transition hover:shadow-md"

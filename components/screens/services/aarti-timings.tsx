@@ -1,14 +1,65 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import { Icon } from "@/components/shared"
 import { useLanguage } from "@/lib/contexts/LanguageContext"
 import { useNavigation } from "@/lib/contexts/NavigationContext"
-import { aartiTimings } from "@/lib/data"
+import { devoteeApi } from "@/lib/api-client"
+import { supabase } from "@/lib/supabase"
 import { motion } from "framer-motion"
+
+interface AartiTiming {
+  id: string
+  name: string
+  name_hi?: string
+  start_time: string
+  end_time?: string
+  description?: string
+  description_hi?: string
+  status: string
+  display_order: number
+}
 
 export function AartiTimingsScreen() {
   const { t, lang } = useLanguage()
   const { goBack } = useNavigation()
+  const [timingsList, setTimingsList] = useState<AartiTiming[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const fetchTimings = () => {
+    devoteeApi.getAartiTimings()
+      .then((res: any) => {
+        if (Array.isArray(res)) {
+          setTimingsList(res)
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load aarti timings from DB", err)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
+  }
+
+  useEffect(() => {
+    fetchTimings()
+
+    const channel = supabase
+      .channel("public:aarti_timings_updates")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "aarti_timings" },
+        () => {
+          console.log("Realtime aarti_timings change detected!")
+          fetchTimings()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
 
   return (
     <div className="space-y-6 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -63,27 +114,44 @@ export function AartiTimingsScreen() {
           </div>
         </div>
 
-        <div className="space-y-4">
-          {aartiTimings.map((aarti, index) => (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              key={aarti.name}
-              className="flex items-center justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0"
-            >
-              <div className="flex items-center gap-3">
-                <Icon name="Flame" className="size-5 text-[#FF8C00] opacity-80" />
-                <p className="text-sm font-bold text-foreground">
-                  {lang === "hi" ? aarti.hindi : aarti.name}
-                </p>
-              </div>
-              <span className="font-heading text-sm font-bold text-[#FF8C00] bg-[#FF8C00]/10 px-3 py-1 rounded-full">
-                {aarti.time}
-              </span>
-            </motion.div>
-          ))}
-        </div>
+        {loading ? (
+          <div className="flex h-32 items-center justify-center">
+            <div className="size-6 animate-spin rounded-full border-2 border-[#FF8C00] border-t-transparent" />
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {timingsList.map((aarti, index) => (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
+                key={aarti.id}
+                className="flex items-start justify-between border-b border-border/50 pb-3 last:border-0 last:pb-0"
+              >
+                <div className="flex items-start gap-3">
+                  <Icon name="Flame" className="size-5 text-[#FF8C00] opacity-80 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-bold text-foreground">
+                      {lang === "hi" && aarti.name_hi ? aarti.name_hi : aarti.name}
+                    </p>
+                    {(aarti.description || aarti.description_hi) && (
+                      <p className="mt-0.5 text-xs text-muted-foreground leading-relaxed">
+                        {lang === "hi" && aarti.description_hi ? aarti.description_hi : aarti.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <span className="font-heading text-sm font-bold text-[#FF8C00] bg-[#FF8C00]/10 px-3 py-1 rounded-full shrink-0">
+                  {aarti.start_time}
+                  {aarti.end_time ? ` - ${aarti.end_time}` : ""}
+                </span>
+              </motion.div>
+            ))}
+            {timingsList.length === 0 && (
+              <p className="text-center text-xs text-muted-foreground py-4">No Aarti timings configured.</p>
+            )}
+          </div>
+        )}
       </section>
 
       {/* Additional Information Notice */}

@@ -48,7 +48,7 @@ const DEFAULT_PRASHAD_ITEMS = [
 export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }) {
   const { lang, t } = useLanguage()
   const { goBack } = useNavigation()
-  const [quantities, setQuantities] = useState<Record<number, number>>({ 1: 0, 2: 0, 3: 0 })
+  const [quantities, setQuantities] = useState<Record<number, number>>({})
   const [deliveryType, setDeliveryType] = useState<"pickup" | "home">("pickup")
   const [checkout, setCheckout] = useHistoryState<boolean>("checkout", false)
   const [shippingForm, setShippingForm] = useState({
@@ -142,7 +142,7 @@ export function PrashadScreen({ navigate }: { navigate: (s: ScreenKey) => void }
       setTimeout(() => {
         setOrdered(false)
         goBack()
-        setQuantities({ 1: 0, 2: 0, 3: 0 })
+        setQuantities({})
         setShippingForm({ name: "", phone: "", address: "", postalCode: "" })
         setCheckout(false)
       }, 4000)
