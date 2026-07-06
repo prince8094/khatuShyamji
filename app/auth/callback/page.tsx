@@ -16,6 +16,8 @@ export default function AuthCallbackPage() {
 
     const handleAuthCallback = async () => {
       console.log("[AuthCallback] Initiating OAuth callback handler...")
+      console.log("[AuthDebug - callback/page.tsx] Current window.location.href:", typeof window !== "undefined" ? window.location.href : "undefined (SSR)")
+      console.log("[AuthDebug - callback/page.tsx] Current window.location.origin:", typeof window !== "undefined" ? window.location.origin : "undefined (SSR)")
       try {
         // Proactively capture any OAuth errors sent back in redirect parameters
         if (typeof window !== "undefined") {

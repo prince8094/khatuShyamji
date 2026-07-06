@@ -136,7 +136,14 @@ export function LoginScreen({
         baseOrigin = process.env.NEXT_PUBLIC_APP_URL || "https://khatu-shyamji-t66v.vercel.app"
       }
       const cleanOrigin = baseOrigin.split("?")[0].replace(/\/+$/, "")
-      return isPopup ? `${cleanOrigin}/auth/callback?popup=true` : `${cleanOrigin}/auth/callback`
+      const redirectUrl = isPopup ? `${cleanOrigin}/auth/callback?popup=true` : `${cleanOrigin}/auth/callback`
+
+      console.log("[AuthDebug - login.tsx] Current Origin (window.location.origin):", typeof window !== "undefined" ? window.location.origin : "undefined (SSR)")
+      console.log("[AuthDebug - login.tsx] NEXT_PUBLIC_APP_URL:", process.env.NEXT_PUBLIC_APP_URL)
+      console.log("[AuthDebug - login.tsx] Calculated cleanOrigin:", cleanOrigin)
+      console.log("[AuthDebug - login.tsx] Calculated final redirectUrl:", redirectUrl)
+
+      return redirectUrl
     }
 
     try {
