@@ -2,7 +2,7 @@
 
 An interactive, premium, and feature-rich Next.js web application built to streamline and enhance the pilgrimage experience for devotees visiting the holy town of **Khatu Shyam Ji**. This system integrates live temple updates, Darshan bookings, infrastructure tracking, emergency services, and administrative workspaces.
 
-🔗 **Live Application URL:** [https://khatu-shyamji-opal.vercel.app/?screen=welcome]([https://khatu-shyamji-opal.vercel.app/?screen=welcome](https://khatu-shyamji-t66v.vercel.app/?screen=welcome))
+🔗 **Live Application URL:** [https://khatu-shyamji-opal.vercel.app/?screen=welcome](https://khatu-shyamji-t66v.vercel.app/?screen=welcome)
 
 ---
 
