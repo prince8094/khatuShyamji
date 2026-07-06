@@ -689,15 +689,20 @@ ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS trigger AS $$
 BEGIN
-  INSERT INTO public.profiles (id, name, phone, email, city)
-  VALUES (
-    new.id,
-    coalesce(new.raw_user_meta_data->>'name', 'Pilgrim'),
-    coalesce(new.phone, ''),
-    coalesce(new.email, ''),
-    coalesce(new.raw_user_meta_data->>'city', '')
-  )
-  ON CONFLICT (id) DO NOTHING;
+  BEGIN
+    INSERT INTO public.profiles (id, name, phone, email, city, provider)
+    VALUES (
+      new.id,
+      coalesce(new.raw_user_meta_data->>'name', 'Pilgrim'),
+      coalesce(new.phone, '+99' || floor(random() * 9000000000 + 1000000000)::text),
+      coalesce(new.email, ''),
+      coalesce(new.raw_user_meta_data->>'city', ''),
+      'google'
+    )
+    ON CONFLICT (id) DO NOTHING;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'Database trigger handle_new_user failed: %', SQLERRM;
+  END;
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;

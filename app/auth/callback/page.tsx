@@ -15,23 +15,41 @@ export default function AuthCallbackPage() {
     let active = true
 
     const handleAuthCallback = async () => {
+      console.log("[AuthCallback] Initiating OAuth callback handler...")
       try {
-        // Wait for session to be established by Supabase client
+        // Proactively capture any OAuth errors sent back in redirect parameters
+        if (typeof window !== "undefined") {
+          const params = new URLSearchParams(window.location.search)
+          const errorParam = params.get("error")
+          const errorDesc = params.get("error_description")
+          if (errorParam) {
+            console.error("[AuthCallback] OAuth redirect error parameter detected:", errorParam, errorDesc)
+            throw new Error(errorDesc || `Authentication failed: ${errorParam}`)
+          }
+        }
+
+        console.log("[AuthCallback] Exchanging token for active session...")
         const { data: { session }, error } = await supabase.auth.getSession()
         
-        if (error) throw error
+        if (error) {
+          console.error("[AuthCallback] Session exchange failed:", error)
+          throw error
+        }
 
         if (!session?.user) {
-          // If no session found immediately, wait for onAuthStateChange to fire
+          console.log("[AuthCallback] No session returned immediately. Subscribing to onAuthStateChange...")
           const { data: authListener } = supabase.auth.onAuthStateChange(async (event, currentSession) => {
+            console.log("[AuthCallback] onAuthStateChange event received:", event)
             if (currentSession?.user && active) {
+              console.log("[AuthCallback] Session resolved via AuthStateChange listener for user:", currentSession.user.id)
               await processSessionUser(currentSession.user)
             }
           })
 
-          // Timeout after 10 seconds if no session is captured
+          // Timeout fallback
           setTimeout(() => {
             if (active && status === "loading") {
+              console.warn("[AuthCallback] Session exchange listener timed out (10s limit).")
               authListener.subscription.unsubscribe()
               setStatus("error")
               setErrorMessage("Authentication timed out. Unable to retrieve session from Google.")
@@ -41,10 +59,11 @@ export default function AuthCallbackPage() {
         }
 
         if (active) {
+          console.log("[AuthCallback] Session resolved immediately for user:", session.user.id)
           await processSessionUser(session.user)
         }
       } catch (err: any) {
-        console.error("Callback verification failed:", err)
+        console.error("[AuthCallback] Callback verification crash:", err)
         if (active) {
           setStatus("error")
           setErrorMessage(err.message || "Google authentication failed. Please try again.")
@@ -53,8 +72,22 @@ export default function AuthCallbackPage() {
     }
 
     const processSessionUser = async (user: any) => {
+      console.log("[AuthCallback] Syncing metadata for devotee user:", user.id)
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Google Devotee"
+      const email = user.email || ""
+      const photoUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || ""
+      const initials = fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+
+      let userObj = {
+        id: user.id,
+        name: fullName,
+        phone: user.phone || "",
+        city: "",
+        initials
+      }
+
       try {
-        // 1. Check if profile exists in public.profiles
+        console.log("[AuthCallback] Fetching profile for ID:", user.id)
         const { data: profile, error: profileErr } = await supabase
           .from("profiles")
           .select("*")
@@ -62,15 +95,12 @@ export default function AuthCallbackPage() {
           .maybeSingle()
 
         if (profileErr) {
-          console.error("Failed checking existing profile:", profileErr)
+          console.error("[AuthCallback] Profile fetch error:", profileErr)
+          throw profileErr
         }
 
-        const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Google Devotee"
-        const email = user.email || ""
-        const photoUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || ""
-
         if (!profile) {
-          // 2. Profile does not exist - generate unique placeholder phone number
+          console.log("[AuthCallback] Profile not found. Provisions needed. Generating unique random phone number placeholder...")
           let phone = user.phone || user.user_metadata?.phone || ""
           if (!phone) {
             let uniquePhone = `+99${Math.floor(1000000000 + Math.random() * 9000000000)}`
@@ -86,7 +116,7 @@ export default function AuthCallbackPage() {
             phone = uniquePhone
           }
 
-          // Try inserting profile with provider column (primary attempt)
+          console.log("[AuthCallback] Attempting database profile insert for user:", user.id, "with phone:", phone)
           const insertPayload: Record<string, any> = {
             id: user.id,
             name: fullName,
@@ -102,8 +132,7 @@ export default function AuthCallbackPage() {
             .insert(insertPayload)
 
           if (insErr) {
-            console.warn("Insert with provider failed, trying without provider column:", insErr)
-            // PGRST204 is column not found or schema caching issue
+            console.warn("[AuthCallback] Profile insert failed, trying without provider column:", insErr)
             if (insErr.code === "PGRST204" || insErr.message?.includes("provider")) {
               delete insertPayload.provider
               const { error: retryErr } = await supabase
@@ -111,15 +140,17 @@ export default function AuthCallbackPage() {
                 .insert(insertPayload)
 
               if (retryErr) {
-                console.error("Retry insert failed:", retryErr)
+                console.error("[AuthCallback] Retry insert without provider failed:", retryErr)
                 throw retryErr
               }
             } else {
               throw insErr
             }
           }
+          console.log("[AuthCallback] Profile insert completed successfully.")
+          userObj.phone = phone
         } else {
-          // 3. Profile exists - update last_login
+          console.log("[AuthCallback] Profile exists. Updating last_login timestamps...")
           const updatePayload: Record<string, any> = {
             updated_at: new Date().toISOString(),
             last_login: new Date().toISOString()
@@ -131,7 +162,7 @@ export default function AuthCallbackPage() {
             .eq("id", user.id)
 
           if (updErr) {
-            console.warn("Update with last_login failed, trying with updated_at only:", updErr)
+            console.warn("[AuthCallback] Timestamp update failed, trying with updated_at only:", updErr)
             if (updErr.code === "PGRST204" || updErr.message?.includes("last_login")) {
               delete updatePayload.last_login
               const { error: retryErr } = await supabase
@@ -140,16 +171,21 @@ export default function AuthCallbackPage() {
                 .eq("id", user.id)
 
               if (retryErr) {
-                console.error("Retry update failed:", retryErr)
+                console.error("[AuthCallback] Retry update without last_login failed:", retryErr)
                 throw retryErr
               }
             } else {
               throw updErr
             }
           }
+          console.log("[AuthCallback] Profile timestamps updated successfully.")
+          userObj.name = profile.name
+          userObj.phone = profile.phone
+          userObj.city = profile.city || ""
+          userObj.initials = profile.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
         }
 
-        // 4. Sync local storage settings for active sessions
+        console.log("[AuthCallback] Fetching final synced profile data...")
         const { data: updatedProfile } = await supabase
           .from("profiles")
           .select("id, name, phone, city")
@@ -157,39 +193,40 @@ export default function AuthCallbackPage() {
           .single()
 
         if (updatedProfile) {
-          const userObj = {
+          userObj = {
             id: updatedProfile.id,
             name: updatedProfile.name,
             phone: updatedProfile.phone,
             city: updatedProfile.city || "",
             initials: updatedProfile.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
           }
-          localStorage.setItem("current_user", JSON.stringify(userObj))
         }
+      } catch (dbErr: any) {
+        // Requirement 5: If database/profile tasks fail, allow auth to succeed
+        console.error("[AuthCallback] DB synchronization failed. Continuing with login default metadata:", dbErr)
+      }
 
-        if (active) {
-          setStatus("success")
-          const isPopup = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("popup") === "true"
-          
-          if (isPopup) {
-            if (window.opener) {
-              window.opener.postMessage({ type: "OAUTH_SUCCESS" }, window.location.origin)
-            }
-            setTimeout(() => {
-              window.close()
-            }, 800)
-          } else {
-            // Redirect back to root shell displaying Home screen
-            setTimeout(() => {
-              window.location.href = "/?screen=home"
-            }, 1000)
+      console.log("[AuthCallback] Committing session details to localStorage:", userObj)
+      localStorage.setItem("current_user", JSON.stringify(userObj))
+
+      if (active) {
+        setStatus("success")
+        const isPopup = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("popup") === "true"
+        
+        if (isPopup) {
+          console.log("[AuthCallback] Posting success signal back to parent window opener...")
+          if (window.opener) {
+            window.opener.postMessage({ type: "OAUTH_SUCCESS" }, window.location.origin)
           }
-        }
-      } catch (err: any) {
-        console.error("Processing user session failed:", err)
-        if (active) {
-          setStatus("error")
-          setErrorMessage(err.message || "Unable to sync devotee profile.")
+          setTimeout(() => {
+            console.log("[AuthCallback] Closing popup window...")
+            window.close()
+          }, 800)
+        } else {
+          console.log("[AuthCallback] Standard redirection to root portal screen...")
+          setTimeout(() => {
+            window.location.href = "/?screen=home"
+          }, 1000)
         }
       }
     }
