@@ -117,10 +117,17 @@ export function ProfileScreen({
   const handleLinkGoogle = async () => {
     setLoadingGoogleLink(true)
     try {
+      let baseOrigin = ""
+      if (typeof window !== "undefined" && window.location.origin) {
+        baseOrigin = window.location.origin
+      } else {
+        baseOrigin = process.env.NEXT_PUBLIC_APP_URL || "https://khatu-shyamji-t66v.vercel.app"
+      }
+      const cleanOrigin = baseOrigin.split("?")[0].replace(/\/+$/, "")
       const { error } = await supabase.auth.linkIdentity({
         provider: 'google',
         options: {
-          redirectTo: window.location.origin + "?screen=profile"
+          redirectTo: cleanOrigin + "/?screen=profile"
         }
       })
       if (error) throw error

@@ -127,6 +127,18 @@ export function LoginScreen({
     setLoading(true)
     setGoogleMessage("")
     
+    // Dynamically resolve base origin URL without query params or trailing slashes
+    const getOAuthRedirectUrl = (isPopup: boolean) => {
+      let baseOrigin = ""
+      if (typeof window !== "undefined" && window.location.origin) {
+        baseOrigin = window.location.origin
+      } else {
+        baseOrigin = process.env.NEXT_PUBLIC_APP_URL || "https://khatu-shyamji-t66v.vercel.app"
+      }
+      const cleanOrigin = baseOrigin.split("?")[0].replace(/\/+$/, "")
+      return isPopup ? `${cleanOrigin}/auth/callback?popup=true` : `${cleanOrigin}/auth/callback`
+    }
+
     try {
       const isStandalone = window.matchMedia("(display-mode: standalone)").matches 
         || (window.navigator as any).standalone 
@@ -134,15 +146,17 @@ export function LoginScreen({
 
       if (isStandalone) {
         const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co"
-        const popupUrl = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/auth/callback?popup=true')}`
+        const redirectUrl = getOAuthRedirectUrl(true)
+        const popupUrl = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectUrl)}`
         const popup = window.open(popupUrl, "pwa-oauth", "width=500,height=600,status=no,resizable=yes,scrollbars=yes")
         
         if (!popup) {
           // Popup blocked, fallback to standard redirect
+          const fallbackRedirectUrl = getOAuthRedirectUrl(false)
           const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
             options: {
-              redirectTo: `${window.location.origin}/auth/callback`
+              redirectTo: fallbackRedirectUrl
             }
           })
           if (error) throw error
@@ -156,10 +170,11 @@ export function LoginScreen({
           }, 1000)
         }
       } else {
+        const standardRedirectUrl = getOAuthRedirectUrl(false)
         const { error } = await supabase.auth.signInWithOAuth({
           provider: 'google',
           options: {
-            redirectTo: `${window.location.origin}/auth/callback`
+            redirectTo: standardRedirectUrl
           }
         })
         if (error) throw error
