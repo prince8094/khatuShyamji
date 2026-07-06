@@ -1,0 +1,100 @@
+{
+  "name": "Smart Pilgrim Management System — Khatu Shyam Ji",
+  "short_name": "Khatu Shyam Ji",
+  "description": "Digital Darshan booking, live crowd indicators, traffic updates, hotel lodging, and services at Khatu Shyam Ji.",
+  "start_url": "/?source=pwa",
+  "display": "standalone",
+  "background_color": "#FAF6F0",
+  "theme_color": "#800000",
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": ["travel", "utilities"],
+  "icons": [
+    {
+      "src": "/images/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book Darshan",
+      "short_name": "Book Darshan",
+      "description": "Book a Solo or Group Darshan Pass",
+      "url": "/?screen=book",
+      "icons": [
+        {
+          "src": "/images/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Accommodation",
+      "short_name": "Hotels",
+      "description": "Book hotel and lodging rooms",
+      "url": "/?screen=hotel-booking",
+      "icons": [
+        {
+          "src": "/images/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Parking Info",
+      "short_name": "Parking",
+      "description": "Check live parking space availability",
+      "url": "/?screen=parking",
+      "icons": [
+        {
+          "src": "/images/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Live Crowd Status",
+      "short_name": "Crowd Status",
+      "description": "Check real-time gate crowd status",
+      "url": "/?screen=crowd",
+      "icons": [
+        {
+          "src": "/images/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Lost & Found",
+      "short_name": "Lost & Found",
+      "description": "Report or look up lost items",
+      "url": "/?screen=lost-found",
+      "icons": [
+        {
+          "src": "/images/icon-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
+}
