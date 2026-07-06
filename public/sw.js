@@ -46,6 +46,12 @@ self.addEventListener("fetch", (event) => {
   if (
     event.request.method !== "GET" ||
     requestUrl.pathname.startsWith("/api/") ||
+    requestUrl.pathname.startsWith("/auth/") ||
+    requestUrl.pathname.includes("callback") ||
+    requestUrl.search.includes("screen=login") ||
+    requestUrl.search.includes("screen=signup") ||
+    requestUrl.search.includes("screen=otp") ||
+    requestUrl.search.includes("screen=welcome") ||
     event.request.url.includes("supabase.co") ||
     event.request.url.includes("google.com") ||
     event.request.url.includes("googleapis.com") ||

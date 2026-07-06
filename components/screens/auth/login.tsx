@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import Image from "next/image"
 import { Icon, Om } from "@/components/shared"
@@ -76,23 +76,97 @@ export function LoginScreen({
     }
   }
 
+  useEffect(() => {
+    const handleOAuthMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return
+      if (event.data?.type === "OAUTH_SUCCESS") {
+        setLoading(true)
+        try {
+          const { data: { session } } = await supabase.auth.getSession()
+          if (session?.user) {
+            const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split("@")[0] || "Google Devotee"
+            const initials = fullName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
+            
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("id, name, phone, city")
+              .eq("id", session.user.id)
+              .maybeSingle()
+
+            const userObj = {
+              id: session.user.id,
+              name: profile?.name || fullName,
+              phone: profile?.phone || "",
+              city: profile?.city || "",
+              initials
+            }
+            
+            localStorage.setItem("current_user", JSON.stringify(userObj))
+            if (onLoginSuccess) {
+              onLoginSuccess(userObj)
+            }
+            navigate("home")
+          } else {
+            window.location.reload()
+          }
+        } catch (err) {
+          console.error("Popup session sync failed", err)
+          window.location.reload()
+        } finally {
+          setLoading(false)
+        }
+      }
+    }
+
+    window.addEventListener("message", handleOAuthMessage)
+    return () => window.removeEventListener("message", handleOAuthMessage)
+  }, [navigate, onLoginSuccess])
+
   const handleGoogleLogin = async () => {
     playTempleBell('single')
     setLoading(true)
     setGoogleMessage("")
     
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+      const isStandalone = window.matchMedia("(display-mode: standalone)").matches 
+        || (window.navigator as any).standalone 
+        || document.referrer.includes("android-app://")
+
+      if (isStandalone) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder.supabase.co"
+        const popupUrl = `${supabaseUrl}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(window.location.origin + '/auth/callback?popup=true')}`
+        const popup = window.open(popupUrl, "pwa-oauth", "width=500,height=600,status=no,resizable=yes,scrollbars=yes")
+        
+        if (!popup) {
+          // Popup blocked, fallback to standard redirect
+          const { error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+              redirectTo: `${window.location.origin}/auth/callback`
+            }
+          })
+          if (error) throw error
+        } else {
+          // Monitor popup closed event to clear loading state
+          const timer = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(timer)
+              setLoading(false)
+            }
+          }, 1000)
         }
-      })
-      if (error) throw error
+      } else {
+        const { error } = await supabase.auth.signInWithOAuth({
+          provider: 'google',
+          options: {
+            redirectTo: `${window.location.origin}/auth/callback`
+          }
+        })
+        if (error) throw error
+      }
     } catch (err: any) {
       console.error("Google login failed", err)
       
-      // Provide meaningful error messages depending on the type of error
       let errMsg = "Google Sign-In failed."
       if (err.message) {
         if (err.message.includes("provider")) {
@@ -108,7 +182,6 @@ export function LoginScreen({
       setTimeout(() => {
         setGoogleMessage("")
       }, 5000)
-    } finally {
       setLoading(false)
     }
   }

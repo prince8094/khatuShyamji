@@ -169,10 +169,21 @@ export default function AuthCallbackPage() {
 
         if (active) {
           setStatus("success")
-          // Redirect back to root shell displaying Home screen
-          setTimeout(() => {
-            window.location.href = "/?screen=home"
-          }, 1000)
+          const isPopup = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("popup") === "true"
+          
+          if (isPopup) {
+            if (window.opener) {
+              window.opener.postMessage({ type: "OAUTH_SUCCESS" }, window.location.origin)
+            }
+            setTimeout(() => {
+              window.close()
+            }, 800)
+          } else {
+            // Redirect back to root shell displaying Home screen
+            setTimeout(() => {
+              window.location.href = "/?screen=home"
+            }, 1000)
+          }
         }
       } catch (err: any) {
         console.error("Processing user session failed:", err)

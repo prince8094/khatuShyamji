@@ -12,7 +12,14 @@ const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "https://placeholder
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-key-for-build"
 const supabaseSecretKey = process.env.SUPABASE_SECRET_KEY || "placeholder-key-for-build"
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true,
+    storage: typeof window !== "undefined" ? window.localStorage : undefined,
+  }
+})
 
 export const supabaseAdmin = createClient(supabaseUrl, supabaseSecretKey || supabaseAnonKey, {
   auth: {
