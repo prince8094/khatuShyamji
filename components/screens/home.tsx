@@ -16,7 +16,17 @@ const quickActions: { key: ScreenKey; icon: string }[] = [
   { key: "temple", icon: "Landmark" },
 ]
 
-export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey) => void; currentUser?: any }) {
+export function HomeScreen({
+  navigate,
+  currentUser,
+  isInstallAvailable,
+  onInstallClick,
+}: {
+  navigate: (s: ScreenKey) => void
+  currentUser?: any
+  isInstallAvailable?: boolean
+  onInstallClick?: () => void
+}) {
   const activeUser = currentUser || user
   const { lang, t } = useLanguage()
 
@@ -196,6 +206,31 @@ export function HomeScreen({ navigate, currentUser }: { navigate: (s: ScreenKey)
 
       {/* Announcements */}
       {announcements.length > 0 ? <AnnouncementBanner announcements={announcements} /> : <AnnouncementBanner />}
+
+      {/* PWA Install Card */}
+      {isInstallAvailable && (
+        <div className="relative overflow-hidden rounded-3xl border border-gold/30 bg-gradient-to-r from-[#FFF8E7] to-white p-5 shadow-sm flex items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <span className="grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-[#800000] to-[#E25822] text-white shadow-sm shrink-0 mt-1">
+              <Icon name="Download" className="size-5" />
+            </span>
+            <div className="space-y-1">
+              <h4 className="font-heading text-[15px] font-bold text-[#800000]">
+                {lang === "hi" ? "ऐप इंस्टॉल करें" : "Install App"}
+              </h4>
+              <p className="text-xs text-muted-foreground leading-relaxed font-semibold">
+                {lang === "hi" ? "तेज़ दर्शन बुकिंग और ऑफ़लाइन बुकिंग एक्सेस के लिए होम स्क्रीन पर जोड़ें।" : "Add to home screen for faster Darshan bookings and offline access."}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onInstallClick}
+            className="shrink-0 bg-[#800000] hover:bg-[#a02020] text-white rounded-xl text-xs font-bold px-4 py-2.5 transition active:scale-95 shadow-sm"
+          >
+            {lang === "hi" ? "इंस्टॉल" : "Install"}
+          </button>
+        </div>
+      )}
 
       {/* Primary CTA */}
       <button

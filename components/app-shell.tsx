@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Icon } from "@/components/shared"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { drawerItems, user as staticUser, type ScreenKey, type AppUser } from "@/lib/data"
 import { type AdminUser } from "@/lib/admin-data"
 import { AdminWorkspace } from "@/components/admin/admin-workspace"
@@ -131,6 +131,34 @@ export function AppShell() {
   const [notifCount] = useState(3) // mock unread notifications count
   const [internalHistoryCount, setInternalHistoryCount] = useState(0)
 
+  // PWA states
+  const [isStandalone, setIsStandalone] = useState(false)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
+  const [isInstallAvailable, setIsInstallAvailable] = useState(false)
+  const [isIOS, setIsIOS] = useState(false)
+  const [showIOSInstructions, setShowIOSInstructions] = useState(false)
+  const [toastMessage, setToastMessage] = useState("")
+  const [isOnline, setIsOnline] = useState(true)
+  const [showGeneralInstructions, setShowGeneralInstructions] = useState(false)
+
+  const triggerPwaInstall = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      const { outcome } = await deferredPrompt.userChoice
+      console.log(`User response to install prompt: ${outcome}`)
+      if (outcome === "accepted") {
+        setIsInstallAvailable(false)
+        setDeferredPrompt(null)
+        setToastMessage("TOCC has been installed successfully.")
+        setTimeout(() => setToastMessage(""), 5000)
+      }
+    } else if (isIOS) {
+      setShowIOSInstructions(true)
+    } else {
+      setShowGeneralInstructions(true)
+    }
+  }
+
   const { lang, setLang, t } = useLanguage()
   const { bhatiMode, setBhatiMode, soundEnabled, setSoundEnabled, timeOfDay } = useAudio()
 
@@ -246,6 +274,49 @@ export function AppShell() {
   }
 
   useEffect(() => {
+    // Check if running as PWA (standalone)
+    const standaloneCheck = window.matchMedia("(display-mode: standalone)").matches 
+      || (window.navigator as any).standalone 
+      || document.referrer.includes("android-app://")
+    setIsStandalone(standaloneCheck)
+
+    // Detect iOS
+    const iosCheck = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream
+    setIsIOS(iosCheck)
+
+    // Track online/offline status
+    setIsOnline(navigator.onLine)
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
+    window.addEventListener("online", handleOnline)
+    window.addEventListener("offline", handleOffline)
+
+    // Listen to beforeinstallprompt event
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setIsInstallAvailable(true)
+    }
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+
+    // Listen to appinstalled event
+    const handleAppInstalled = () => {
+      setIsInstallAvailable(false)
+      setDeferredPrompt(null)
+      setToastMessage("TOCC has been installed successfully.")
+      setTimeout(() => setToastMessage(""), 5000)
+    }
+    window.addEventListener("appinstalled", handleAppInstalled)
+
+    return () => {
+      window.removeEventListener("online", handleOnline)
+      window.removeEventListener("offline", handleOffline)
+      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
+      window.removeEventListener("appinstalled", handleAppInstalled)
+    }
+  }, [])
+
+  useEffect(() => {
     // Check if user is logged in
     const sessionUser = localStorage.getItem("current_user") || localStorage.getItem("temp_signup_user")
     const sessionAdmin = localStorage.getItem("current_admin")
@@ -351,6 +422,24 @@ export function AppShell() {
   }, [])
 
   const navigate = (s: ScreenKey) => {
+    const authRequiredScreens: ScreenKey[] = [
+      "bookings",
+      "notifications",
+      "qr",
+      "lost-found",
+      "profile",
+      "book",
+      "passenger-details",
+      "group-booking",
+      "seva-booking"
+    ]
+
+    if (authRequiredScreens.includes(s) && !currentUser) {
+      setToastMessage(lang === "hi" ? "कृपया इस सेवा का उपयोग करने के लिए लॉगिन करें।" : "Please log in to access this feature.")
+      setTimeout(() => setToastMessage(""), 4000)
+      s = "login"
+    }
+
     if (s === screen) return
     if (typeof window !== "undefined") {
       window.history.pushState({ screen: s }, "", `?screen=${s}`)
@@ -423,14 +512,155 @@ export function AppShell() {
   // ── Admin Mode: Render the admin workspace instead of user app ──
   if (adminUser) {
     return (
-      <AdminWorkspace
-        initialUser={adminUser}
-        onExitAdmin={() => {
-          setAdminUser(null)
-          localStorage.removeItem("current_admin")
-          navigate("welcome")
-        }}
-      />
+      <>
+        <AdminWorkspace
+          initialUser={adminUser}
+          onExitAdmin={() => {
+            setAdminUser(null)
+            localStorage.removeItem("current_admin")
+            navigate("welcome")
+          }}
+          isStandalone={isStandalone}
+          triggerPwaInstall={triggerPwaInstall}
+        />
+
+        {/* Floating Install App Button (FAB) for Admin */}
+        {!isStandalone && (
+          <div className="fixed z-40 right-6 bottom-6 transition-all duration-300">
+            <button
+              onClick={triggerPwaInstall}
+              className="flex items-center justify-center size-12 rounded-full bg-gradient-to-r from-[#800000] to-[#E25822] text-white shadow-lg shadow-[#800000]/30 hover:scale-110 active:scale-95 transition-all border border-[#D4AF37]/50"
+              title="Install App"
+              aria-label="Install App"
+            >
+              <Icon name="Download" className="size-6 animate-pulse" />
+            </button>
+          </div>
+        )}
+
+        {/* iOS Safari Instructions Dialog */}
+        <AnimatePresence>
+          {showIOSInstructions && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="relative w-full max-w-sm rounded-3xl border border-amber-100 bg-white p-6 shadow-2xl text-center space-y-5"
+              >
+                <button
+                  onClick={() => setShowIOSInstructions(false)}
+                  className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+                  aria-label="Close"
+                >
+                  <Icon name="X" className="size-5" />
+                </button>
+                
+                <div className="mx-auto grid size-16 place-items-center rounded-full bg-amber-50 border border-amber-200 text-[#800000]">
+                  <Icon name="Share" className="size-8" />
+                </div>
+
+                <div className="space-y-2 text-center">
+                  <h3 className="font-heading text-lg font-bold text-foreground">
+                    Install on iOS Device
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Safari on iOS does not support one-click installations. Please follow these steps to add the app to your Home Screen:
+                  </p>
+                </div>
+
+                <div className="text-left space-y-3 bg-[#FAF6F0] p-4 rounded-2xl border border-amber-100/50">
+                  <div className="flex gap-3 text-xs font-semibold text-amber-900/80">
+                    <span className="grid size-5 place-items-center rounded-full bg-[#800000] text-white text-[10px] shrink-0">1</span>
+                    <span>Tap the <strong>Share</strong> button at the bottom of Safari.</span>
+                  </div>
+                  <div className="flex gap-3 text-xs font-semibold text-amber-900/80">
+                    <span className="grid size-5 place-items-center rounded-full bg-[#800000] text-white text-[10px] shrink-0">2</span>
+                    <span>Scroll down the share menu and select <strong>Add to Home Screen</strong>.</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowIOSInstructions(false)}
+                  className="w-full bg-[#800000] hover:bg-[#a02020] text-white rounded-2xl text-sm font-bold py-3 transition shadow-md"
+                >
+                  Got It
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* General Browser Instructions Dialog */}
+        <AnimatePresence>
+          {showGeneralInstructions && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.95, opacity: 0 }}
+                className="relative w-full max-w-sm rounded-3xl border border-amber-100 bg-white p-6 shadow-2xl text-center space-y-5"
+              >
+                <button
+                  onClick={() => setShowGeneralInstructions(false)}
+                  className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+                  aria-label="Close"
+                >
+                  <Icon name="X" className="size-5" />
+                </button>
+                
+                <div className="mx-auto grid size-16 place-items-center rounded-full bg-amber-50 border border-amber-200 text-[#800000]">
+                  <Icon name="Laptop" className="size-8" />
+                </div>
+
+                <div className="space-y-2 text-center">
+                  <h3 className="font-heading text-lg font-bold text-foreground">
+                    Install Application
+                  </h3>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    Your browser does not trigger native installation prompts automatically. You can install it manually:
+                  </p>
+                </div>
+
+                <div className="text-left space-y-3 bg-[#FAF6F0] p-4 rounded-2xl border border-amber-100/50">
+                  <div className="flex gap-3 text-xs font-semibold text-[#800000] leading-relaxed">
+                    <span className="grid size-5 place-items-center rounded-full bg-[#800000] text-white text-[10px] shrink-0 mt-0.5">1</span>
+                    <span>Click the <strong>Menu</strong> icon (three dots <strong className="font-mono">⋮</strong> or three lines <strong className="font-mono">☰</strong>) in your browser's top-right corner.</span>
+                  </div>
+                  <div className="flex gap-3 text-xs font-semibold text-[#800000] leading-relaxed">
+                    <span className="grid size-5 place-items-center rounded-full bg-[#800000] text-white text-[10px] shrink-0 mt-0.5">2</span>
+                    <span>Select <strong>Save and share</strong> ➔ <strong>Install page as app...</strong> or click <strong>Install App</strong>.</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowGeneralInstructions(false)}
+                  className="w-full bg-[#800000] hover:bg-[#a02020] text-white rounded-2xl text-sm font-bold py-3 transition shadow-md"
+                >
+                  Got It
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Success Toast */}
+        <AnimatePresence>
+          {toastMessage && (
+            <div className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 w-full max-w-sm">
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                exit={{ y: 20, opacity: 0 }}
+                className="flex items-center gap-3 rounded-2xl bg-green-50 border border-green-200 px-4 py-3.5 shadow-lg text-sm text-green-700 font-semibold"
+              >
+                <Icon name="CheckCircle" className="size-5 shrink-0" />
+                <span>{toastMessage}</span>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </>
     )
   }
 
@@ -544,6 +774,28 @@ export function AppShell() {
             </div>
           )
         })}
+        
+        {/* PWA Install Button in Sidebar */}
+        {!isStandalone && (
+          <div className="mt-2 pt-2 border-t border-border">
+            <button
+              onClick={() => {
+                setDrawerOpen(false)
+                triggerPwaInstall()
+              }}
+              className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left transition-all duration-200 text-[#D97706] hover:bg-[#D97706]/5"
+            >
+              <span className="grid size-9 place-items-center rounded-xl shadow-sm shrink-0 bg-gradient-to-br from-[#D97706] to-[#D4AF37] text-white">
+                <Icon name="Download" className="size-4" />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[13px] font-bold leading-tight font-heading truncate">
+                  Install App
+                </span>
+              </span>
+            </button>
+          </div>
+        )}
       </nav>
 
       <div className="p-5 text-center shrink-0 border-t border-border">
@@ -579,7 +831,7 @@ export function AppShell() {
 
       {/* Floating Animated Diyas for Night Darshan Mode */}
       {isNightMode && showHeaderAndNav && (
-        <div className="pointer-events-none fixed bottom-20 right-6 z-40 flex gap-4">
+        <div className={cn("pointer-events-none fixed bottom-20 z-40 flex gap-4 transition-all duration-300", !isStandalone ? "right-20" : "right-6")}>
           <motion.div
             animate={{ scale: [0.95, 1.05, 0.95] }}
             transition={{ duration: 1.5, repeat: Infinity }}
@@ -593,6 +845,20 @@ export function AppShell() {
               />
             </div>
           </motion.div>
+        </div>
+      )}
+
+      {/* Floating Install App Button (FAB) */}
+      {!isStandalone && (
+        <div className={cn("fixed z-40 right-6 transition-all duration-300", showHeaderAndNav ? "bottom-20 lg:bottom-6" : "bottom-6")}>
+          <button
+            onClick={triggerPwaInstall}
+            className="flex items-center justify-center size-12 rounded-full bg-gradient-to-r from-[#800000] to-[#E25822] text-white shadow-lg shadow-[#800000]/30 hover:scale-110 active:scale-95 transition-all border border-[#D4AF37]/50"
+            title="Install App"
+            aria-label="Install App"
+          >
+            <Icon name="Download" className="size-6 animate-pulse" />
+          </button>
         </div>
       )}
 
@@ -655,6 +921,18 @@ export function AppShell() {
               <div className="flex items-center gap-1.5">
                 {/* Language Toggle — pill style */}
                 <LanguageToggle />
+
+                {/* Install App button in Header */}
+                {!isStandalone && (
+                  <button
+                    onClick={triggerPwaInstall}
+                    className="relative grid size-9 md:size-10 shrink-0 place-items-center rounded-xl bg-white/20 transition hover:bg-white/30 active:scale-95 text-white"
+                    aria-label="Install App"
+                    title="Install App"
+                  >
+                    <Icon name="Download" className="size-5" />
+                  </button>
+                )}
 
                 {/* Notifications Bell — notifications only */}
                 <button
@@ -736,7 +1014,14 @@ export function AppShell() {
           {screen === "virtual-darshan" && <VirtualDarshanScreen navigate={navigate} />}
           {screen === "live-darshan" && <LiveDarshanScreen navigate={navigate} />}
           {screen === "help-support" && <HelpSupportScreen navigate={navigate} />}
-          {screen === "home" && <HomeScreen navigate={navigate} currentUser={currentUser} />}
+          {screen === "home" && (
+            <HomeScreen
+              navigate={navigate}
+              currentUser={currentUser}
+              isInstallAvailable={!isStandalone}
+              onInstallClick={triggerPwaInstall}
+            />
+          )}
           {screen === "book" && <BookDarshanScreen navigate={navigate} navigateWithDate={navigateWithDate} />}
           {screen === "passenger-details" && <PassengerDetailsScreen navigate={navigate} bookingDate={bookingDate} />}
           {screen === "group-booking" && <GroupBookingScreen navigate={navigate} bookingDate={bookingDate} />}
@@ -769,6 +1054,10 @@ export function AppShell() {
                 setCurrentUser(merged)
                 localStorage.setItem("current_user", JSON.stringify(merged))
               }}
+              isInstallAvailable={!isStandalone}
+              onInstallClick={triggerPwaInstall}
+              isOnline={isOnline}
+              isStandalone={isStandalone}
             />
           )}
           {screen === "shyam-ai" && <ShyamSahayakScreen navigate={navigate} />}
@@ -836,6 +1125,128 @@ export function AppShell() {
           </aside>
         </div>
       )}
+      {/* iOS Safari Instructions Dialog */}
+      <AnimatePresence>
+        {showIOSInstructions && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-sm rounded-3xl border border-amber-100 bg-white p-6 shadow-2xl text-center space-y-5"
+            >
+              <button
+                onClick={() => setShowIOSInstructions(false)}
+                className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+                aria-label="Close"
+              >
+                <Icon name="X" className="size-5" />
+              </button>
+              
+              <div className="mx-auto grid size-16 place-items-center rounded-full bg-amber-50 border border-amber-200 text-[#800000]">
+                <Icon name="Share" className="size-8" />
+              </div>
+
+              <div className="space-y-2 text-center">
+                <h3 className="font-heading text-lg font-bold text-foreground">
+                  Install on iOS Device
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Safari on iOS does not support one-click installations. Please follow these steps to add the app to your Home Screen:
+                </p>
+              </div>
+
+              <div className="text-left space-y-3 bg-[#FAF6F0] p-4 rounded-2xl border border-amber-100/50">
+                <div className="flex gap-3 text-xs font-semibold text-amber-900/80">
+                  <span className="grid size-5 place-items-center rounded-full bg-[#800000] text-white text-[10px] shrink-0">1</span>
+                  <span>Tap the <strong>Share</strong> button at the bottom of Safari.</span>
+                </div>
+                <div className="flex gap-3 text-xs font-semibold text-amber-900/80">
+                  <span className="grid size-5 place-items-center rounded-full bg-[#800000] text-white text-[10px] shrink-0">2</span>
+                  <span>Scroll down the share menu and select <strong>Add to Home Screen</strong>.</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowIOSInstructions(false)}
+                className="w-full bg-[#800000] hover:bg-[#a02020] text-white rounded-2xl text-sm font-bold py-3 transition shadow-md"
+              >
+                Got It
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* General Browser Instructions Dialog */}
+      <AnimatePresence>
+        {showGeneralInstructions && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="relative w-full max-w-sm rounded-3xl border border-amber-100 bg-white p-6 shadow-2xl text-center space-y-5"
+            >
+              <button
+                onClick={() => setShowGeneralInstructions(false)}
+                className="absolute right-4 top-4 text-muted-foreground hover:text-foreground"
+                aria-label="Close"
+              >
+                <Icon name="X" className="size-5" />
+              </button>
+              
+              <div className="mx-auto grid size-16 place-items-center rounded-full bg-amber-50 border border-amber-200 text-[#800000]">
+                <Icon name="Laptop" className="size-8" />
+              </div>
+
+              <div className="space-y-2 text-center">
+                <h3 className="font-heading text-lg font-bold text-foreground">
+                  Install Application
+                </h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Your browser does not trigger native installation prompts automatically. You can install it manually:
+                </p>
+              </div>
+
+              <div className="text-left space-y-3 bg-[#FAF6F0] p-4 rounded-2xl border border-amber-100/50">
+                <div className="flex gap-3 text-xs font-semibold text-[#800000] leading-relaxed">
+                  <span className="grid size-5 place-items-center rounded-full bg-[#800000] text-white text-[10px] shrink-0 mt-0.5">1</span>
+                  <span>Click the <strong>Menu</strong> icon (three dots <strong className="font-mono">⋮</strong> or three lines <strong className="font-mono">☰</strong>) in your browser's top-right corner.</span>
+                </div>
+                <div className="flex gap-3 text-xs font-semibold text-[#800000] leading-relaxed">
+                  <span className="grid size-5 place-items-center rounded-full bg-[#800000] text-white text-[10px] shrink-0 mt-0.5">2</span>
+                  <span>Select <strong>Save and share</strong> ➔ <strong>Install page as app...</strong> or click <strong>Install App</strong>.</span>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowGeneralInstructions(false)}
+                className="w-full bg-[#800000] hover:bg-[#a02020] text-white rounded-2xl text-sm font-bold py-3 transition shadow-md"
+              >
+                Got It
+              </button>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Success Toast */}
+      <AnimatePresence>
+        {toastMessage && (
+          <div className="fixed bottom-20 lg:bottom-6 left-1/2 -translate-x-1/2 z-50 px-4 w-full max-w-sm">
+            <motion.div
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 20, opacity: 0 }}
+              className="flex items-center gap-3 rounded-2xl bg-green-50 border border-green-200 px-4 py-3.5 shadow-lg text-sm text-green-700 font-semibold"
+            >
+              <Icon name="CheckCircle" className="size-5 shrink-0" />
+              <span>{toastMessage}</span>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
       </div>
     </NavigationContext.Provider>
   )

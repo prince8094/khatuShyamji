@@ -84,11 +84,19 @@ export function ProfileScreen({
   onLogout,
   currentUser,
   onUpdateUser,
+  isInstallAvailable,
+  onInstallClick,
+  isOnline,
+  isStandalone,
 }: {
   navigate: (s: ScreenKey) => void
   onLogout?: () => void
   currentUser?: ProfileUser | null
   onUpdateUser?: (user: ProfileUser) => void
+  isInstallAvailable?: boolean
+  onInstallClick?: () => void
+  isOnline?: boolean
+  isStandalone?: boolean
 }) {
   const { lang, t } = useLanguage()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -407,6 +415,86 @@ export function ProfileScreen({
                   {loadingGoogleLink ? (lang === "hi" ? "लिंक हो रहा है..." : "Linking...") : (lang === "hi" ? "लिंक करें" : "Link Account")}
                 </button>
               )}
+            </div>
+          </section>
+
+          {/* App Settings Section */}
+          <section className="overflow-hidden rounded-3xl border border-border bg-card p-5 shadow-sm space-y-4">
+            <h4 className="font-heading text-sm font-bold text-foreground flex items-center gap-2">
+              <Icon name="Settings" className="size-4 text-primary" />
+              {lang === "hi" ? "ऐप सेटिंग्स" : "App Settings"}
+            </h4>
+            
+            <div className="space-y-3">
+              {/* Install Option */}
+              <div className="flex items-center justify-between p-3 rounded-2xl border border-secondary bg-secondary/10">
+                <div className="flex items-center gap-2">
+                  <Icon name="Download" className="size-5 text-[#D97706]" />
+                  <span className="text-xs font-bold text-foreground">
+                    {lang === "hi" ? "ऐप इंस्टॉल करें" : "Install App"}
+                  </span>
+                </div>
+                {isStandalone ? (
+                  <span className="flex items-center gap-1 text-[11px] font-bold text-green-600 bg-green-50 px-2.5 py-1 rounded-full border border-green-200">
+                    <Icon name="CheckCircle" className="size-3" />
+                    {lang === "hi" ? "इंस्टॉल है" : "Installed"}
+                  </span>
+                ) : isInstallAvailable ? (
+                  <button
+                    onClick={onInstallClick}
+                    className="text-xs font-bold text-[#800000] hover:text-[#a02020] bg-white border border-gray-200 hover:border-amber-200 px-3.5 py-1.5 rounded-xl shadow-sm active:scale-[0.97] transition animate-pulse"
+                  >
+                    {lang === "hi" ? "इंस्टॉल" : "Install"}
+                  </button>
+                ) : (
+                  <span className="text-[11px] font-semibold text-muted-foreground bg-gray-150 px-2.5 py-1 rounded-full">
+                    {lang === "hi" ? "ब्राउज़र समर्थित नहीं" : "Browser Standalone"}
+                  </span>
+                )}
+              </div>
+
+              {/* Check for Updates */}
+              <div className="flex items-center justify-between p-3 rounded-2xl border border-secondary bg-secondary/10">
+                <div className="flex items-center gap-2">
+                  <Icon name="RefreshCw" className="size-5 text-[#D97706]" />
+                  <span className="text-xs font-bold text-foreground">
+                    {lang === "hi" ? "अपडेट की जांच करें" : "Check for Updates"}
+                  </span>
+                </div>
+                <button
+                  onClick={() => {
+                    if ("serviceWorker" in navigator) {
+                      navigator.serviceWorker.ready.then((registration) => {
+                        registration.update().then(() => {
+                          window.location.reload();
+                        });
+                      });
+                    } else {
+                      window.location.reload();
+                    }
+                  }}
+                  className="text-xs font-bold text-[#800000] hover:text-[#a02020] bg-white border border-gray-200 hover:border-amber-200 px-3.5 py-1.5 rounded-xl shadow-sm active:scale-[0.97] transition"
+                >
+                  {lang === "hi" ? "जांचें" : "Check"}
+                </button>
+              </div>
+
+              {/* Version & Network status */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="flex flex-col p-3 rounded-2xl border border-secondary bg-secondary/10 text-center">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground">Version</span>
+                  <span className="text-sm font-heading font-extrabold text-[#D97706] mt-1">v2.0.0-PWA</span>
+                </div>
+                <div className="flex flex-col p-3 rounded-2xl border border-secondary bg-secondary/10 text-center">
+                  <span className="text-[10px] uppercase font-bold text-muted-foreground">Network</span>
+                  <span className="flex items-center justify-center gap-1.5 text-xs font-bold mt-2">
+                    <span className={`size-2.5 rounded-full ${isOnline ? "bg-green-500 animate-pulse" : "bg-red-500 animate-ping"}`} />
+                    <span className={isOnline ? "text-green-700" : "text-red-700"}>
+                      {isOnline ? (lang === "hi" ? "ऑनलाइन" : "Online") : (lang === "hi" ? "ऑफ़लाइन" : "Offline")}
+                    </span>
+                  </span>
+                </div>
+              </div>
             </div>
           </section>
 

@@ -82,9 +82,13 @@ const sidebarItems: { key: AdminScreenKey; icon: string; label: string; group: s
 export function AdminWorkspace({
   initialUser,
   onExitAdmin,
+  isStandalone = false,
+  triggerPwaInstall,
 }: {
   initialUser: AdminUser
   onExitAdmin: () => void
+  isStandalone?: boolean
+  triggerPwaInstall?: () => void
 }) {
   const [screen, setScreen] = useState<AdminScreenKey>("role-hub")
   const [currentAdmin] = useState<AdminUser>(initialUser)
@@ -230,6 +234,23 @@ export function AdminWorkspace({
                 </div>
               </div>
             ))}
+            
+            {/* PWA Install Button in Admin Sidebar */}
+            {!isStandalone && triggerPwaInstall && (
+              <div className="mt-2 pt-2 border-t border-border">
+                <button
+                  onClick={triggerPwaInstall}
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-all duration-200 text-[#D97706] hover:bg-[#D97706]/5"
+                >
+                  <span className="grid size-8 place-items-center rounded-lg shadow-sm shrink-0 bg-gradient-to-br from-[#D97706] to-[#D4AF37] text-white">
+                    <Icon name="Download" className="size-4" />
+                  </span>
+                  <span className="text-[13px] font-bold leading-tight font-heading truncate">
+                    Install App
+                  </span>
+                </button>
+              </div>
+            )}
           </nav>
 
           <div className="p-4 text-center shrink-0 border-t border-border">
@@ -486,6 +507,26 @@ export function AdminWorkspace({
                   </div>
                 </div>
               ))}
+              
+              {/* PWA Install Button in Admin Mobile Drawer */}
+              {!isStandalone && triggerPwaInstall && (
+                <div className="mt-2 pt-2 border-t border-border">
+                  <button
+                    onClick={() => {
+                      setDrawerOpen(false)
+                      triggerPwaInstall()
+                    }}
+                    className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-all duration-200 text-[#D97706] hover:bg-[#D97706]/5"
+                  >
+                    <span className="grid size-8 place-items-center rounded-lg shadow-sm shrink-0 bg-gradient-to-br from-[#D97706] to-[#D4AF37] text-white">
+                      <Icon name="Download" className="size-4" />
+                    </span>
+                    <span className="text-[13px] font-bold leading-tight font-heading truncate">
+                      Install App
+                    </span>
+                  </button>
+                </div>
+              )}
             </nav>
 
             <div className="p-4 border-t border-border">
