@@ -1,4 +1,4 @@
-# Smart Pilgrim Management System — Khatu Shyam Ji
+# 🕉️ Smart Pilgrim Management System — Khatu Shyam Ji
 
 An interactive, premium, and feature-rich Next.js web application built to streamline and enhance the pilgrimage experience for devotees visiting the holy town of **Khatu Shyam Ji**. This system integrates live temple updates, Darshan bookings, infrastructure tracking, emergency services, and administrative workspaces.
 
@@ -115,5 +115,5 @@ npm run start
 
 ---
 
-## Contribution & License
+## 🤝 Contribution & License
 This project is built for the smart administration of religious tourism and holy sites. Feel free to open issues or pull requests to improve the platform's utility!
