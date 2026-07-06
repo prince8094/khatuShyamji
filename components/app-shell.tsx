@@ -147,15 +147,42 @@ export function AppShell() {
         return null
       }
 
+      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Google Devotee"
+      const email = user.email || ""
+      const photoUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || ""
+
       if (profile) {
+        // Update last login (robust fallback)
+        const updatePayload: Record<string, any> = {
+          updated_at: new Date().toISOString(),
+          last_login: new Date().toISOString()
+        }
+
+        const { error: updErr } = await supabase
+          .from("profiles")
+          .update(updatePayload)
+          .eq("id", user.id)
+
+        if (updErr) {
+          console.warn("Update with last_login failed, trying with updated_at only:", updErr)
+          if (updErr.code === "PGRST204" || updErr.message?.includes("last_login")) {
+            delete updatePayload.last_login
+            const { error: retryErr } = await supabase
+              .from("profiles")
+              .update(updatePayload)
+              .eq("id", user.id)
+
+            if (retryErr) {
+              console.error("Retry profile update failed:", retryErr)
+            }
+          } else {
+            console.error("Profile update failed:", updErr)
+          }
+        }
         return profile
       }
 
       // Auto-create profile if missing (first-time OAuth login)
-      const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Google User"
-      const email = user.email || ""
-      
-      // Generate a unique placeholder phone number
       let phone = user.phone || user.user_metadata?.phone || ""
       if (!phone) {
         let uniquePhone = `+99${Math.floor(1000000000 + Math.random() * 9000000000)}`
@@ -171,22 +198,46 @@ export function AppShell() {
         phone = uniquePhone
       }
 
-      const { data: newProfile, error: insErr } = await supabase
+      const insertPayload: Record<string, any> = {
+        id: user.id,
+        name: fullName,
+        phone: phone,
+        email: email || null,
+        photo_url: photoUrl || null,
+        city: "",
+        provider: "google"
+      }
+
+      let newProfile = null
+      const { data: insData, error: insErr } = await supabase
         .from("profiles")
-        .insert({
-          id: user.id,
-          name: fullName,
-          phone: phone,
-          email: email || null,
-          city: ""
-        })
+        .insert(insertPayload)
         .select("id, name, phone, city")
         .single()
 
       if (insErr) {
-        console.error("Failed to auto-create user profile:", insErr)
-        return null
+        console.warn("Insert with provider failed, trying without provider column:", insErr)
+        if (insErr.code === "PGRST204" || insErr.message?.includes("provider")) {
+          delete insertPayload.provider
+          const { data: retryData, error: retryErr } = await supabase
+            .from("profiles")
+            .insert(insertPayload)
+            .select("id, name, phone, city")
+            .single()
+
+          if (retryErr) {
+            console.error("Retry profile insert failed:", retryErr)
+            return null
+          }
+          newProfile = retryData
+        } else {
+          console.error("Profile insert failed:", insErr)
+          return null
+        }
+      } else {
+        newProfile = insData
       }
+
       return newProfile
     } catch (err) {
       console.error("Error in syncUserProfile:", err)

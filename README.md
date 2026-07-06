@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Smart Pilgrim Management System — Khatu Shyam Ji
+=======
+# 🕉️ Smart Pilgrim Management System — Khatu Shyam Ji
+>>>>>>> 914915e (google auth)
 
 An interactive, premium, and feature-rich Next.js web application built to streamline and enhance the pilgrimage experience for devotees visiting the holy town of **Khatu Shyam Ji**. This system integrates live temple updates, Darshan bookings, infrastructure tracking, emergency services, and administrative workspaces.
 
@@ -6,7 +10,11 @@ An interactive, premium, and feature-rich Next.js web application built to strea
 
 ---
 
+<<<<<<< HEAD
 ## Key Features
+=======
+## 🚀 Key Features
+>>>>>>> 914915e (google auth)
 
 ### 1. Devotee Portal (Client App)
 - **Darshan Booking & digital passes:** Supports both Solo and Group bookings with validation for passenger details, age, and ID proofs. Generates a secure QR Pass for entry verification.
@@ -29,7 +37,11 @@ An interactive, premium, and feature-rich Next.js web application built to strea
 
 ---
 
+<<<<<<< HEAD
 ## Tech Stack
+=======
+## 🛠️ Tech Stack
+>>>>>>> 914915e (google auth)
 
 - **Frontend Framework:** [Next.js 16](https://nextjs.org/) (App Router), [React 19](https://react.dev/), [TypeScript](https://www.typescriptlang.org/)
 - **State Management & UI Shell:** Context-based multi-screen application layout with responsive navigation drawer and audio managers.
@@ -39,7 +51,11 @@ An interactive, premium, and feature-rich Next.js web application built to strea
 
 ---
 
+<<<<<<< HEAD
 ## Project Structure
+=======
+## 📁 Project Structure
+>>>>>>> 914915e (google auth)
 
 ```bash
 KhatuShyamji/
@@ -60,7 +76,11 @@ KhatuShyamji/
 
 ---
 
+<<<<<<< HEAD
 ## Database Schema & Relational Design
+=======
+## ⚙️ Database Schema & Relational Design
+>>>>>>> 914915e (google auth)
 
 The backend uses a PostgreSQL schema managed by **Supabase**. The core tables include:
 - `profiles`: User information, phone, avatar link, and city.
@@ -74,7 +94,11 @@ Full database blueprints, ERDs, and specification documents can be found in [dat
 
 ---
 
+<<<<<<< HEAD
 ## Getting Started Locally
+=======
+## 💻 Getting Started Locally
+>>>>>>> 914915e (google auth)
 
 Follow these steps to run the application on your computer:
 
@@ -115,5 +139,9 @@ npm run start
 
 ---
 
+<<<<<<< HEAD
 ## Contribution & License
+=======
+## 🤝 Contribution & License
+>>>>>>> 914915e (google auth)
 This project is built for the smart administration of religious tourism and holy sites. Feel free to open issues or pull requests to improve the platform's utility!

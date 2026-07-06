@@ -89,6 +89,8 @@ CREATE TABLE public.profiles (
     dob DATE NULL,
     gender VARCHAR(20) NULL,
     photo_url TEXT NULL,
+    provider VARCHAR(50) DEFAULT 'google' NULL,
+    last_login TIMESTAMP WITH TIME ZONE NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now() NOT NULL
 );
