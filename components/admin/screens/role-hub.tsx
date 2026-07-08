@@ -84,7 +84,7 @@ export function RoleHubScreen({
       </div>
 
       {/* Role Cards */}
-      <div className="relative px-4 py-6 max-w-2xl mx-auto">
+      <div className="relative w-full max-w-[1700px] mx-auto px-8 py-8">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="font-heading text-lg font-bold text-foreground">Your Workspaces</h2>
@@ -98,7 +98,7 @@ export function RoleHubScreen({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
           {userRoles.map((role, i) => (
             <motion.button
               key={role.key}
