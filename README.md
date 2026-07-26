@@ -115,4 +115,5 @@ npm run start
 
 ---
 
+## Contribution
 This project is built for the smart administration of religious tourism and holy sites. Feel free to open issues or pull requests to improve the platform's utility!
